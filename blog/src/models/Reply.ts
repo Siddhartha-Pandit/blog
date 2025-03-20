@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface Reply extends Document{
     reply: string;
-    likes: Number;
+    likes: number;
     commentDate: Date;
     replyId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;

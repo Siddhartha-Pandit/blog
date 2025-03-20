@@ -4,9 +4,9 @@ export interface Content extends Document{
     title: string;
     contentBody: string;
     author: mongoose.Schema.Types.ObjectId;
-    shares: Number;
-    likes: Number;
-    isPublished: Boolean;
+    shares: number;
+    likes: number;
+    isPublished: boolean;
     category: mongoose.Schema.Types.ObjectId;
     publishDateTime: Date;
 }

@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface Comment extends Document{
     comment: string;
-    likes: Number;
+    likes: number;
     commentDate: Date;
     contentId: mongoose.Schema.Types.ObjectId;
     userId: mongoose.Schema.Types.ObjectId;
