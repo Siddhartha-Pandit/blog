@@ -5,7 +5,7 @@ export interface Content extends Document{
     contentBody: string;
     author: mongoose.Schema.Types.ObjectId;
     shares: number;
-    likes: Schema.Types.ObjectId[];
+    likes:  mongoose.Types.ObjectId[]; 
     tags: string[];
     isPublished: boolean;
     category: mongoose.Schema.Types.ObjectId;
@@ -35,7 +35,7 @@ const ContentSchema = new Schema<Content>({
         default:0
     },
     likes: [{
-        type:mongoose.Schema.Types.ObjectId,
+        type:Schema.Types.ObjectId,
         ref: "User"
     }],
     tags: [

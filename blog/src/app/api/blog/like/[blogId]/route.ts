@@ -5,7 +5,8 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import mongoose,{Schema,Document} from "mongoose";
+import mongoose from "mongoose"; // Use default import to access mongoose.Types
+
 export async function PUT(req: Request, { params }: { params: { blogId: string } }) {
     console.debug("Received PUT request to update like blog:", params.blogId);
 
@@ -28,7 +29,10 @@ export async function PUT(req: Request, { params }: { params: { blogId: string }
         const blog = await ContentModel.findById(params.blogId);
         if (!blog) {
             console.error("Blog not found or unauthorized update attempt for:", params.blogId);
-            return NextResponse.json(new ApiError(404, "Blog not found or you are not authorized to update the blog."), { status: 404 });
+            return NextResponse.json(
+                new ApiError(404, "Blog not found or you are not authorized to update the blog."),
+                { status: 404 }
+            );
         }
 
         const userId = session.user.id;
@@ -39,7 +43,8 @@ export async function PUT(req: Request, { params }: { params: { blogId: string }
             blog.likes.splice(likeIndex, 1); // Remove like
             console.debug(`Removed user ${userId} from likes.`);
         } else {
-            blog.likes.push(userId as unknown as Schema.Types.ObjectId);
+            // Convert the string userId to an ObjectId using mongoose.Types.ObjectId
+            blog.likes.push(new mongoose.Types.ObjectId(userId));
             console.debug(`Added user ${userId} to likes.`);
         }
 
