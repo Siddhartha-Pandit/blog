@@ -5,7 +5,7 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/authOptions";
-
+import CategoryModel from "@/models/Category";
 export async function POST(request: Request) {
   console.debug("Received POST request to create a new blog post.");
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   console.debug("Authenticated user:", session.user.id);
 
   try {
-    const { title, contentBody, shares, likes, isPublished, category, publishDateTime } = await request.json();
+    const { title, contentBody, shares, likes, isPublished, category,tags, publishDateTime } = await request.json();
     console.debug("Received payload:", { title, contentBody, shares, likes, isPublished, category, publishDateTime });
     if (!title || !contentBody || !category) {
       console.error("Validation failed: Missing required fields.");
@@ -27,22 +27,25 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
+    
     await dbConnect();
     console.debug("Database connected.");
-
+    const myCategory = await CategoryModel.findOne({ _id: category });
+    if(!myCategory){
+      return NextResponse.json(new ApiError(404,"content Not found"),{status:404})
+    }
     const newContent = new ContentModel({
       title,
       contentBody,
       author: session.user.id,
-      likes: likes ?? 0,
+      shares:0,
+      likes: 0,
       isPublished,
-      category,
+      category:myCategory._id,
+      tags: Array.isArray(tags) ? tags:[],
       publishDateTime: publishDateTime ? new Date(publishDateTime) : new Date()
     });
     console.debug("New blog content constructed:", newContent);
-
-    // Save the document in the database
     const savedContent = await newContent.save();
     console.debug("Saved content:", savedContent);
 
