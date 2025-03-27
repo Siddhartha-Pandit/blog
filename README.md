@@ -1,65 +1,131 @@
-# **Next.js Blog**
+# Blog API Documentation
 
-Welcome to the **Next.js Blog**! This is a fully responsive blog built using **Next.js** with modern web technologies. This documentation will guide you through setting up and running the project locally, as well as deploying it to production.
+This document provides comprehensive documentation for the Blog API built with Next.js. The API handles user authentication, blog management, subscriptions, comments, categories, and user interactions like likes, shares, and bookmarks.
 
----
+## Base URL
+All endpoints are prefixed with `/api`.
 
-## **Table of Contents**
-
-- [Introduction](#introduction)
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Setup & Installation](#setup--installation)
-  - [Prerequisites](#prerequisites)
-  - [Clone the Repository](#clone-the-repository)
-  - [Install Dependencies](#install-dependencies)
-  - [Running Locally](#running-locally)
-- [Project Structure](#project-structure)
-- [Usage](#usage)
-- [Deployment](#deployment)
-  - [Deploying to Vercel](#deploying-to-vercel)
-- [Contributing](#contributing)
-- [License](#license)
+## Authentication
+Endpoints requiring authentication use NextAuth.js. Include the session token in cookies or use the `next-auth.session-token` header.
 
 ---
 
-## **Introduction**
+## API Resources
 
-This is a simple, yet powerful **Next.js blog** that can be easily customized for your personal needs. It supports features like dynamic routing, markdown-based blog posts, and server-side rendering, making it perfect for anyone looking to build a modern static blog with ease.
+### Subscriber
+Manage creator subscriptions.
 
----
+#### Subscribe to Creator
+- **POST** `/subscriber/create/{creatorId}`
+  - **Body**: `{ email?: string }` (Required if unauthenticated)
+  - **Success**: 200 OK with subscription confirmation
+  - **Error**: 400 if missing parameters, 500 on server error
 
-## **Features**
+#### Unsubscribe
+- **DELETE** `/subscriber/delete/{subscriberId}`
+  - **Headers**: Valid session token
+  - **Success**: 200 OK with success message
+  - **Error**: 401 if unauthorized, 404 if subscriber not found
 
-- **Static Site Generation (SSG)** for fast load times and SEO optimization
-- **Markdown-based blog posts**, so you can easily add content without worrying about complex CMS systems
-- **Dynamic Routing** for post pages
-- **Dark Mode** support
-- Simple **customizable themes** and components
-
----
-
-## **Getting Started**
-
-Follow these steps to get the project up and running on your local machine.
-
----
-
-### **Prerequisites**
-
-Before you start, make sure you have the following software installed:
-
-- **Node.js** (version 12.0 or higher)
-- **npm** or **yarn** (Node package managers)
-
-If you don’t have Node.js installed, you can get it from [https://nodejs.org/](https://nodejs.org/).
+#### Check Subscription Status
+- **GET** `/subscriber/read/{creatorId}/{email}`
+  - **Response**: `{ isSubscribed: boolean }`
+  - **Error**: 400 if missing IDs
 
 ---
 
-### **Clone the Repository**
+### Blog
+CRUD operations for blog posts and interactions.
 
-First, you’ll need to clone the repository to your local machine:
+#### Create Blog
+- **POST** `/blog/create`
+  - **Body**: 
+    ```json
+    {
+      "title": "Post Title",
+      "contentBody": "Content...",
+      "isPublished": true,
+      "category": "categoryId",
+      "tags": ["tag1", "tag2"],
+      "publishDateTime": "2024-01-01T00:00:00Z"
+    }
+    ```
+  - **Success**: 201 Created with blog data
 
-```bash
-git clone https://github.com/yourusername/nextjs-blog.git
-cd nextjs-blog
+#### Manage Blog Media
+- **Upload**: POST `/blog/media/upload/{blogId}`
+- **Read**: GET `/blog/media/read/{blogId}/{mediaId}`
+- **Update**: PUT `/blog/media/update/{blogId}/{mediaId}`
+- **Delete**: DELETE `/blog/media/remove/{blogId}/{mediaId}`
+
+#### Interactions
+- **Like**: PUT `/blog/like/{blogId}`
+  - **Response**: `{ likeCount: number, likeStatus: boolean }`
+- **Share**: PUT `/blog/share/{blogId}`
+  - **Response**: Updated share count
+
+---
+
+### Comment
+Manage blog post comments.
+
+#### Add Comment
+- **POST** `/comment/create/{blogId}`
+  - **Body**: `{ comment: "Comment text" }`
+  - **Success**: 200 with comment data
+
+#### Nested Replies
+Comments support nested replies through recursive population.
+
+#### Comment Interactions
+- **Like**: PUT `/comment/likes/{blogId}/{commentId}`
+  - **Response**: Updated like status and count
+
+---
+
+### Category (Admin Only)
+Category management (requires admin privileges).
+
+#### Create Category
+- **POST** `/category/create`
+  - **Body**: `{ name: "Category Name" }`
+
+#### List Categories
+- **GET** `/category/read`
+  - **Response**: Array of category objects
+
+---
+
+### User Interactions
+
+#### Follow System
+- **Follow/Unfollow**: PUT `/user/follow/{targetUserId}`
+  - **Response**: 
+    ```json
+    {
+      "followStatus": boolean,
+      "followingCount": number,
+      "followerCount": number
+    }
+    ```
+
+#### Bookmarks
+- **Toggle Bookmark**: PUT `/user/bookmark/{contentId}`
+  - **Response**: 
+    ```json
+    {
+      "bookmarkStatus": boolean,
+      "bookmarkCount": number
+    }
+    ```
+
+---
+
+## Error Handling
+Standard error response format:
+```json
+{
+  "success": false,
+  "message": "Error message",
+  "error": { ...error details }
+}
