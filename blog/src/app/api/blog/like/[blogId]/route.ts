@@ -5,7 +5,7 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { getServerSession } from "next-auth";
-import mongoose from "mongoose"; // Use default import to access mongoose.Types
+import mongoose from "mongoose"; 
 
 export async function PUT(req: Request, { params }: { params: { blogId: string } }) {
     console.debug("Received PUT request to update like blog:", params.blogId);
@@ -38,19 +38,21 @@ export async function PUT(req: Request, { params }: { params: { blogId: string }
         const userId = session.user.id;
         
         const likeIndex = blog.likes.findIndex((like) => like.toString() === userId);
-
+        let likeStatus=false;
         if (likeIndex !== -1) {
             blog.likes.splice(likeIndex, 1); // Remove like
+            likeStatus=false;
             console.debug(`Removed user ${userId} from likes.`);
         } else {
             // Convert the string userId to an ObjectId using mongoose.Types.ObjectId
             blog.likes.push(new mongoose.Types.ObjectId(userId));
+            likeStatus=true
             console.debug(`Added user ${userId} to likes.`);
         }
 
         await blog.save();
 
-        return NextResponse.json(new ApiResponse(200, null, "Like status updated successfully."), { status: 200 });
+        return NextResponse.json(new ApiResponse(200, {likeCount:blog.likes.length,likeStatus}, "Like status updated successfully."), { status: 200 });
 
     } catch (error) {
         console.error("Error updating like status in blog post:", error);
