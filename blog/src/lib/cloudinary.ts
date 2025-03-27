@@ -7,6 +7,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// The upload function remains unchanged.
 export const uploadOnCloudinary = async (
   localFilePath: string
 ): Promise<UploadApiResponse | null> => {
@@ -25,13 +26,11 @@ export const uploadOnCloudinary = async (
   }
 };
 
-
 const extractPublicIdFromUrl = (url: string): string | null => {
   const regex = /\/v\d+\/(.*?)\./;
   const match = url.match(regex);
   return match ? match[1] : null;
 };
-
 
 const getResourceTypeFromUrl = (url: string): string => {
   const extension = url.split('.').pop()?.toLowerCase() || "";
@@ -44,8 +43,12 @@ const getResourceTypeFromUrl = (url: string): string => {
   }
 };
 
+// Define an interface to type the Cloudinary destroy response.
+export interface CloudinaryDestroyResponse {
+  result: string;
+}
 
-export const deleteFromCloudinary = async (url: string): Promise<any> => {
+export const deleteFromCloudinary = async (url: string): Promise<CloudinaryDestroyResponse> => {
   try {
     const publicId = extractPublicIdFromUrl(url);
     if (!publicId) throw new Error("Invalid Cloudinary URL.");
@@ -53,7 +56,7 @@ export const deleteFromCloudinary = async (url: string): Promise<any> => {
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: resourceType,
     });
-    return result;
+    return result as CloudinaryDestroyResponse;
   } catch (error) {
     console.error("Error deleting from Cloudinary:", error);
     throw new Error("Failed to delete file from Cloudinary");

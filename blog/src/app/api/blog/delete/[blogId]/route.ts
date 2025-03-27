@@ -1,37 +1,54 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import dbConnect from "@/lib/dbConnect";
 import ContentModel from "@/models/Content";
 import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
-import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-import { getServerSession } from "next-auth";
-export async function DELETE(req:Request,
-    {params}:{params:{blogId:string}}){
-    console.debug("Received DELETE request to delete blog:", params.blogId);
-    const session=await getServerSession(authOptions);
-    if(!session){
-        console.error("Unauthorized request: No token found.");
-        return NextResponse.json(new ApiError(401, "User is unauthorized"),{status:401});
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { blogId: string } }
+) {
+  if (!params.blogId) {
+    return NextResponse.json(
+      new ApiError(400, "BlogId is required"),
+      { status: 400 }
+    );
+  }
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json(
+      new ApiError(401, "Unauthorized access"),
+      { status: 401 }
+    );
+  }
+
+  try {
+
+    await dbConnect();
+
+    const blogToDelete = await ContentModel.findOne({_id:params.blogId,author:session.user.id});
+    
+    if (!blogToDelete) {
+      return NextResponse.json(
+        new ApiError(404, "Blog not found"),
+        { status: 404 }
+      );
     }
-    console.debug("Authenticated user:", session.user.id);
-    try{
-        if(!params.blogId){
-            console.error("Blog id missing in URL parameters.");
-            return NextResponse.json(new ApiError(400,"Blog id is required for delete"),{status:400});
-        }
-        await dbConnect();
-        console.debug("Database connection established in blog/delete.");
-        const blog=await ContentModel.findOne({_id:params.blogId,author:session.user.id});
-        if(!blog){
-            console.error("Blog not found or unauthorized delete attempt for:", params.blogId);
-            return NextResponse.json(new ApiError(404,"Blog not found or you are not authorized to delete the blog."),{status:404});
-        }
-        const deletedBlog=await blog.deleteOne();
-        console.debug("Blog deleted successfully:", deletedBlog);
-        return NextResponse.json(new ApiResponse(200,deletedBlog,"Blog deleted successfully."),{status:200});
-    }
-    catch(error){
-        console.error("Error while deleting the blog:", error);
-        return NextResponse.json(new ApiError(500,"Error while deleting the blog"),{status:500});
-    }
+
+    await ContentModel.deleteOne({ _id: params.blogId, author: session.user.id });
+
+
+    return NextResponse.json(
+      new ApiResponse(200, "Blog deleted successfully"),
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting blog:", error);
+    return NextResponse.json(
+      new ApiError(500, "Internal Server Error"),
+      { status: 500 }
+    );
+  }
 }

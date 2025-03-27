@@ -7,11 +7,12 @@ import { ApiError } from "@/lib/ApiError";
 import ContentModel from "@/models/Content";
 import MediaModel from "@/models/Media";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
+
 export async function DELETE(
   req: Request,
   { params }: { params: { blogId: string; mediaId: string } }
 ) {
-  console.debug("Received the GET request to update the media");
+  console.debug("Received the DELETE request to update the media");
   const session = await getServerSession(authOptions);
   if (!session) {
     console.error("Unauthorized request: No token found.");
@@ -32,7 +33,7 @@ export async function DELETE(
   try {
     await dbConnect();
     console.debug("Database connection established.");
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       new ApiError(500, "Database connection error"),
       { status: 500 }
@@ -40,7 +41,6 @@ export async function DELETE(
   }
 
   try {
-    
     const blog = await ContentModel.findOne({
       _id: params.blogId,
       author: session.user.id,
@@ -66,19 +66,20 @@ export async function DELETE(
     }
 
     try {
-        await deleteFromCloudinary(media.link);
-        const deleteMedia=media.deleteOne();
-        console.debug("File deleted from cloudinary and in database.");
-        return NextResponse.json(
-            new ApiResponse(200, media, "File updated successfully"),
-            {status:200}
-          );
-      } catch (delError) {
-        console.error("Error deleting  file from Cloudinary:", delError);
-        return NextResponse.json(new ApiError(500,"Couldn't delete the media"),{status:500})
-      }
-
-   
+      await deleteFromCloudinary(media.link);
+      await media.deleteOne();
+      console.debug("File deleted from Cloudinary and removed from the database.");
+      return NextResponse.json(
+        new ApiResponse(200, media, "File updated successfully"),
+        { status: 200 }
+      );
+    } catch (delError) {
+      console.error("Error deleting file from Cloudinary:", delError);
+      return NextResponse.json(
+        new ApiError(500, "Couldn't delete the media"),
+        { status: 500 }
+      );
+    }
   } catch (err) {
     console.error("Error during file update:", err);
     return NextResponse.json(new ApiError(500, "File update error"), {

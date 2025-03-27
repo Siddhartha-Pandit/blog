@@ -36,6 +36,7 @@ export async function PUT(
     await dbConnect();
     console.debug("Database connection established.");
   } catch (error) {
+    console.error("Database connection error ", error);
     return NextResponse.json(
       new ApiError(500, "Database connection error"),
       { status: 500 }

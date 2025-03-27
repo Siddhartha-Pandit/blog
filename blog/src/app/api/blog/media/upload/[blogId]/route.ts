@@ -29,6 +29,7 @@ export async function POST(req: Request,
             console.debug("Database connection established.");
         }
         catch (error){
+            console.error("Database connection established.",error);
             return NextResponse.json(
             new ApiError(500, "Database connection error"),{status:500}
             );
@@ -77,6 +78,7 @@ export async function POST(req: Request,
               );        
             }
         catch(err){
+            console.error("Database connection established.",err);
             return NextResponse.json(new ApiError(500,"File upload error"),{status:500})
         }
 }

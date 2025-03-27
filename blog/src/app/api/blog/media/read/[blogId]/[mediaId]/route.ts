@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import dbConnect from "@/lib/dbConnect";
-import { ApiResponse } from "@/lib/ApiResponse";
-import { ApiError } from "@/lib/ApiError";
 import ContentModel from "@/models/Content";
 import MediaModel from "@/models/Media";
+import { ApiResponse } from "@/lib/ApiResponse";
+import { ApiError } from "@/lib/ApiError";
 
 export async function GET(
   req: Request,
   { params }: { params: { blogId: string; mediaId: string } }
-) {
-  console.debug("Received the GET request to update the media");
+): Promise<NextResponse> {
+  console.debug("Received GET request to read the media");
   const session = await getServerSession(authOptions);
   if (!session) {
     console.error("Unauthorized request: No token found.");
@@ -32,7 +32,7 @@ export async function GET(
   try {
     await dbConnect();
     console.debug("Database connection established.");
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       new ApiError(500, "Database connection error"),
       { status: 500 }
@@ -40,13 +40,12 @@ export async function GET(
   }
 
   try {
-    
     const blog = await ContentModel.findOne({
       _id: params.blogId,
       author: session.user.id,
     });
     if (!blog) {
-      console.error("Blog not found or unauthorized user to update the blog.");
+      console.error("Blog not found or unauthorized user to access the blog.");
       return NextResponse.json(
         new ApiError(400, "No blogs found for you"),
         { status: 400 }
@@ -65,14 +64,14 @@ export async function GET(
       );
     }
 
-
     return NextResponse.json(
-      new ApiResponse(200, media, "File updated successfully")
+      new ApiResponse(200, media, "Media fetched successfully")
     );
-  } catch (err) {
-    console.error("Error during file update:", err);
-    return NextResponse.json(new ApiError(500, "File update error"), {
-      status: 500,
-    });
+  } catch {
+    console.error("Error during media retrieval");
+    return NextResponse.json(
+      new ApiError(500, "Media retrieval error"),
+      { status: 500 }
+    );
   }
 }
