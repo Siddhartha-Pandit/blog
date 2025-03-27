@@ -35,7 +35,6 @@ export async function POST(request: Request) {
       title,
       contentBody,
       author: session.user.id,
-      shares: shares ?? 0,
       likes: likes ?? 0,
       isPublished,
       category,

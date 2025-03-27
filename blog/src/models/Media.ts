@@ -1,13 +1,12 @@
-//id, contentId, link
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface Image extends Document{
+export interface Media extends Document{
     name: string;
     contentId: mongoose.Schema.Types.ObjectId;
     link: string
 }
 
-const ImageSchema = new Schema<Image>({
+const MediaSchema = new Schema<Media>({
     name:{
         type: String,
         required: [true, "Category name is required"],
@@ -24,5 +23,5 @@ const ImageSchema = new Schema<Image>({
     }
 },{timestamps:true})
 
-const ImageModel=mongoose.models.Image as mongoose.Model<Image> || mongoose.model<Image>("Image",ImageSchema);
-export default ImageModel;
+const MediaModel=mongoose.models.Media as mongoose.Model<Media> || mongoose.model<Media>("Media",MediaSchema);
+export default MediaModel;
