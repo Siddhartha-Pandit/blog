@@ -4,10 +4,11 @@ export interface User extends Document {
   fullName: string;
   userName: string;
   email: string;
-  password?: string;  // Made optional
-  image?: string;     // Added image field
-  bookmark: string[];
+  password?: string;
+  image?: string;
+  bookmarks: mongoose.Types.ObjectId[]; // References to Content documents
   followers: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[]; // References to User documents (similar to followers)
   provider?: string;
   providerId?: string;
 }
@@ -40,19 +41,25 @@ const UserSchema: Schema<User> = new Schema<User>(
     },
     password: {
       type: String,
-      required: false,  // No longer required
+      required: false,
     },
     image: {
       type: String,
       default: "",
     },
-    bookmark: {
-      type: [String],
+    bookmarks: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Content", // Each bookmark is a reference to a Content document
       default: [],
     },
     followers: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "User",
+      default: [],
+    },
+    following: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User", // Each following is a reference to a User document
       default: [],
     },
     provider: {
