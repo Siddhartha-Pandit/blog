@@ -65,7 +65,12 @@ export async function POST(req: Request,
                 contentId: params.blogId,
                 link: cloudinaryResponse?.secure_url
             });
+            const savedContent = await newMedia.save();
+
             console.debug("Media record saved:", newMedia);
+            if(!savedContent.id){
+                return NextResponse.json(new ApiError(500,"Content not saved in the database"))
+            }
 
             return NextResponse.json(
                 new ApiResponse(200, cloudinaryResponse,"File uploaded successfully")
