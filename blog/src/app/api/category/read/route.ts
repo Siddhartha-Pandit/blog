@@ -5,7 +5,7 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
 
 export async function GET(
-  req: Request
+
 ) {
   console.debug("Received GET request to update a category.");
    
