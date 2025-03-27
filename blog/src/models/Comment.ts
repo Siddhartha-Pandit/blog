@@ -1,42 +1,50 @@
-//  reply
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
-export interface Comment extends Document{
-    comment: string;
-    likes: number;
-    commentDate: Date;
-    contentId: mongoose.Schema.Types.ObjectId;
-    userId: mongoose.Schema.Types.ObjectId;
-    reply: mongoose.Schema.Types.ObjectId;
+export interface CommentDoc extends Document {
+  comment: string;
+  likes: Types.ObjectId[];
+  commentDate: Date;
+  contentId: Types.ObjectId;
+  userId: Types.ObjectId;
+  reply: Array<Types.ObjectId | CommentDoc>;
 }
 
-const CommentSchema = new Schema<Comment>({
-    comment:{
-        type: String,
-        required: true
+const CommentSchema = new Schema<CommentDoc>(
+  {
+    comment: {
+      type: String,
+      required: true,
     },
-    likes:{
-        type: Number,
-        default:0
-    },
-    commentDate:{
-        type: Date,
-        default: Date.now
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    commentDate: {
+      type: Date,
+      default: Date.now,
     },
     contentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Content",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Content",
     },
-    userId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
-    reply:[{
-       type: mongoose.Schema.Types.ObjectId,
-        ref: "Reply"
-    }]
+    reply: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
-},{timestamps:true})
+const CommentModel =
+  (mongoose.models.Comment as mongoose.Model<CommentDoc>) ||
+  mongoose.model<CommentDoc>("Comment", CommentSchema);
 
-const CommentModel=mongoose.models.Content as mongoose.Model<Comment> || mongoose.model<Comment>("Comment",CommentSchema);
 export default CommentModel;
