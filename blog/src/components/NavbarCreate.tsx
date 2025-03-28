@@ -1,10 +1,11 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
-import SearchBar from "./SearchBar";
 import {
   Menubar,
   MenubarContent,
@@ -13,19 +14,25 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { SquarePen } from "lucide-react";
+import { Save, ArrowUpToLine } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function Navbar() {
+export default function NavbarCreate() {
   const { data: session, status } = useSession();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
 
-  const navClasses =
-    "fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)]";
+  // Function to mask email addresses
+  function maskEmail(email: string) {
+    if (!email || typeof email !== "string") return "";
+    const [localPart, domain] = email.split("@");
+    if (!localPart || !domain) return email;
+    const firstTwo = localPart.slice(0, 2);
+    const bulletMask = "•".repeat(10);
+    return `${firstTwo}${bulletMask}@${domain}`;
+  }
 
-  // Update mobile state based on viewport width (md breakpoint: 768px)
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -33,64 +40,38 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // If session status is loading, render nothing (or you can render a fallback)
   if (status === "loading") {
     return (
-      <nav className={navClasses} suppressHydrationWarning>
-        {/* Optionally, you can remove this fallback if you don't want any loading state */}
-        <p>Loading...</p>
+      <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-gray-100">
+        Loading...
       </nav>
     );
   }
 
-  function maskEmail(email: string) {
-    if (!email || typeof email !== "string") return "";
-    const [localPart, domain] = email.split("@");
-    if (!localPart || !domain) return email;
-    const firstTwo = localPart.slice(0, 2);
-    // Fixed: Always using 10 bullets
-    const bulletMask = "•".repeat(10);
-    return `${firstTwo}${bulletMask}@${domain}`;
-  }
-
   return (
-    <nav className={navClasses} suppressHydrationWarning>
-      {/* Logo: On mobile/tablet, when search is open, hide the logo; otherwise, display it with proper spacing */}
-      <div
-        suppressHydrationWarning
-        className={`flex items-center space-x-4 ${isMobile && isSearchOpen ? "hidden" : "block"}`}
-      >
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-[var(--background)] text-[var(--foreground)] border-b">
+      <div suppressHydrationWarning className="flex items-center">
         <span
-          className={`font-poppins font-extrabold tracking-wide ${isMobile ? "text-base" : "text-xl"}`}
+          className={`font-poppins font-extrabold tracking-wide ${
+            isMobile ? "text-base" : "text-xl"
+          }`}
         >
           <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words
         </span>
       </div>
-
-      {/* Right Side: Adjust spacing and component sizes based on mobile state */}
-      <div
-        suppressHydrationWarning
-        className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}
-      >
-        <SearchBar onToggleChange={(open) => setIsSearchOpen(open)} />
-        <Link href="/create">
-          <Button
-            className={`flex items-center gap-2 rounded-md border border-gray-300 bg-white ${
-              isMobile ? "px-2 py-1 text-xs text-[#1e1e1e]" : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
-            } shadow-sm transition-colors hover:bg-gray-100 dark:border-neutral-600 dark:bg-neutral-900 dark:text-[#faf9f6] dark:hover:bg-neutral-800`}
-          >
-            <SquarePen size={isMobile ? 16 : 20} />
-            {!isMobile && "Create"}
-          </Button>
-        </Link>
+      <div className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}>
+        <Button
+          className="flex items-center gap-2 rounded-full px-5 py-2 bg-[#004EBA] text-[#FAF9F6] dark:bg-[#79ACF2] dark:text-[#1E1E1E] hover:opacity-90 transition-all shadow-md"
+        >
+          <ArrowUpToLine size={20} />
+          {!isMobile && <span>Publish</span>}
+        </Button>
         <ThemeToggle />
         {session ? (
           <Menubar className="bg-transparent border-none shadow-none">
             <MenubarMenu>
               <MenubarTrigger className="focus:outline-none">
-                <Avatar
-                  className={`${isMobile ? "w-7 h-7" : "w-9 h-9"} border-0 !border-none !shadow-none !ring-0`}
-                >
+                <Avatar className={`${isMobile ? "w-7 h-7" : "w-9 h-9"} border-0 !border-none !shadow-none !ring-0`}>
                   <AvatarImage
                     src={session.user?.image || ""}
                     alt={session.user?.name || "User"}
@@ -114,7 +95,7 @@ export default function Navbar() {
                       width={32}
                       height={32}
                       priority
-                      unoptimized // Remove this prop if you configure next.config.js properly
+                      unoptimized
                     />
                     <div className="flex flex-col">
                       <span className="font-semibold text-[var(--foreground)]">
