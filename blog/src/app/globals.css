@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
@@ -43,7 +45,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
-
+/* 
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -77,8 +79,8 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-}
-
+} */
+/* 
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -111,8 +113,105 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+} */
+:root {
+  --radius: 0.625rem;
+  --background: rgb(250,249,246);
+  --foreground: rgb(30,30,30);
+  
+  /* Derived from light background (250,249,246) */
+  --card: rgb(255,255,255);
+  --card-foreground: rgb(30,30,30);
+  --popover: rgb(255,255,255);
+  --popover-foreground: rgb(30,30,30);
+  
+  /* Primary - Navy blue for contrast */
+  --primary: rgb(0, 48, 73);
+  --primary-foreground: rgb(250,249,246);
+  
+  /* Secondary - Light beige variant */
+  --secondary: rgb(245,243,240);
+  --secondary-foreground: rgb(0, 48, 73);
+  
+  /* Muted & Accent */
+  --muted: rgb(240,239,235);
+  --muted-foreground: rgb(100,100,100);
+  --accent: rgb(230,228,224);
+  --accent-foreground: rgb(0, 48, 73);
+  
+  /* State colors */
+  --destructive: rgb(178, 34, 34);
+  --border: rgb(220,220,220);
+  --input: rgb(220,220,220);
+  --ring: rgb(180,180,180);
+  
+  /* Charts */
+  --chart-1: rgb(231, 76, 60);
+  --chart-2: rgb(46, 134, 193);
+  --chart-3: rgb(52, 152, 219);
+  --chart-4: rgb(241, 196, 15);
+  --chart-5: rgb(142, 68, 173);
+  
+  /* Sidebar */
+  --sidebar: rgb(255,255,255);
+  --sidebar-foreground: rgb(30,30,30);
+  --sidebar-primary: rgb(0, 48, 73);
+  --sidebar-primary-foreground: rgb(250,249,246);
+  --sidebar-accent: rgb(245,243,240);
+  --sidebar-accent-foreground: rgb(0, 48, 73);
+  --sidebar-border: rgb(220,220,220);
+  --sidebar-ring: rgb(180,180,180);
 }
-
+.dark {
+  --background: rgb(30,30,30);
+  --foreground: rgb(250,249,246);
+  
+  /* Derived from dark background */
+  --card: rgb(40,40,40);
+  --card-foreground: rgb(250,249,246);
+  --popover: rgb(40,40,40);
+  --popover-foreground: rgb(250,249,246);
+  
+  /* Primary - Light sand color */
+  --primary: rgb(240,234,214);
+  --primary-foreground: rgb(30,30,30);
+  
+  /* Secondary - Dark gray variant */
+  --secondary: rgb(50,50,50);
+  --secondary-foreground: rgb(240,234,214);
+  
+  /* Muted & Accent */
+  --muted: rgb(60,60,60);
+  --muted-foreground: rgb(180,180,180);
+  --accent: rgb(70,70,70);
+  --accent-foreground: rgb(240,234,214);
+  
+  /* State colors */
+  --destructive: rgb(255, 71, 87);
+  --border: rgb(80,80,80);
+  --input: rgb(80,80,80);
+  --ring: rgb(120,120,120);
+  
+  /* Charts */
+  --chart-1: rgb(255, 107, 107);
+  --chart-2: rgb(72, 207, 173);
+  --chart-3: rgb(254, 202, 87);
+  --chart-4: rgb(155, 89, 182);
+  --chart-5: rgb(84, 153, 199);
+  
+  /* Sidebar */
+  --sidebar: rgb(40,40,40);
+  --sidebar-foreground: rgb(250,249,246);
+  --sidebar-primary: rgb(240,234,214);
+  --sidebar-primary-foreground: rgb(30,30,30);
+  --sidebar-accent: rgb(50,50,50);
+  --sidebar-accent-foreground: rgb(240,234,214);
+  --sidebar-border: rgb(80,80,80);
+  --sidebar-ring: rgb(120,120,120);
+}
+body {
+  font-family: 'Poppins', sans-serif;
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
