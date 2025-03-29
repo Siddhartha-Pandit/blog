@@ -131,9 +131,10 @@ Standard error response format:
 }
 
 ======================================
-bold, itallic, headers, links, list, paragraph, underline, text highlight, strikethrough, superscript,subscript, Defination List, Task list
+bold, itallic, headers, links, list, paragraph, underline, text highlight, strikethrough, superscript,subscript,
+footnotes, Defination List, Task list
 ======================================
 ++++++++++++++++++++++++++++++++++++++
 ======================================
-image, Video, blockquotes,footnotes, code blocks, tables, blank space
+image, Video, blockquotes,code blocks, tables, blank space
 ======================================
