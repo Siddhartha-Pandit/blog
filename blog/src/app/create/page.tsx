@@ -4,10 +4,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { Undo2, Redo2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+// -----------------------
+// AutoSizeInput Component
+// -----------------------
 interface AutoSizeInputProps {
   value: string;
   placeholder?: string;
@@ -17,7 +21,6 @@ interface AutoSizeInputProps {
   initialWidth?: number;
 }
 
-// AutoSizeInput for adding new tags
 const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
   value,
   placeholder = "New tag...",
@@ -66,32 +69,46 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
 };
 
 const CreatePage = () => {
-  const { data: session, status } = useSession();
+  // Get session and router from next-auth and Next.js app router
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  // Redirect to login if not authenticated.
+  useEffect(() => {
+    if (session === null) {
+      router.push("/");
+    }
+  }, [session, router]);
+
+  // Local state
   const [isSavedDraft, setIsSaveDraft] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  // Category dropdown
+  // --------------
+  // CATEGORY DROPDOWN
+  // --------------
   const categories = ["Programming", "Design", "Marketing", "Lifestyle", "Tech"];
+  // measureRef is used to compute the width of the selected category text.
   const measureRef = useRef<HTMLSpanElement>(null);
-  const [selectWidth, setSelectWidth] = useState(60);
+  const [selectWidth, setSelectWidth] = useState(130);
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Recalculate select width when the selected category changes
   useEffect(() => {
     if (measureRef.current) {
-      const measuredWidth = measureRef.current.offsetWidth + 35;
+      const measuredWidth = measureRef.current.offsetWidth + 35; // extra padding for icon
       setSelectWidth(measuredWidth);
     }
   }, [selectedCategory]);
 
-  // Tags
+  // --------------
+  // TAGS STATE
+  // --------------
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const tagContainerRef = useRef<HTMLDivElement>(null);
 
-  // Hide inline tag input if user clicks outside while it's empty
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -104,11 +121,9 @@ const CreatePage = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isAddingTag, inputValue]);
 
-  // Add a new tag on Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
       e.preventDefault();
@@ -118,12 +133,12 @@ const CreatePage = () => {
     }
   };
 
-  // Remove a tag by index
   const removeTag = (index: number) => {
     setTags((prevTags) => prevTags.filter((_, i) => i !== index));
   };
 
-  if (status === "loading") {
+  // If session is still loading (undefined), display loading state.
+  if (session === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-xl font-semibold">Loading...</p>
@@ -197,7 +212,7 @@ const CreatePage = () => {
 
       {/* Category & Tags Section */}
       <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between p-5">
-        {/* Category Dropdown (improved dark theme) */}
+        {/* Category Dropdown */}
         <div className="flex items-center mb-4 sm:mb-0 sm:mr-4">
           <div
             className="
@@ -208,19 +223,14 @@ const CreatePage = () => {
               rounded-full relative mb-2
             "
           >
-            {/* Hidden measure span to calculate width */}
             <span ref={measureRef} className="invisible absolute whitespace-pre">
               {selectedCategory}
             </span>
-
             <select
               onMouseDown={() => setIsDropdownOpen(true)}
               onBlur={() => setIsDropdownOpen(false)}
               style={{ width: selectWidth, transition: "width 0.25s ease" }}
-              className="
-                appearance-none bg-transparent outline-none pr-8
-                text-gray-800 dark:text-gray-100
-              "
+              className="appearance-none bg-transparent outline-none pr-8 text-gray-800 dark:text-gray-100"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
@@ -228,17 +238,12 @@ const CreatePage = () => {
                 <option
                   key={cat}
                   value={cat}
-                  className="
-                    bg-[#faf9f6] dark:bg-[#1e1e1e]
-                    text-[#1e1e1e] dark:text-[#faf9f6]
-                  "
+                  className="bg-[#faf9f6] dark:bg-[#1e1e1e] text-lg text-[#1e1e1e] dark:text-[#faf9f6] py-2"
                 >
                   {cat}
                 </option>
               ))}
             </select>
-
-            {/* Chevron icon that toggles up/down */}
             <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">
               {isDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </span>

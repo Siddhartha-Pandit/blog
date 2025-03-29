@@ -1,8 +1,9 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import ThemeToggle from "./ThemeToggle";
 import SearchBar from "./SearchBar";
 import {
@@ -13,83 +14,103 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { SquarePen } from "lucide-react";
+import { SquarePen, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false); // Added mounted state
 
-  const navClasses =
-    "fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)]";
-
-  // Update mobile state based on viewport width (md breakpoint: 768px)
+  // Only render after mounting on client to avoid hydration mismatch.
   useEffect(() => {
+    setMounted(true);
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // If session status is loading, render nothing (or you can render a fallback)
-  if (status === "loading") {
-    return (
-      <nav className={navClasses} suppressHydrationWarning>
-        {/* Optionally, you can remove this fallback if you don't want any loading state */}
-        <p>Loading...</p>
-      </nav>
-    );
+  if (!mounted) {
+    // Render a fallback that matches server HTML
+    return <nav className="fixed top-0 left-0 right-0 z-50 h-[50px]" />;
   }
 
+  // Simple email mask function
   function maskEmail(email: string) {
     if (!email || typeof email !== "string") return "";
     const [localPart, domain] = email.split("@");
     if (!localPart || !domain) return email;
     const firstTwo = localPart.slice(0, 2);
-    // Fixed: Always using 10 bullets
     const bulletMask = "•".repeat(10);
     return `${firstTwo}${bulletMask}@${domain}`;
   }
 
+  const navClasses =
+    "fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)]";
+
   return (
     <nav className={navClasses} suppressHydrationWarning>
-      {/* Logo: On mobile/tablet, when search is open, hide the logo; otherwise, display it with proper spacing */}
+      {/* Logo */}
       <div
         suppressHydrationWarning
-        className={`flex items-center space-x-4 ${isMobile && isSearchOpen ? "hidden" : "block"}`}
+        className={`flex items-center space-x-4 ${
+          isMobile && isSearchOpen ? "hidden" : "block"
+        }`}
       >
         <span
-          className={`font-poppins font-extrabold tracking-wide ${isMobile ? "text-base" : "text-xl"}`}
+          className={`font-poppins font-extrabold tracking-wide ${
+            isMobile ? "text-base" : "text-xl"
+          }`}
         >
-          <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words&apos;
+          <span className="text-[#004EBA] dark:text-[#79ACF2]">
+            Today&apos;s
+          </span>
+          Words&apos;
         </span>
       </div>
 
-      {/* Right Side: Adjust spacing and component sizes based on mobile state */}
+      {/* Right Side */}
       <div
         suppressHydrationWarning
-        className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}
+        className={`flex items-center ${
+          isMobile ? "space-x-2" : "space-x-4"
+        }`}
       >
         <SearchBar onToggleChange={(open) => setIsSearchOpen(open)} />
         <Link href="/create">
           <Button
             className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white ${
-              isMobile ? "px-2 py-1 text-xs text-[#1e1e1e]" : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
+              isMobile
+                ? "px-2 py-1 text-xs text-[#1e1e1e]"
+                : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
             } shadow-sm transition-colors hover:bg-gray-100 dark:border-neutral-600 dark:bg-neutral-900 dark:text-[#faf9f6] dark:hover:bg-neutral-800`}
           >
             <SquarePen size={isMobile ? 16 : 20} />
-            {!isMobile && "Create"}
+            {!isMobile && <span>Create</span>}
           </Button>
         </Link>
         <ThemeToggle />
+
         {session ? (
           <Menubar className="bg-transparent border-none shadow-none">
             <MenubarMenu>
               <MenubarTrigger className="focus:outline-none">
                 <Avatar
-                  className={`${isMobile ? "w-7 h-7" : "w-9 h-9"} border-0 !border-none !shadow-none !ring-0`}
+                  className={`${
+                    isMobile ? "w-7 h-7" : "w-9 h-9"
+                  } border-0 !border-none !shadow-none !ring-0`}
                 >
                   <AvatarImage
                     src={session.user?.image || ""}
@@ -97,7 +118,9 @@ export default function Navbar() {
                     loading="lazy"
                   />
                   <AvatarFallback className="bg-gray-500 text-white">
-                    {session.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                    {session.user?.name
+                      ? session.user.name.charAt(0).toUpperCase()
+                      : "U"}
                   </AvatarFallback>
                 </Avatar>
               </MenubarTrigger>
@@ -114,7 +137,7 @@ export default function Navbar() {
                       width={32}
                       height={32}
                       priority
-                      unoptimized // Remove this prop if you configure next.config.js properly
+                      unoptimized
                     />
                     <div className="flex flex-col">
                       <span className="font-semibold text-[var(--foreground)]">
@@ -137,12 +160,41 @@ export default function Navbar() {
             </MenubarMenu>
           </Menubar>
         ) : (
-          <Link
-            href="/login"
-            className="border-0 text-[var(--primary)] text-[14px] transition-colors hover:brightness-60"
-          >
-            Sign In
-          </Link>
+          // Dialog for Sign In
+          <Dialog>
+            <DialogTrigger asChild>
+            <Button className="border-0 transition-colors text-[14px] bg-[#faf9f6] text-[#1e1e1e] dark:bg-[#1e1e1e] dark:text-[#faf9f6] hover:bg-[#f0f0f0]">
+              Sign In
+            </Button>
+
+            </DialogTrigger>
+            <DialogContent className="w-full max-w-md rounded-lg bg-[#faf9f6] dark:bg-[#1e1e1e] p-6 shadow-lg">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold text-[#1e1e1e] dark:text-[#faf9f6]">
+                  Login / Signup
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-600 dark:text-gray-300">
+                  Sign in with your Google account.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-6">
+                <Button
+                  onClick={() => signIn("google")}
+                  className="w-full flex items-center justify-center px-4 py-2 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-colors duration-200 text-white font-semibold shadow-lg"
+                >
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z" />
+                  </svg>
+                  Continue with Google
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </nav>

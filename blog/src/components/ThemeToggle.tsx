@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon, Monitor } from "lucide-react";
 import {
@@ -11,8 +12,14 @@ import {
 
 export default function ThemeDropdown() {
   const { resolvedTheme, setTheme } = useTheme();
+  // Ensure we only render on the client
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  // Determine the current theme icon
+  if (!mounted) return null; // Prevent rendering until after mount
+
   const currentIcon =
     resolvedTheme === "light" ? (
       <Sun className="h-4 w-4" />
