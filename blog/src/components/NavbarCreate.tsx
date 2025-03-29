@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import {
   Menubar,
@@ -14,14 +13,13 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Save, ArrowUpToLine } from "lucide-react";
+import { ArrowUpToLine } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function NavbarCreate() {
   const { data: session, status } = useSession();
   const [isMobile, setIsMobile] = useState(false);
-  const pathname = usePathname();
 
   // Function to mask email addresses
   function maskEmail(email: string) {
