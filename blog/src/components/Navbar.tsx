@@ -63,7 +63,7 @@ export default function Navbar() {
         <span
           className={`font-poppins font-extrabold tracking-wide ${isMobile ? "text-base" : "text-xl"}`}
         >
-          <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words
+          <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words&apos;
         </span>
       </div>
 
@@ -75,7 +75,7 @@ export default function Navbar() {
         <SearchBar onToggleChange={(open) => setIsSearchOpen(open)} />
         <Link href="/create">
           <Button
-            className={`flex items-center gap-2 rounded-md border border-gray-300 bg-white ${
+            className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white ${
               isMobile ? "px-2 py-1 text-xs text-[#1e1e1e]" : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
             } shadow-sm transition-colors hover:bg-gray-100 dark:border-neutral-600 dark:bg-neutral-900 dark:text-[#faf9f6] dark:hover:bg-neutral-800`}
           >

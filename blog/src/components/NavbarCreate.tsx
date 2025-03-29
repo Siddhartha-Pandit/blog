@@ -56,12 +56,12 @@ export default function NavbarCreate() {
             isMobile ? "text-base" : "text-xl"
           }`}
         >
-          <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words
+          <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words&apos;
         </span>
       </div>
       <div className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}>
         <Button
-          className="flex items-center gap-2 rounded-full px-5 py-2 bg-[#004EBA] text-[#FAF9F6] dark:bg-[#79ACF2] dark:text-[#000000] hover:opacity-90 transition-all shadow-md"
+          className="flex items-center gap-2 rounded-full px-5 py-2 bg-[#004EBA] text-[#FAF9F6] dark:bg-[#79ACF2] dark:text-[#000000] hover:bg-[#003F8F] transition-all shadow-md"
         >
           <ArrowUpToLine size={20} />
           {!isMobile && <span>Publish</span>}
