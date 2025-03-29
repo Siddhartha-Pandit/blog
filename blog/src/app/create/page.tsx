@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Save, ArrowUpToLine, Undo2, Redo2 } from "lucide-react";
+import { Save, ArrowUpToLine, Undo2, Redo2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// AutoSizeInput Component: It measures text width using a hidden span and adjusts the input width accordingly.
 interface AutoSizeInputProps {
   value: string;
   placeholder?: string;
@@ -30,10 +29,8 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
   const spanRef = useRef<HTMLSpanElement>(null);
   const [inputWidth, setInputWidth] = useState(initialWidth);
 
-  // Update width when the value changes
   useEffect(() => {
     if (spanRef.current) {
-      // Extra 20px for padding
       setInputWidth(spanRef.current.offsetWidth + 20);
     }
   }, [value]);
@@ -49,16 +46,15 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
         placeholder={placeholder}
         style={{ width: `${inputWidth}px` }}
         className="
-          inline-block 
-          bg-[#faf9f6] dark:bg-[#1e1e1e] 
-          text-[#1e1e1e] dark:text-[#faf9f6] 
-          placeholder-gray-500 dark:placeholder-gray-400 
+          inline-block
+          bg-[#faf9f6] dark:bg-[#1e1e1e]
+          text-[#1e1e1e] dark:text-[#faf9f6]
+          placeholder-gray-500 dark:placeholder-gray-400
           px-3 py-1 text-sm font-medium
           outline-none border border-[#d1d1d1] dark:border-[#525252]
           rounded-full transition-colors
         "
       />
-      {/* Hidden span to measure text width */}
       <span
         ref={spanRef}
         className="invisible absolute whitespace-pre text-sm font-medium px-3 py-1"
@@ -76,16 +72,28 @@ const CreatePage = () => {
   const { data: session, status } = useSession();
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  // Tag state
+  const categories = ["Programming", "Design", "Marketing", "Lifestyle", "Tech"];
+
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [selectWidth, setSelectWidth] = useState(60); 
+  const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]);
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (measureRef.current) {
+      const measuredWidth = measureRef.current.offsetWidth + 35;
+      setSelectWidth(measuredWidth);
+    }
+  }, [selectedCategory]);
+
+ 
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
-  // Controls if we are currently adding a new tag
   const [isAddingTag, setIsAddingTag] = useState(false);
-  // The text for the new tag
   const [inputValue, setInputValue] = useState("");
-  // Ref for the container of the tag input area
+
   const tagContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle responsiveness
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -93,7 +101,6 @@ const CreatePage = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Document click handler: if the inline tag input is empty and a click happens outside, hide the input.
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -106,11 +113,11 @@ const CreatePage = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
+    return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isAddingTag, inputValue]);
 
-  // Add a new tag on Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && inputValue.trim() !== "") {
       e.preventDefault();
@@ -120,7 +127,6 @@ const CreatePage = () => {
     }
   };
 
-  // Remove a tag by index
   const removeTag = (index: number) => {
     setTags((prevTags) => prevTags.filter((_, i) => i !== index));
   };
@@ -133,7 +139,6 @@ const CreatePage = () => {
         </div>
       ) : (
         <div className="relative mt-[50px] mx-4 sm:mx-8 lg:mx-20 items-center">
-          {/* Header Section */}
           <div className="flex items-center justify-between p-5">
             <div className="flex items-center space-x-4">
               <Avatar className="w-9 h-9 border-0 !border-none !shadow-none !ring-0">
@@ -153,7 +158,7 @@ const CreatePage = () => {
               </Avatar>
               <div>
                 <p className="text-customLight dark:text-customDark font-semibold">
-                  {session?.user.name || "Guest"}
+                  {session?.user?.name || "Guest"}
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
                   <Popover>
@@ -162,9 +167,7 @@ const CreatePage = () => {
                         className="cursor-pointer hover:underline"
                         role="button"
                       >
-                        {new Date(date || new Date()).toLocaleDateString(
-                          "en-GB"
-                        )}
+                        {new Date(date || new Date()).toLocaleDateString("en-GB")}
                       </span>
                     </PopoverTrigger>
                     <PopoverContent className="w-[250px] bg-[#faf9f6] dark:bg-[#1e1e1e] p-2 shadow-lg rounded-md border border-gray-300 dark:border-gray-700">
@@ -200,15 +203,67 @@ const CreatePage = () => {
             </div>
           </div>
 
-          {/* Tags Input Section */}
-          <div ref={tagContainerRef} className="flex flex-col justify-between p-5">
-            <div className="w-full mt-4">
+          <div
+            ref={tagContainerRef}
+            className="flex flex-col sm:flex-row justify-between p-5"
+          >
+            <div className="flex items-center mb-4 sm:mb-0 sm:mr-4">
+              <div
+                className="
+                  inline-flex items-center px-3 py-1 text-sm font-medium
+                  bg-[#faf9f6] dark:bg-[#1e1e1e]
+                  text-gray-800 dark:text-gray-100
+                  border border-[#d1d1d1] dark:border-[#525252]
+                  rounded-full relative
+                "
+              >
+                <label className="mr-2">Category:</label>
+
+                <span ref={measureRef} className="invisible absolute whitespace-pre">
+                  {selectedCategory}
+                </span>
+
+                <div className="relative">
+                  <select
+                    onMouseDown={() => setIsDropdownOpen(true)}
+                    onBlur={() => setIsDropdownOpen(false)}
+                    style={{
+                      width: selectWidth,
+                      transition: "width 0.25s ease",
+                    }}
+                    className="
+                      appearance-none bg-transparent outline-none pr-5
+                      text-gray-800 dark:text-gray-100
+                    "
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">
+                    {isDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col w-full">
               <div className="flex flex-wrap gap-2 justify-start">
-                {/* Existing Tags */}
                 {tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center px-3 py-1 text-sm font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
+                    className="
+                      inline-flex items-center
+                      px-3 py-1 text-sm font-medium
+                      bg-[#faf9f6] dark:bg-[#1e1e1e]
+                      text-gray-800 dark:text-gray-100
+                      border border-[#d1d1d1] dark:border-[#525252]
+                      rounded-full
+                    "
                   >
                     {tag}
                     <button
@@ -220,7 +275,6 @@ const CreatePage = () => {
                   </span>
                 ))}
 
-                {/* + Add Tag Pill or Inline AutoSizeInput */}
                 {isAddingTag ? (
                   <AutoSizeInput
                     value={inputValue}
@@ -238,7 +292,14 @@ const CreatePage = () => {
                 ) : (
                   <span
                     onClick={() => setIsAddingTag(true)}
-                    className="inline-flex items-center cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-[#1e1e1e] dark:text-[#faf9f6] px-3 py-1 rounded-full text-sm hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
+                    className="
+                      inline-flex items-center cursor-pointer
+                      border-dashed border border-[#d1d1d1] dark:border-[#525252]
+                      bg-transparent text-[#1e1e1e] dark:text-[#faf9f6]
+                      px-3 py-1 rounded-full text-sm
+                      hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a]
+                      transition-colors
+                    "
                   >
                     + Add tag
                   </span>
@@ -247,13 +308,11 @@ const CreatePage = () => {
             </div>
           </div>
 
-          {/* Title Section */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 px-5">
             <h1 className="text-2xl font-bold">Create</h1>
           </div>
 
-          {/* CMS Editor Components */}
-          <div>
+          <div className="px-5">
             <p>Your CMS editor components go here...</p>
           </div>
         </div>
