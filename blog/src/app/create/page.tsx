@@ -81,11 +81,8 @@ const CreatePage = () => {
   const [isSavedDraft, setIsSaveDraft] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  // --------------
-  // CATEGORY DROPDOWN
-  // --------------
+  // -------------- CATEGORY DROPDOWN --------------
   const categories = ["Programming", "Design", "Marketing", "Lifestyle", "Tech"];
-  // measureRef is used to compute the width of the selected category text.
   const measureRef = useRef<HTMLSpanElement>(null);
   const [selectWidth, setSelectWidth] = useState(130);
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]);
@@ -98,9 +95,7 @@ const CreatePage = () => {
     }
   }, [selectedCategory]);
 
-  // --------------
-  // TAGS STATE
-  // --------------
+  // -------------- TAGS STATE --------------
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -135,7 +130,6 @@ const CreatePage = () => {
     setTags((prevTags) => prevTags.filter((_, i) => i !== index));
   };
 
-  // If session is still loading (undefined), display loading state.
   if (session === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -145,9 +139,17 @@ const CreatePage = () => {
   }
 
   return (
-    <div className="relative mt-12 mx-4 sm:mx-8 lg:mx-20">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-5">
+    <div className="container mx-auto p-4">
+      {/* Title Section with extra top margin */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-20 px-4">
+        <input
+          type="text"
+          placeholder="Title"
+          className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none focus:border-[#d1d1d1] dark:focus:border-[#525252]"
+        />
+      </div>
+      {/* Header Section (User section) with reduced bottom margin */}
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 mb-4">
         <div className="flex items-center space-x-4">
           <Avatar className="w-9 h-9 border-0 !shadow-none">
             {session?.user?.image ? (
@@ -158,13 +160,11 @@ const CreatePage = () => {
               />
             ) : (
               <AvatarFallback className="bg-gray-500 text-white">
-                {session?.user?.name
-                  ? session.user.name.charAt(0).toUpperCase()
-                  : "U"}
+                {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
               </AvatarFallback>
             )}
           </Avatar>
-          <div>
+          <div className="mt-2">
             <p className="text-customLight dark:text-customDark font-semibold">
               {session?.user?.name || "Guest"}
             </p>
@@ -188,10 +188,7 @@ const CreatePage = () => {
               {isSavedDraft ? (
                 "Saved"
               ) : (
-                <span
-                  className="cursor-pointer hover:underline"
-                  onClick={() => setIsSaveDraft(true)}
-                >
+                <span className="cursor-pointer hover:underline" onClick={() => setIsSaveDraft(true)}>
                   Save Draft
                 </span>
               )}
@@ -207,21 +204,11 @@ const CreatePage = () => {
           </Button>
         </div>
       </div>
-
-      {/* Category & Tags Section */}
-      <div
-        ref={tagContainerRef}
-        className="flex flex-col sm:flex-row justify-between items-start p-5 gap-4"
-      >
+      {/* Category & Tags Section with reduced gap */}
+      <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between items-start p-4 gap-2 mb-4">
         {/* Category Dropdown */}
         <div className="flex items-center w-full sm:w-auto">
-          <div
-            className="inline-flex items-center px-3 py-1 text-sm font-medium
-              bg-[#faf9f6] dark:bg-[#1e1e1e]
-              text-gray-800 dark:text-gray-100
-              border border-[#d1d1d1] dark:border-[#525252]
-              rounded-full relative h-10 w-full sm:w-auto"
-          >
+          <div className="inline-flex items-center px-3 py-1 text-sm font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full relative h-10 w-full sm:w-auto">
             <span ref={measureRef} className="invisible absolute whitespace-pre">
               {selectedCategory}
             </span>
@@ -248,18 +235,13 @@ const CreatePage = () => {
             </span>
           </div>
         </div>
-
         {/* Tags Input Section */}
         <div className="flex flex-col w-full">
           <div className="flex flex-wrap gap-2 justify-start">
             {tags.map((tag, index) => (
               <span
                 key={index}
-                className="inline-flex items-center h-10 px-3 py-1 text-sm font-medium
-                  bg-[#faf9f6] dark:bg-[#1e1e1e]
-                  text-gray-800 dark:text-gray-100
-                  border border-[#d1d1d1] dark:border-[#525252]
-                  rounded-full"
+                className="inline-flex items-center h-10 px-3 py-1 text-sm font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
               >
                 {tag}
                 <button
@@ -270,7 +252,6 @@ const CreatePage = () => {
                 </button>
               </span>
             ))}
-
             {isAddingTag ? (
               <AutoSizeInput
                 value={inputValue}
@@ -288,11 +269,7 @@ const CreatePage = () => {
             ) : (
               <span
                 onClick={() => setIsAddingTag(true)}
-                className="inline-flex items-center h-10 cursor-pointer
-                  border-dashed border border-[#d1d1d1] dark:border-[#525252]
-                  bg-transparent text-gray-800 dark:text-gray-100
-                  px-3 py-1 rounded-full text-sm
-                  hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
+                className="inline-flex items-center h-10 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-3 py-1 rounded-full text-sm hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
               >
                 + Add tag
               </span>
@@ -300,18 +277,8 @@ const CreatePage = () => {
           </div>
         </div>
       </div>
-
-      {/* Title Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 px-5">
-        <input
-          type="text"
-          placeholder="Title"
-          className="w-full p-2 border border-[#d1d1d1] dark:border-[#525252] rounded-md"
-        />
-      </div>
-
-      {/* CMS Editor Components */}
-      <div className="px-5">
+      {/* CMS Editor Components with added top margin */}
+      <div className="p-4 mt-4">
         <p>Your CMS editor components go here...</p>
       </div>
     </div>
