@@ -82,8 +82,8 @@ const CreatePage = () => {
   const [isAddingTag, setIsAddingTag] = useState(false);
   // The text for the new tag
   const [inputValue, setInputValue] = useState("");
-  // Ref to focus the input when toggling isAddingTag (if needed)
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Ref for the container of the tag input area
+  const tagContainerRef = useRef<HTMLDivElement>(null);
 
   // Handle responsiveness
   useEffect(() => {
@@ -92,6 +92,23 @@ const CreatePage = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Document click handler: if the inline tag input is empty and a click happens outside, hide the input.
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        isAddingTag &&
+        inputValue.trim() === "" &&
+        tagContainerRef.current &&
+        !tagContainerRef.current.contains(e.target as Node)
+      ) {
+        setIsAddingTag(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, [isAddingTag, inputValue]);
 
   // Add a new tag on Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -107,13 +124,6 @@ const CreatePage = () => {
   const removeTag = (index: number) => {
     setTags((prevTags) => prevTags.filter((_, i) => i !== index));
   };
-
-  // Optionally focus the input (if using inputRef inside AutoSizeInput, not required here)
-  useEffect(() => {
-    if (isAddingTag && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isAddingTag]);
 
   return (
     <>
@@ -152,7 +162,9 @@ const CreatePage = () => {
                         className="cursor-pointer hover:underline"
                         role="button"
                       >
-                        {new Date(date || new Date()).toLocaleDateString("en-GB")}
+                        {new Date(date || new Date()).toLocaleDateString(
+                          "en-GB"
+                        )}
                       </span>
                     </PopoverTrigger>
                     <PopoverContent className="w-[250px] bg-[#faf9f6] dark:bg-[#1e1e1e] p-2 shadow-lg rounded-md border border-gray-300 dark:border-gray-700">
@@ -189,7 +201,7 @@ const CreatePage = () => {
           </div>
 
           {/* Tags Input Section */}
-          <div className="flex flex-col justify-between p-5">
+          <div ref={tagContainerRef} className="flex flex-col justify-between p-5">
             <div className="w-full mt-4">
               <div className="flex flex-wrap gap-2 justify-start">
                 {/* Existing Tags */}
@@ -215,6 +227,9 @@ const CreatePage = () => {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     onBlur={() => {
+                      if (inputValue.trim() !== "") {
+                        setTags((prevTags) => [...prevTags, inputValue.trim()]);
+                      }
                       setInputValue("");
                       setIsAddingTag(false);
                     }}
