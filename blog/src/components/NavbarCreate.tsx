@@ -61,7 +61,7 @@ export default function NavbarCreate() {
       </div>
       <div className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}>
         <Button
-          className="flex items-center gap-2 rounded-full px-5 py-2 bg-[#004EBA] text-[#FAF9F6] dark:bg-[#79ACF2] dark:text-[#1E1E1E] hover:opacity-90 transition-all shadow-md"
+          className="flex items-center gap-2 rounded-full px-5 py-2 bg-[#004EBA] text-[#FAF9F6] dark:bg-[#79ACF2] dark:text-[#000000] hover:opacity-90 transition-all shadow-md"
         >
           <ArrowUpToLine size={20} />
           {!isMobile && <span>Publish</span>}
