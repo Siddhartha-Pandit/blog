@@ -9,9 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// -----------------------
-// AutoSizeInput Component
-// -----------------------
 interface AutoSizeInputProps {
   value: string;
   placeholder?: string;
@@ -96,7 +93,7 @@ const CreatePage = () => {
 
   useEffect(() => {
     if (measureRef.current) {
-      const measuredWidth = measureRef.current.offsetWidth + 35; // extra padding for icon
+      const measuredWidth = measureRef.current.offsetWidth + 35; // extra space for icon
       setSelectWidth(measuredWidth);
     }
   }, [selectedCategory]);
@@ -121,7 +118,8 @@ const CreatePage = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, [isAddingTag, inputValue]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -147,11 +145,11 @@ const CreatePage = () => {
   }
 
   return (
-    <div className="relative mt-[50px] mx-4 sm:mx-8 lg:mx-20">
+    <div className="relative mt-12 mx-4 sm:mx-8 lg:mx-20">
       {/* Header Section */}
-      <div className="flex items-center justify-between p-5">
+      <div className="flex flex-col sm:flex-row items-center justify-between p-5">
         <div className="flex items-center space-x-4">
-          <Avatar className="w-9 h-9 border-0 !border-none !shadow-none !ring-0">
+          <Avatar className="w-9 h-9 border-0 !shadow-none">
             {session?.user?.image ? (
               <AvatarImage
                 src={session.user.image}
@@ -177,7 +175,7 @@ const CreatePage = () => {
                     {new Date(date || new Date()).toLocaleDateString("en-GB")}
                   </span>
                 </PopoverTrigger>
-                <PopoverContent className="w-[250px] bg-[#faf9f6] dark:bg-[#1e1e1e] p-2 shadow-lg rounded-md border border-gray-300 dark:border-gray-700">
+                <PopoverContent className="w-60 bg-[#faf9f6] dark:bg-[#1e1e1e] p-2 shadow-lg rounded-md border border-gray-300 dark:border-gray-700">
                   <Calendar
                     mode="single"
                     selected={date}
@@ -199,29 +197,30 @@ const CreatePage = () => {
               )}
             </p>
           </div>
-          <div className="flex absolute top-4 right-3 space-x-2">
-            <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow-md rounded-full transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-700">
-              <Undo2 />
-            </Button>
-            <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow-md rounded-full transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-700">
-              <Redo2 />
-            </Button>
-          </div>
+        </div>
+        <div className="flex mt-4 sm:mt-0 space-x-2">
+          <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
+            <Undo2 />
+          </Button>
+          <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
+            <Redo2 />
+          </Button>
         </div>
       </div>
 
       {/* Category & Tags Section */}
-      <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between p-5">
+      <div
+        ref={tagContainerRef}
+        className="flex flex-col sm:flex-row justify-between items-start p-5 gap-4"
+      >
         {/* Category Dropdown */}
-        <div className="flex items-center mb-4 sm:mb-0 sm:mr-4">
+        <div className="flex items-center w-full sm:w-auto">
           <div
-            className="
-              inline-flex items-center px-3 py-1 text-sm font-medium
+            className="inline-flex items-center px-3 py-1 text-sm font-medium
               bg-[#faf9f6] dark:bg-[#1e1e1e]
               text-gray-800 dark:text-gray-100
               border border-[#d1d1d1] dark:border-[#525252]
-              rounded-full relative mb-2
-            "
+              rounded-full relative h-10 w-full sm:w-auto"
           >
             <span ref={measureRef} className="invisible absolute whitespace-pre">
               {selectedCategory}
@@ -238,7 +237,7 @@ const CreatePage = () => {
                 <option
                   key={cat}
                   value={cat}
-                  className="bg-[#faf9f6] dark:bg-[#1e1e1e] text-lg text-[#1e1e1e] dark:text-[#faf9f6] py-2"
+                  className="bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 py-1"
                 >
                   {cat}
                 </option>
@@ -256,19 +255,16 @@ const CreatePage = () => {
             {tags.map((tag, index) => (
               <span
                 key={index}
-                className="
-                  inline-flex items-center
-                  px-3 py-1 text-sm font-medium
+                className="inline-flex items-center h-10 px-3 py-1 text-sm font-medium
                   bg-[#faf9f6] dark:bg-[#1e1e1e]
                   text-gray-800 dark:text-gray-100
                   border border-[#d1d1d1] dark:border-[#525252]
-                  rounded-full
-                "
+                  rounded-full"
               >
                 {tag}
                 <button
                   onClick={() => removeTag(index)}
-                  className="cursor-pointer ml-2 focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                  className="ml-2 text-lg leading-none cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
                 >
                   &times;
                 </button>
@@ -292,14 +288,11 @@ const CreatePage = () => {
             ) : (
               <span
                 onClick={() => setIsAddingTag(true)}
-                className="
-                  inline-flex items-center cursor-pointer
+                className="inline-flex items-center h-10 cursor-pointer
                   border-dashed border border-[#d1d1d1] dark:border-[#525252]
-                  bg-transparent text-[#1e1e1e] dark:text-[#faf9f6]
+                  bg-transparent text-gray-800 dark:text-gray-100
                   px-3 py-1 rounded-full text-sm
-                  hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a]
-                  transition-colors
-                "
+                  hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
               >
                 + Add tag
               </span>
@@ -310,7 +303,11 @@ const CreatePage = () => {
 
       {/* Title Section */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 px-5">
-        <h1 className="text-2xl font-bold">Create</h1>
+        <input
+          type="text"
+          placeholder="Title"
+          className="w-full p-2 border border-[#d1d1d1] dark:border-[#525252] rounded-md"
+        />
       </div>
 
       {/* CMS Editor Components */}
