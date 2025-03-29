@@ -129,3 +129,11 @@ Standard error response format:
   "message": "Error message",
   "error": { ...error details }
 }
+
+======================================
+bold, itallic, headers, links, list, paragraph, underline, text highlight, strikethrough, superscript,subscript, Defination List, Task list
+======================================
+++++++++++++++++++++++++++++++++++++++
+======================================
+image, Video, blockquotes,footnotes, code blocks, tables, blank space
+======================================
