@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Pen, GripVertical, Undo2, Redo2, ChevronDown, ChevronUp } from "lucide-react";
-// Removed unused: Heading
 import {
   Bold, 
   Italic,
@@ -329,8 +328,7 @@ const CreatePage = () => {
 
       {/* CMS Editor Components */}
       <div className="flex items-center w-full sm:w-auto">
-        <div className="flex flex-col m-2 dark:bg-[#1e1e1e]">
-          {/* Buttons with enhanced shadows */}
+        {/* <div className="flex flex-col m-2 dark:bg-[#1e1e1e]">
           <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
             <GripVertical className="w-4 h-4" />
           </div>
@@ -340,60 +338,71 @@ const CreatePage = () => {
           <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
             <Pen className="w-4 h-4" />
           </div>
-        </div>
+        </div> */}
         {/* Editor Area */}
         <div className="min-h-60 m-3 p-4 w-full bg-[#eae9e6] text-[#1e1e1e] shadow-lg shadow-gray-200/40 hover:shadow-xl hover:shadow-gray-300/40 dark:bg-[#2e2e2e] dark:text-[#faf9f6] dark:border-[#525252] dark:shadow-gray-900/50 transition-all duration-300 transform hover:-translate-y-0.5">
-          <div className="flex items-center">
-            {/* Group 1: Text Formatting */}
-            <Toggle><span><Bold /></span></Toggle>
-            <Toggle><span><Italic /></span></Toggle>
-            <Toggle><span><Underline /></span></Toggle>
-            <Separator orientation="vertical"  />
-            {/* Group 2: Heading Levels */}
-            <ToggleGroup type="single">
-              <ToggleGroupItem value="H1"><Heading1 /></ToggleGroupItem>
-              <ToggleGroupItem value="H2"><Heading2 /></ToggleGroupItem>
-              <ToggleGroupItem value="H3"><Heading3 /></ToggleGroupItem>
-              <ToggleGroupItem value="H4"><Heading4 /></ToggleGroupItem>
-              <ToggleGroupItem value="H5"><Heading5 /></ToggleGroupItem>
-              <ToggleGroupItem value="H6"><Heading6 /></ToggleGroupItem>
-            </ToggleGroup>
-            <Separator orientation="vertical" />
-
-            {/* Group 3: Link & Regex */}
-            <Toggle>
-              <span><Link /></span>
-            </Toggle>
-            <Toggle>
-              <span><Regex /></span>
-            </Toggle>
-            <Separator orientation="vertical" />
-
-            {/* Group 4: List Options */}
-            <ToggleGroup type="single">
-              <ToggleGroupItem value="UL"><span><List /></span></ToggleGroupItem>
-              <ToggleGroupItem value="OL"><span><ListOrdered /></span></ToggleGroupItem>
-              <ToggleGroupItem value="DL"><span><ListTree /></span></ToggleGroupItem>
-              <ToggleGroupItem value="SL"><span><ListChecks /></span></ToggleGroupItem>
-            </ToggleGroup>
-            <Separator orientation="vertical" />
-
-            {/* Group 5: More Formatting */}
-            <Toggle><span><Highlighter /></span></Toggle>
-            <Toggle><span><Strikethrough /></span></Toggle>
-            <Toggle><span><Superscript /></span></Toggle>
-            <Toggle><span><Subscript /></span></Toggle>
-            <Separator orientation="vertical" />
-
-            {/* Group 6: Additional Tools */}
-            <Toggle><span><Quote /></span></Toggle>
-            <Toggle><span><ImageIcon aria-label="Image icon" /></span></Toggle>
-            <Toggle><span><VideoIcon aria-label="Video icon" /></span></Toggle>
-            <Toggle><span><Code /></span></Toggle>
-            <Toggle><span><Grid3x3 /></span></Toggle>
+  {/* Toolbar Container */}
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
+              {/* Group 1: Text Formatting */}
+              <div className="flex items-center space-x-1 sm:space-x-2 bg-[#ff0000] p-1 rounded">
+                <Toggle><span><Bold /></span></Toggle>
+                <Toggle><span><Italic /></span></Toggle>
+                <Toggle><span><Underline /></span></Toggle>
+              {/* Group 4: List Options */}
+                <ToggleGroup type="single">
+                  <ToggleGroupItem value="UL"><span><List /></span></ToggleGroupItem>
+                  <ToggleGroupItem value="OL"><span><ListOrdered /></span></ToggleGroupItem>
+                  <ToggleGroupItem value="DL"><span><ListTree /></span></ToggleGroupItem>
+                  <ToggleGroupItem value="SL"><span><ListChecks /></span></ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              
+              <Separator orientation="vertical" className="hidden sm:block" />
+              
+              {/* Group 3: Link & Other Inline Formatting */}
+              <div className="flex items-center space-x-1 sm:space-x-2 bg-[#00ff00] p-1 rounded">
+                <Toggle><span><Link /></span></Toggle>
+                <Toggle><span><Regex /></span></Toggle>
+                <Toggle><span><Highlighter /></span></Toggle>
+                <Toggle><span><Strikethrough /></span></Toggle>
+                <Toggle><span><Superscript /></span></Toggle>
+                <Toggle><span><Subscript /></span></Toggle>
+              </div>
+              
+              <Separator orientation="vertical" className="hidden sm:block" />
+              
+              {/* Group 2: Heading Levels */}
+              <div className="flex items-center bg-[#0000ff] p-1 rounded">
+                <ToggleGroup type="single">
+                  <ToggleGroupItem value="H1"><Heading1 /></ToggleGroupItem>
+                  <ToggleGroupItem value="H2"><Heading2 /></ToggleGroupItem>
+                  <ToggleGroupItem value="H3"><Heading3 /></ToggleGroupItem>
+                  <ToggleGroupItem value="H4"><Heading4 /></ToggleGroupItem>
+                  <ToggleGroupItem value="H5"><Heading5 /></ToggleGroupItem>
+                  <ToggleGroupItem value="H6"><Heading6 /></ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              
+              <Separator orientation="vertical" className="hidden sm:block" />
+              
+              {/* Group 6: Additional Tools */}
+              <div className="flex items-center space-x-1 sm:space-x-2 bg-[#cafe00] p-1 rounded">
+                <Toggle><span><Quote /></span></Toggle>
+                <Toggle><span><ImageIcon aria-label="Image icon" /></span></Toggle>
+                <Toggle><span><VideoIcon aria-label="Video icon" /></span></Toggle>
+                <Toggle><span><Code /></span></Toggle>
+                <Toggle><span><Grid3x3 /></span></Toggle>
+              </div>
+            </div>
+            
+            {/* Content Input */}
+            <input 
+              type="text" 
+              placeholder="Tell your story..." 
+              className="w-full p-2 mt-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            />
           </div>
-          <input type="text" placeholder="Tell your story..." className="w-full p-2 mt-4 border border-gray-300 rounded" />
-        </div>
+
       </div>
     </div>
   );

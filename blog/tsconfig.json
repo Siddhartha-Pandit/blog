@@ -33,7 +33,7 @@
     "**/*.tsx",
     "next-env.d.ts",
     ".next/types/**/*.ts"
-, "src/components/Navbar.tsx"  ],
+, "src/components/Navbar.tsx", "../markdownParser.ts"  ],
   "exclude": [
     "node_modules",
     ".next"
