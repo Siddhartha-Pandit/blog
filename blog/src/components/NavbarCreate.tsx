@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut, signIn } from "next-auth/react";
 import ThemeToggle from "./ThemeToggle";
-import SearchBar from "./SearchBar";
 import {
   Menubar,
   MenubarContent,
@@ -14,7 +13,7 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { SquarePen, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowUpToLine } from "lucide-react";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -26,16 +25,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-export default function Navbar() {
-  const { data: session, status } = useSession();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+export default function NavbarCreate() {
+  const { data: session } = useSession();
+  // Removed isSearchOpen and setIsSearchOpen because they weren't used.
   const [isMobile, setIsMobile] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const navClasses =
-    "fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)]";
-
-  // Update mobile state based on viewport width (md breakpoint: 768px)
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -54,34 +48,24 @@ export default function Navbar() {
   }
 
   return (
-    <nav className={navClasses} suppressHydrationWarning>
-      {/* Logo */}
-      <div
-        suppressHydrationWarning
-        className={`flex items-center space-x-4 ${isMobile && isSearchOpen ? "hidden" : "block"}`}
-      >
-        <span className={`font-poppins font-extrabold tracking-wide ${isMobile ? "text-base" : "text-xl"}`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 h-[50px] bg-[var(--background)] text-[var(--foreground)] border-b border-[var(--border)]">
+      <div className={`flex items-center space-x-4 ${isMobile ? "text-base" : "text-xl"}`}>
+        <span className="font-poppins font-extrabold tracking-wide">
           <span className="text-[#004EBA] dark:text-[#79ACF2]">Today&apos;s</span>Words&apos;
         </span>
       </div>
-
-      {/* Right Side */}
-      <div suppressHydrationWarning className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}>
-        <SearchBar onToggleChange={(open) => setIsSearchOpen(open)} />
+      <div className={`flex items-center ${isMobile ? "space-x-2" : "space-x-4"}`}>
         <Link href="/create">
           <Button
-            className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white ${
-              isMobile
-                ? "px-2 py-1 text-xs text-[#1e1e1e]"
-                : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
-            } shadow-sm transition-colors hover:bg-gray-100 dark:border-neutral-600 dark:bg-neutral-900 dark:text-[#faf9f6] dark:hover:bg-neutral-800`}
+            className={`flex items-center gap-2 rounded-full border border-gray-300 bg-[#004EBA] text-[#faf9f6] dark:text-[#1e1e1e] hover:bg-[#005CEB] ${
+              isMobile ? "px-2 py-1 text-xs" : "px-4 py-2 text-sm font-medium"
+            } shadow-sm transition-colors dark:border-neutral-600 dark:bg-[#79ACF2] dark:hover:bg-[#88B9F7]`}
           >
-            <SquarePen size={isMobile ? 16 : 20} />
-            {!isMobile && <span>Create</span>}
+            <ArrowUpToLine size={isMobile ? 16 : 20} />
+            {!isMobile && <span>Publish</span>}
           </Button>
         </Link>
         <ThemeToggle />
-
         {session ? (
           <Menubar className="bg-transparent border-none shadow-none">
             <MenubarMenu>
@@ -133,7 +117,6 @@ export default function Navbar() {
             </MenubarMenu>
           </Menubar>
         ) : (
-          // Use Dialog for Sign In
           <Dialog>
             <DialogTrigger asChild>
               <Button className="border-0 transition-colors text-[14px] bg-[#faf9f6] text-[#1e1e1e] dark:bg-[#1e1e1e] dark:text-[#faf9f6] hover:bg-[#f0f0f0]">

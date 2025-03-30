@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
@@ -27,9 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Global head elements go here */}
-      </head>
+      <head>{/* Global head elements go here */}</head>
       <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
         <Providers>
           <ThemeProvider

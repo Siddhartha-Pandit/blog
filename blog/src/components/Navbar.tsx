@@ -14,7 +14,7 @@ import {
   MenubarSeparator,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { SquarePen, ChevronDown, ChevronUp } from "lucide-react";
+import { SquarePen } from "lucide-react"; // Removed ChevronDown, ChevronUp
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -27,10 +27,10 @@ import {
 } from "@/components/ui/dialog";
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession(); // Removed status from destructuring
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // Removed isDropdownOpen and setIsDropdownOpen as they are not used.
   const [mounted, setMounted] = useState(false); // Added mounted state
 
   // Only render after mounting on client to avoid hydration mismatch.
@@ -92,9 +92,7 @@ export default function Navbar() {
         <Link href="/create">
           <Button
             className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white ${
-              isMobile
-                ? "px-2 py-1 text-xs text-[#1e1e1e]"
-                : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
+              isMobile ? "px-2 py-1 text-xs text-[#1e1e1e]" : "px-4 py-2 text-sm font-medium text-[#1e1e1e]"
             } shadow-sm transition-colors hover:bg-gray-100 dark:border-neutral-600 dark:bg-neutral-900 dark:text-[#faf9f6] dark:hover:bg-neutral-800`}
           >
             <SquarePen size={isMobile ? 16 : 20} />
@@ -163,10 +161,9 @@ export default function Navbar() {
           // Dialog for Sign In
           <Dialog>
             <DialogTrigger asChild>
-            <Button className="border-0 transition-colors text-[14px] bg-[#faf9f6] text-[#1e1e1e] dark:bg-[#1e1e1e] dark:text-[#faf9f6] hover:bg-[#f0f0f0]">
-              Sign In
-            </Button>
-
+              <Button className="border-0 transition-colors text-[14px] bg-[#faf9f6] text-[#1e1e1e] dark:bg-[#1e1e1e] dark:text-[#faf9f6] hover:bg-[#f0f0f0]">
+                Sign In
+              </Button>
             </DialogTrigger>
             <DialogContent className="w-full max-w-md rounded-lg bg-[#faf9f6] dark:bg-[#1e1e1e] p-6 shadow-lg">
               <DialogHeader>

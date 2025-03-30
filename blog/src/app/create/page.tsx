@@ -1,13 +1,34 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Undo2, Redo2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Pen, GripVertical, Undo2, Redo2, ChevronDown, ChevronUp } from "lucide-react";
+// Removed unused: Heading
+import {
+  Bold, 
+  Italic,
+  Underline,
+  Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
+  List, ListOrdered, ListTree, ListChecks,
+  Highlighter,
+  Strikethrough,
+  Superscript, Subscript,
+  Quote,
+  Image as ImageIcon, // renamed to ImageIcon for clarity
+  Video as VideoIcon,
+  Code,
+  Grid3x3,
+  Link,
+  Regex
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Separator } from "@/components/ui/separator";
 
 interface AutoSizeInputProps {
   value: string;
@@ -307,8 +328,72 @@ const CreatePage = () => {
       </div>
 
       {/* CMS Editor Components */}
-      <div className="px-5">
-        <p>Your CMS editor components go here...</p>
+      <div className="flex items-center w-full sm:w-auto">
+        <div className="flex flex-col m-2 dark:bg-[#1e1e1e]">
+          {/* Buttons with enhanced shadows */}
+          <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
+            <GripVertical className="w-4 h-4" />
+          </div>
+          <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
+            <Plus className="w-4 h-4" />
+          </div>
+          <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
+            <Pen className="w-4 h-4" />
+          </div>
+        </div>
+        {/* Editor Area */}
+        <div className="min-h-60 m-3 p-4 w-full bg-[#eae9e6] text-[#1e1e1e] shadow-lg shadow-gray-200/40 hover:shadow-xl hover:shadow-gray-300/40 dark:bg-[#2e2e2e] dark:text-[#faf9f6] dark:border-[#525252] dark:shadow-gray-900/50 transition-all duration-300 transform hover:-translate-y-0.5">
+          <div className="flex items-center">
+            {/* Group 1: Text Formatting */}
+            <Toggle><span><Bold /></span></Toggle>
+            <Toggle><span><Italic /></span></Toggle>
+            <Toggle><span><Underline /></span></Toggle>
+            <Separator orientation="vertical"  />
+            {/* Group 2: Heading Levels */}
+            <ToggleGroup type="single">
+              <ToggleGroupItem value="H1"><Heading1 /></ToggleGroupItem>
+              <ToggleGroupItem value="H2"><Heading2 /></ToggleGroupItem>
+              <ToggleGroupItem value="H3"><Heading3 /></ToggleGroupItem>
+              <ToggleGroupItem value="H4"><Heading4 /></ToggleGroupItem>
+              <ToggleGroupItem value="H5"><Heading5 /></ToggleGroupItem>
+              <ToggleGroupItem value="H6"><Heading6 /></ToggleGroupItem>
+            </ToggleGroup>
+            <Separator orientation="vertical" />
+
+            {/* Group 3: Link & Regex */}
+            <Toggle>
+              <span><Link /></span>
+            </Toggle>
+            <Toggle>
+              <span><Regex /></span>
+            </Toggle>
+            <Separator orientation="vertical" />
+
+            {/* Group 4: List Options */}
+            <ToggleGroup type="single">
+              <ToggleGroupItem value="UL"><span><List /></span></ToggleGroupItem>
+              <ToggleGroupItem value="OL"><span><ListOrdered /></span></ToggleGroupItem>
+              <ToggleGroupItem value="DL"><span><ListTree /></span></ToggleGroupItem>
+              <ToggleGroupItem value="SL"><span><ListChecks /></span></ToggleGroupItem>
+            </ToggleGroup>
+            <Separator orientation="vertical" />
+
+            {/* Group 5: More Formatting */}
+            <Toggle><span><Highlighter /></span></Toggle>
+            <Toggle><span><Strikethrough /></span></Toggle>
+            <Toggle><span><Superscript /></span></Toggle>
+            <Toggle><span><Subscript /></span></Toggle>
+            <Separator orientation="vertical" />
+
+            {/* Group 6: Additional Tools */}
+            <Toggle><span><Quote /></span></Toggle>
+            <Toggle><span><ImageIcon aria-label="Image icon" /></span></Toggle>
+            <Toggle><span><VideoIcon aria-label="Video icon" /></span></Toggle>
+            <Toggle><span><Code /></span></Toggle>
+            <Toggle><span><Grid3x3 /></span></Toggle>
+          </div>
+          <input type="text" placeholder="Tell your story..." className="w-full p-2 mt-4 border border-gray-300 rounded" />
+        </div>
       </div>
     </div>
   );
