@@ -388,53 +388,8 @@ const CreatePage = () => {
         </div>
 
         {/* Header Section */}
-        <div className="flex flex-row items-center justify-between p-5">
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-9 h-9 border-0 !shadow-none">
-              {session?.user?.image ? (
-                <AvatarImage
-                  src={session.user.image}
-                  alt={session.user.name || "User"}
-                  loading="lazy"
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : (
-                <AvatarFallback className="bg-gray-500 text-white">
-                  {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div>
-              <p className="text-customLight dark:text-customDark font-semibold">
-                {session?.user?.name || "Guest"}
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <span className="cursor-pointer hover:underline" role="button">
-                      {new Date(date || new Date()).toLocaleDateString("en-GB")}
-                    </span>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-60 bg-[#faf9f6] dark:bg-[#1e1e1e] p-2 shadow-lg rounded-md border border-gray-300 dark:border-gray-700">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      className="border-none text-xs w-full bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 rounded-md"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <span> • </span>
-                {isSavedDraft ? (
-                  "Saved"
-                ) : (
-                  <span className="cursor-pointer hover:underline" onClick={() => setIsSavedDraft(true)}>
-                    Save Draft
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
+        {/* <div className="flex flex-row items-center justify-between p-5">
+          
           <div className="flex space-x-2">
             <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
               <Undo2 />
@@ -443,7 +398,7 @@ const CreatePage = () => {
               <Redo2 />
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* CMS Editor Components */}
         <div className="flex items-center w-full sm:w-auto">
@@ -529,7 +484,7 @@ const CreatePage = () => {
           </TooltipProvider>
         </div>
 
-        <div className="flex flex-row items-center space-x-1">
+        <div className="flex flex-row items-center justify-between gap-x-4">
           <span className="text-xs text-gray-200">Contributors:</span>
           <TooltipProvider>
             <Tooltip >
