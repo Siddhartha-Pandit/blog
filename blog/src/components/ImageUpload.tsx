@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ImageUp, Trash } from "lucide-react";
+import Image from "next/image";
 
 interface ImageUploadProps {
   onFileAccepted?: (file: File) => void;
@@ -29,7 +30,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
     const file = event.dataTransfer.files[0];
     if (file && isImageFile(file)) {
       setImage(file);
-      onFileAccepted && onFileAccepted(file);
+      if (onFileAccepted) {
+        onFileAccepted(file);
+      }
     } else {
       alert("Please upload an image file.");
     }
@@ -39,7 +42,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
     const file = event.target.files?.[0];
     if (file && isImageFile(file)) {
       setImage(file);
-      onFileAccepted && onFileAccepted(file);
+      if (onFileAccepted) {
+        onFileAccepted(file);
+      }
     } else {
       alert("Please upload an image file.");
     }
@@ -63,8 +68,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
       className="w-full max-w-md p-4 border-2 border-dashed rounded-xl cursor-pointer flex flex-col items-center justify-center dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-400 border-gray-300 bg-gray-100 hover:border-gray-500 transition-all"
     >
       {preview ? (
-        <div className="relative w-full">
-          <img src={preview} alt="Preview" className="w-full object-cover rounded-md" />
+        <div className="relative w-full h-auto">
+          <Image
+            src={preview}
+            alt="Preview"
+            width={500}   // adjust as needed
+            height={300}  // adjust as needed
+            className="object-cover rounded-md"
+          />
           <button
             onClick={(e) => {
               e.stopPropagation();

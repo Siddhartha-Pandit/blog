@@ -4,8 +4,9 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Pen,
-  // Undo2,
-  // Redo2,
+  PanelRightOpen,
+  MessageCircle,
+  PanelRightClose
 } from "lucide-react";
 import {
   Bold,
@@ -32,10 +33,7 @@ import {
   Code,
   Grid3x3,
   Link,
-  Regex,
-  PanelRightOpen,
-  MessageCircle,
-  PanelRightClose
+  Regex
 } from "lucide-react";
 import {
   Select,
@@ -49,17 +47,13 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// import { Calendar } from "@/components/ui/calendar";
-// import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-// import { Separator } from "@/components/ui/separator";
 import ImageUpload from "@/components/ImageUpload";
 
 interface AutoSizeInputProps {
@@ -117,9 +111,6 @@ const CreatePage = () => {
     }
   }, [session, router]);
 
-  const [isSavedDraft, setIsSavedDraft] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date());
-
   // Category dropdown state
   const categories = ["Programming", "Design", "Marketing", "Lifestyle", "Tech"];
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]);
@@ -129,12 +120,13 @@ const CreatePage = () => {
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // We only use the setter for uploadedFile, so ignore the first element.
+  const [, setUploadedFile] = useState<File | null>(null);
   const tagContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [words, setWords] = useState(0)
-  const [savedTime, setSavedTime] = useState("Just Now")
-  const [content, setContent] = useState("<p>Your default content here</p>");
+  const [words] = useState(0);
+  const [savedTime] = useState("Just Now");
+  const [content] = useState("<p>Your default content here</p>");
 
   const handleFileAccepted = (file: File) => {
     setUploadedFile(file);
@@ -182,15 +174,43 @@ const CreatePage = () => {
       icon: <Bold className="w-4 h-4" />,
       label: "Text Format",
       content: (
-        <div className="flex items-center space-x-3 w-full  rounded">
-          <Toggle><span><Bold /></span></Toggle>
-          <Toggle><span><Italic /></span></Toggle>
-          <Toggle><span><Underline /></span></Toggle>
+        <div className="flex items-center space-x-3 w-full rounded">
+          <Toggle>
+            <span>
+              <Bold />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Italic />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Underline />
+            </span>
+          </Toggle>
           <ToggleGroup type="single">
-            <ToggleGroupItem value="UL"><span><List /></span></ToggleGroupItem>
-            <ToggleGroupItem value="OL"><span><ListOrdered /></span></ToggleGroupItem>
-            <ToggleGroupItem value="DL"><span><ListTree /></span></ToggleGroupItem>
-            <ToggleGroupItem value="SL"><span><ListChecks /></span></ToggleGroupItem>
+            <ToggleGroupItem value="UL">
+              <span>
+                <List />
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="OL">
+              <span>
+                <ListOrdered />
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="DL">
+              <span>
+                <ListTree />
+              </span>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="SL">
+              <span>
+                <ListChecks />
+              </span>
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
       ),
@@ -199,13 +219,37 @@ const CreatePage = () => {
       icon: <Pen className="w-4 h-4" />,
       label: "Text Design",
       content: (
-        <div className="flex items-center space-x-3 w-full  rounded">
-          <Toggle><span><Link /></span></Toggle>
-          <Toggle><span><Regex /></span></Toggle>
-          <Toggle><span><Highlighter /></span></Toggle>
-          <Toggle><span><Strikethrough /></span></Toggle>
-          <Toggle><span><Superscript /></span></Toggle>
-          <Toggle><span><Subscript /></span></Toggle>
+        <div className="flex items-center space-x-3 w-full rounded">
+          <Toggle>
+            <span>
+              <Link />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Regex />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Highlighter />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Strikethrough />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Superscript />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Subscript />
+            </span>
+          </Toggle>
         </div>
       ),
     },
@@ -213,14 +257,26 @@ const CreatePage = () => {
       icon: <Heading className="w-4 h-4" />,
       label: "Heading",
       content: (
-        <div className="flex items-center space-x-3 w-full  rounded">
+        <div className="flex items-center space-x-3 w-full rounded">
           <ToggleGroup type="single">
-            <ToggleGroupItem value="H1"><Heading1 /></ToggleGroupItem>
-            <ToggleGroupItem value="H2"><Heading2 /></ToggleGroupItem>
-            <ToggleGroupItem value="H3"><Heading3 /></ToggleGroupItem>
-            <ToggleGroupItem value="H4"><Heading4 /></ToggleGroupItem>
-            <ToggleGroupItem value="H5"><Heading5 /></ToggleGroupItem>
-            <ToggleGroupItem value="H6"><Heading6 /></ToggleGroupItem>
+            <ToggleGroupItem value="H1">
+              <Heading1 />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="H2">
+              <Heading2 />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="H3">
+              <Heading3 />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="H4">
+              <Heading4 />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="H5">
+              <Heading5 />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="H6">
+              <Heading6 />
+            </ToggleGroupItem>
           </ToggleGroup>
         </div>
       ),
@@ -229,12 +285,32 @@ const CreatePage = () => {
       icon: <Plus className="w-4 h-4" />,
       label: "Insert",
       content: (
-        <div className="flex items-center space-x-3 w-full  rounded">
-          <Toggle><span><Quote /></span></Toggle>
-          <Toggle><span><ImageIcon aria-label="Image icon" /></span></Toggle>
-          <Toggle><span><VideoIcon aria-label="Video icon" /></span></Toggle>
-          <Toggle><span><Code /></span></Toggle>
-          <Toggle><span><Grid3x3 /></span></Toggle>
+        <div className="flex items-center space-x-3 w-full rounded">
+          <Toggle>
+            <span>
+              <Quote />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <ImageIcon aria-label="Image icon" />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <VideoIcon aria-label="Video icon" />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Code />
+            </span>
+          </Toggle>
+          <Toggle>
+            <span>
+              <Grid3x3 />
+            </span>
+          </Toggle>
         </div>
       ),
     },
@@ -246,14 +322,15 @@ const CreatePage = () => {
         {/* Drawer */}
         <div
           id="drawer"
-          className={`fixed top-0 right-0 w-[300px] h-full shadow-2xl transform transition-transform duration-300 ease-in-out mt-12.5 z-100 ${isOpen ? "right-0" : "right-[-300px]"
-            } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto max-h-[calc(100vh-3rem)]`}
+          className={`fixed top-0 right-0 w-[300px] h-full shadow-2xl transform transition-transform duration-300 ease-in-out mt-12.5 z-100 ${
+            isOpen ? "right-0" : "right-[-300px]"
+          } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto max-h-[calc(100vh-3rem)]`}
         >
           <div className="flex items-center mt-3 relative">
             <span className="ml-3 text-2xl font-bold">Blog Setting</span>
             <button
               onClick={() => setIsOpen(false)}
-              className="absolute right-3  rounded text-[#1e1e1e] dark:text-white"
+              className="absolute right-3 rounded text-[#1e1e1e] dark:text-white"
             >
               <PanelRightClose />
             </button>
@@ -328,7 +405,7 @@ const CreatePage = () => {
               </div>
 
               {/* Meta Description */}
-              <div className="flex flex-col justify-center  mt-5 gap-4">
+              <div className="flex flex-col justify-center mt-5 gap-4">
                 <span className="mb-2 text-base font-medium">Meta Description</span>
                 <textarea
                   rows={4}
@@ -349,36 +426,43 @@ const CreatePage = () => {
             <button
               key={index}
               onClick={() => setActiveTab(index)}
-              className={`px-2 py-2 text-sm flex items-center justify-center transition-colors ${activeTab === index
+              className={`px-2 py-2 text-sm flex items-center justify-center transition-colors ${
+                activeTab === index
                   ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-bold"
                   : "text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                }`}
+              }`}
             >
               {tab.icon && <span className="mr-1">{tab.icon}</span>}
               <span className="hidden md:inline">{tab.label}</span>
             </button>
           ))}
-          <button
-            className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
-            <span className="mr-1"><MessageCircle /></span>
+          <button className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <span className="mr-1">
+              <MessageCircle />
+            </span>
             <span className="hidden md:inline">Message</span>
           </button>
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
-            {isOpen ? <span className="mr-1"><PanelRightOpen /></span> : <span className="mr-1"><PanelRightClose /></span>}
+            {isOpen ? (
+              <span className="mr-1">
+                <PanelRightOpen />
+              </span>
+            ) : (
+              <span className="mr-1">
+                <PanelRightClose />
+              </span>
+            )}
             <span className="hidden md:inline">{isOpen ? "Close " : "Open "}Drawer</span>
           </button>
         </div>
-
 
         {/* Fixed Tabs Content */}
         <div className="fixed top-20 left-0 right-0 h-[50px] bg-[#eae9e6] dark:bg-[#2e2e2e] z-10 overflow-hidden p-3">
           {tabs[activeTab].content}
         </div>
-
 
         {/* Title Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-2 mt-35 px-5">
@@ -389,30 +473,13 @@ const CreatePage = () => {
           />
         </div>
 
-        {/* Header Section */}
-        {/* <div className="flex flex-row items-center justify-between p-5">
-          
-          <div className="flex space-x-2">
-            <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
-              <Undo2 />
-            </Button>
-            <Button className="w-7 h-7 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
-              <Redo2 />
-            </Button>
-          </div>
-        </div> */}
-
         {/* CMS Editor Components */}
         <div className="flex items-center w-full sm:w-auto">
           <div className="border p-4 mt-2" dangerouslySetInnerHTML={{ __html: content }} />
         </div>
-        {/* footer components */}
-
-
       </div>
       <div className="flex flex-row absolute bottom-0 w-full h-7 bg-gray-800 text-white items-center justify-around px-4 text-xs">
         <span>Last Saved: {" " + savedTime}</span>
-
         <div className="flex flex-row items-center space-x-1">
           <span className="text-xs text-gray-800 dark:text-gray-200">Authors:</span>
           <TooltipProvider>
@@ -444,7 +511,6 @@ const CreatePage = () => {
       </div>
       <div className="flex flex-row absolute bottom-0 w-full h-7 bg-gray-800 text-white items-center justify-around px-4 text-xs">
         <span>Last Saved: {" " + savedTime}</span>
-
         <div className="flex flex-row items-center space-x-1">
           <span className="text-xs text-gray-200">Authors:</span>
           <TooltipProvider>
@@ -466,19 +532,18 @@ const CreatePage = () => {
                 </Avatar>
               </TooltipTrigger>
               <TooltipContent className="bg-[#e6e9ea] dark:bg-[#2e2e2e]">
-                <p className="text-xs text-[#1e1e1e]  dark:text-[#f6f9fa]">
+                <p className="text-xs text-[#1e1e1e] dark:text-[#f6f9fa]">
                   {session?.user?.name || "Guest"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-
         <div className="flex flex-row items-center justify-between gap-x-4">
           <span className="text-xs text-gray-200">Contributors:</span>
           <TooltipProvider>
-            <Tooltip >
-              <TooltipTrigger >
+            <Tooltip>
+              <TooltipTrigger>
                 <Avatar className="w-4 h-4 border-0 !shadow-none">
                   {session?.user?.image ? (
                     <AvatarImage
@@ -495,18 +560,15 @@ const CreatePage = () => {
                 </Avatar>
               </TooltipTrigger>
               <TooltipContent className="bg-[#e6e9ea] dark:bg-[#2e2e2e]">
-                <p className="text-xs text-[#1e1e1e]  dark:text-[#f6f9fa]">
+                <p className="text-xs text-[#1e1e1e] dark:text-[#f6f9fa]">
                   {session?.user?.name || "Guest"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-
         <span>{words} words</span>
       </div>
-
-
     </>
   );
 };
