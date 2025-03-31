@@ -1,24 +1,49 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Pen, GripVertical, Undo2, Redo2, ChevronDown, ChevronUp } from "lucide-react";
 import {
-  Bold, 
+  Plus,
+  Pen,
+  GripVertical,
+  Undo2,
+  Redo2,
+  ChevronDown,
+  ChevronUp,
+  Divide,
+} from "lucide-react";
+import {
+  Bold,
   Italic,
   Underline,
-  Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
-  List, ListOrdered, ListTree, ListChecks,
+  Heading1,
+  Heading2,
+  Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
+  List,
+  ListOrdered,
+  ListTree,
+  ListChecks,
   Highlighter,
   Strikethrough,
-  Superscript, Subscript,
+  Superscript,
+  Subscript,
   Quote,
-  Image as ImageIcon, // renamed to ImageIcon for clarity
+  Image as ImageIcon,
   Video as VideoIcon,
   Code,
   Grid3x3,
   Link,
-  Regex
+  Regex,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -48,7 +73,6 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
 }) => {
   const spanRef = useRef<HTMLSpanElement>(null);
   const [inputWidth, setInputWidth] = useState(initialWidth);
-
   useEffect(() => {
     if (spanRef.current) {
       setInputWidth(spanRef.current.offsetWidth + 20);
@@ -98,23 +122,13 @@ const CreatePage = () => {
   }, [session, router]);
 
   // Local state
-  const [isSavedDraft, setIsSaveDraft] = useState(false);
+  const [isSavedDraft, setIsSavedDraft] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   // -------------- CATEGORY DROPDOWN --------------
   const categories = ["Programming", "Design", "Marketing", "Lifestyle", "Tech"];
-  // measureRef is used to compute the width of the selected category text.
-  const measureRef = useRef<HTMLSpanElement>(null);
-  const [selectWidth, setSelectWidth] = useState(130);
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    if (measureRef.current) {
-      const measuredWidth = measureRef.current.offsetWidth + 35; // extra space for icon
-      setSelectWidth(measuredWidth);
-    }
-  }, [selectedCategory]);
+  const [isOpen, setIsOpen] = useState(true);
 
   // -------------- TAGS STATE --------------
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
@@ -162,16 +176,98 @@ const CreatePage = () => {
 
   return (
     <div className="relative mt-12 mx-4 sm:mx-8 lg:mx-20">
+      {/* Drawer */}
+      <div
+        id="drawer"
+        className={`fixed top-0 right-0 w-[300px] h-full shadow-2xl rounded-l-2xl transform transition-transform duration-300 ease-in-out mt-12 z-20
+          ${isOpen ? "right-0" : "right-[-300px]"}
+          bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6]`}
+      >
+        <button
+          onClick={() => setIsOpen(false)}
+          className="absolute top-3 right-3 bg-red-500 px-3 py-1 rounded"
+        >
+          X
+        </button>
+        <div className="flex flex-col pt-20 px-2 pb-2">
+          <div className="flex flex-col">
+            <span className="m-2 text-base font-medium">Category</span>
+            {/* Shadcn Select for Category without extra chevron */}
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger  className="w-full h-6 inline-flex items-center pl-3 pr-1 py-0.5 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#faf9f6] dark:bg-[#1e1e1e]">
+                {categories.map((cat) => (
+                  <SelectItem
+                    key={cat}
+                    value={cat}
+                    className="text-gray-800 dark:text-gray-100 text-xs"
+                  >
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Tags Section */}
+            <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between items-start mt-5 gap-4">
+              <div className="flex flex-col w-full">
+                <span className="text-base font-medium">Tags</span>
+                <div className="flex flex-wrap gap-2 mt-1 justify-start">
+                  {tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center h-7 px-2 py-1 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => removeTag(index)}
+                        className="ml-1 inline-flex items-center h-7 px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                  {isAddingTag ? (
+                    <AutoSizeInput
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onBlur={() => {
+                        if (inputValue.trim() !== "") {
+                          setTags((prevTags) => [...prevTags, inputValue.trim()]);
+                        }
+                        setInputValue("");
+                        setIsAddingTag(false);
+                      }}
+                      initialWidth={100}
+                    />
+                  ) : (
+                    <span
+                      onClick={() => setIsAddingTag(true)}
+                      className="inline-flex items-center h-7 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-medium hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
+                    >
+                      + Add tag
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Title Section */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-2 mt-30 px-5">
         <input
           type="text"
           placeholder="Title"
-          className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none 
-            focus:border-[#d1d1d1] dark:focus:border-[#525252]"
+          className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none focus:border-[#d1d1d1] dark:focus:border-[#525252]"
         />
       </div>
-      {/* Header Section - Always in row mode (mobile included) */}
+
+      {/* Header Section */}
       <div className="flex flex-row items-center justify-between p-5">
         <div className="flex items-center space-x-4">
           <Avatar className="w-9 h-9 border-0 !shadow-none">
@@ -183,9 +279,7 @@ const CreatePage = () => {
               />
             ) : (
               <AvatarFallback className="bg-gray-500 text-white">
-                {session?.user?.name
-                  ? session.user.name.charAt(0).toUpperCase()
-                  : "U"}
+                {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
               </AvatarFallback>
             )}
           </Avatar>
@@ -213,10 +307,7 @@ const CreatePage = () => {
               {isSavedDraft ? (
                 "Saved"
               ) : (
-                <span
-                  className="cursor-pointer hover:underline"
-                  onClick={() => setIsSaveDraft(true)}
-                >
+                <span className="cursor-pointer hover:underline" onClick={() => setIsSavedDraft(true)}>
                   Save Draft
                 </span>
               )}
@@ -233,176 +324,154 @@ const CreatePage = () => {
         </div>
       </div>
 
-      {/* Category & Tags Section */}
-      <div
-        ref={tagContainerRef}
-        className="flex flex-col sm:flex-row justify-between items-start p-5 gap-4"
-      >
-        {/* Category Dropdown */}
-        <div className="flex items-center w-full sm:w-auto">
-          <div
-            className="inline-flex items-center px-3 py-1 text-sm font-medium
-              bg-[#faf9f6] dark:bg-[#1e1e1e]
-              text-gray-800 dark:text-gray-100
-              border border-[#d1d1d1] dark:border-[#525252]
-              rounded-full relative h-10 w-full sm:w-auto"
-          >
-            <span ref={measureRef} className="invisible absolute whitespace-pre">
-              {selectedCategory}
-            </span>
-            <select
-              onMouseDown={() => setIsDropdownOpen(true)}
-              onBlur={() => setIsDropdownOpen(false)}
-              style={{ width: selectWidth, transition: "width 0.25s ease" }}
-              className="appearance-none bg-transparent outline-none pr-8 text-gray-800 dark:text-gray-100"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              {categories.map((cat) => (
-                <option
-                  key={cat}
-                  value={cat}
-                  className="bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 py-1"
-                >
-                  {cat}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">
-              {isDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </span>
-          </div>
-        </div>
-
-        {/* Tags Input Section */}
-        <div className="flex flex-col w-full">
-          <div className="flex flex-wrap gap-2 justify-start">
-            {tags.map((tag, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center h-10 px-3 py-1 text-sm font-medium
-                  bg-[#faf9f6] dark:bg-[#1e1e1e]
-                  text-gray-800 dark:text-gray-100
-                  border border-[#d1d1d1] dark:border-[#525252]
-                  rounded-full"
-              >
-                {tag}
-                <button
-                  onClick={() => removeTag(index)}
-                  className="ml-2 text-lg leading-none cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                >
-                  &times;
-                </button>
-              </span>
-            ))}
-
-            {isAddingTag ? (
-              <AutoSizeInput
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onBlur={() => {
-                  if (inputValue.trim() !== "") {
-                    setTags((prevTags) => [...prevTags, inputValue.trim()]);
-                  }
-                  setInputValue("");
-                  setIsAddingTag(false);
-                }}
-                initialWidth={100}
-              />
-            ) : (
-              <span
-                onClick={() => setIsAddingTag(true)}
-                className="inline-flex items-center h-10 cursor-pointer
-                  border-dashed border border-[#d1d1d1] dark:border-[#525252]
-                  bg-transparent text-gray-800 dark:text-gray-100
-                  px-3 py-1 rounded-full text-sm
-                  hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
-              >
-                + Add tag
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* CMS Editor Components */}
       <div className="flex items-center w-full sm:w-auto">
-        {/* <div className="flex flex-col m-2 dark:bg-[#1e1e1e]">
-          <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
-            <GripVertical className="w-4 h-4" />
-          </div>
-          <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
-            <Plus className="w-4 h-4" />
-          </div>
-          <div className="p-2 m-1 flex items-center justify-center bg-[#EAE9E6] text-black dark:bg-[#2f2f2f] dark:text-white shadow rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-700">
-            <Pen className="w-4 h-4" />
-          </div>
-        </div> */}
-        {/* Editor Area */}
         <div className="min-h-60 m-3 p-4 w-full bg-[#eae9e6] text-[#1e1e1e] shadow-lg shadow-gray-200/40 hover:shadow-xl hover:shadow-gray-300/40 dark:bg-[#2e2e2e] dark:text-[#faf9f6] dark:border-[#525252] dark:shadow-gray-900/50 transition-all duration-300 transform hover:-translate-y-0.5">
-  {/* Toolbar Container */}
-            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
-              {/* Group 1: Text Formatting */}
-              <div className="flex items-center space-x-1 sm:space-x-2 bg-[#ff0000] p-1 rounded">
-                <Toggle><span><Bold /></span></Toggle>
-                <Toggle><span><Italic /></span></Toggle>
-                <Toggle><span><Underline /></span></Toggle>
+          {/* Toolbar Container */}
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
+            {/* Group 1: Text Formatting */}
+            <div className="flex items-center space-x-1 sm:space-x-2 bg-[#ff0000] p-1 rounded">
+              <Toggle>
+                <span>
+                  <Bold />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Italic />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Underline />
+                </span>
+              </Toggle>
               {/* Group 4: List Options */}
-                <ToggleGroup type="single">
-                  <ToggleGroupItem value="UL"><span><List /></span></ToggleGroupItem>
-                  <ToggleGroupItem value="OL"><span><ListOrdered /></span></ToggleGroupItem>
-                  <ToggleGroupItem value="DL"><span><ListTree /></span></ToggleGroupItem>
-                  <ToggleGroupItem value="SL"><span><ListChecks /></span></ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-              
-              <Separator orientation="vertical" className="hidden sm:block" />
-              
-              {/* Group 3: Link & Other Inline Formatting */}
-              <div className="flex items-center space-x-1 sm:space-x-2 bg-[#00ff00] p-1 rounded">
-                <Toggle><span><Link /></span></Toggle>
-                <Toggle><span><Regex /></span></Toggle>
-                <Toggle><span><Highlighter /></span></Toggle>
-                <Toggle><span><Strikethrough /></span></Toggle>
-                <Toggle><span><Superscript /></span></Toggle>
-                <Toggle><span><Subscript /></span></Toggle>
-              </div>
-              
-              <Separator orientation="vertical" className="hidden sm:block" />
-              
-              {/* Group 2: Heading Levels */}
-              <div className="flex items-center bg-[#0000ff] p-1 rounded">
-                <ToggleGroup type="single">
-                  <ToggleGroupItem value="H1"><Heading1 /></ToggleGroupItem>
-                  <ToggleGroupItem value="H2"><Heading2 /></ToggleGroupItem>
-                  <ToggleGroupItem value="H3"><Heading3 /></ToggleGroupItem>
-                  <ToggleGroupItem value="H4"><Heading4 /></ToggleGroupItem>
-                  <ToggleGroupItem value="H5"><Heading5 /></ToggleGroupItem>
-                  <ToggleGroupItem value="H6"><Heading6 /></ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-              
-              <Separator orientation="vertical" className="hidden sm:block" />
-              
-              {/* Group 6: Additional Tools */}
-              <div className="flex items-center space-x-1 sm:space-x-2 bg-[#cafe00] p-1 rounded">
-                <Toggle><span><Quote /></span></Toggle>
-                <Toggle><span><ImageIcon aria-label="Image icon" /></span></Toggle>
-                <Toggle><span><VideoIcon aria-label="Video icon" /></span></Toggle>
-                <Toggle><span><Code /></span></Toggle>
-                <Toggle><span><Grid3x3 /></span></Toggle>
-              </div>
+              <ToggleGroup type="single">
+                <ToggleGroupItem value="UL">
+                  <span>
+                    <List />
+                  </span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="OL">
+                  <span>
+                    <ListOrdered />
+                  </span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="DL">
+                  <span>
+                    <ListTree />
+                  </span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="SL">
+                  <span>
+                    <ListChecks />
+                  </span>
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
-            
-            {/* Content Input */}
-            <input 
-              type="text" 
-              placeholder="Tell your story..." 
-              className="w-full p-2 mt-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            />
+
+            <Separator orientation="vertical" className="hidden sm:block" />
+
+            {/* Group 3: Link & Other Inline Formatting */}
+            <div className="flex items-center space-x-1 sm:space-x-2 bg-[#00ff00] p-1 rounded">
+              <Toggle>
+                <span>
+                  <Link />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Regex />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Highlighter />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Strikethrough />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Superscript />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Subscript />
+                </span>
+              </Toggle>
+            </div>
+
+            <Separator orientation="vertical" className="hidden sm:block" />
+
+            {/* Group 2: Heading Levels */}
+            <div className="flex items-center bg-[#0000ff] p-1 rounded">
+              <ToggleGroup type="single">
+                <ToggleGroupItem value="H1">
+                  <Heading1 />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="H2">
+                  <Heading2 />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="H3">
+                  <Heading3 />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="H4">
+                  <Heading4 />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="H5">
+                  <Heading5 />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="H6">
+                  <Heading6 />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <Separator orientation="vertical" className="hidden sm:block" />
+
+            {/* Group 6: Additional Tools */}
+            <div className="flex items-center space-x-1 sm:space-x-2 bg-[#cafe00] p-1 rounded">
+              <Toggle>
+                <span>
+                  <Quote />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <ImageIcon aria-label="Image icon" />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <VideoIcon aria-label="Video icon" />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Code />
+                </span>
+              </Toggle>
+              <Toggle>
+                <span>
+                  <Grid3x3 />
+                </span>
+              </Toggle>
+            </div>
           </div>
 
+          {/* Content Input */}
+          <input
+            type="text"
+            placeholder="Tell your story..."
+            className="w-full p-2 mt-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
       </div>
     </div>
   );
