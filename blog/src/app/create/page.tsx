@@ -247,7 +247,7 @@ const CreatePage = () => {
             </div>
             <div className="flex flex-col justify-center items-start mt-5 gap-4">
               <span className="mb-2 text-base font-medium">Feature Image</span>
-              <div className="flex flex-col">
+              <div className="flex flex-col ml-3">
                 <ImageUpload onFileAccepted={handleFileAccepted} />
               </div>
             </div>
