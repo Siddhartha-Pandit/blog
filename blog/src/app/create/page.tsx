@@ -134,6 +134,8 @@ const CreatePage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [words, setWords] = useState(0)
   const [savedTime, setSavedTime] = useState("Just Now")
+  const [content, setContent] = useState("<p>Your default content here</p>");
+
   const handleFileAccepted = (file: File) => {
     setUploadedFile(file);
   };
@@ -402,19 +404,7 @@ const CreatePage = () => {
 
         {/* CMS Editor Components */}
         <div className="flex items-center w-full sm:w-auto">
-          <div className="min-h-60 m-3 p-4 w-full bg-[#eae9e6] text-[#1e1e1e] shadow-lg shadow-gray-200/40 hover:shadow-xl hover:shadow-gray-300/40 dark:bg-[#2e2e2e] dark:text-[#faf9f6] dark:border-[#525252] dark:shadow-gray-900/50 transition-all duration-300 transform hover:-translate-y-0.5">
-            {/* Toolbar Container */}
-            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
-              <Separator orientation="vertical" className="hidden sm:block" />
-            </div>
-            {/* Content Input */}
-            <input
-              type="text"
-              placeholder="Tell your story..."
-              className="w-full p-2 mt-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
+          <div className="border p-4 mt-2" dangerouslySetInnerHTML={{ __html: content }} />
         </div>
         {/* footer components */}
 
