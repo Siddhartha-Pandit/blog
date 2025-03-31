@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Pen,
-  Undo2,
-  Redo2,
+  // Undo2,
+  // Redo2,
 } from "lucide-react";
 import {
   Bold,
@@ -55,11 +55,11 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// import { Calendar } from "@/components/ui/calendar";
+// import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import ImageUpload from "@/components/ImageUpload";
 
 interface AutoSizeInputProps {
@@ -320,7 +320,7 @@ const CreatePage = () => {
               </div>
 
               {/* Feature Image Section */}
-              <div className="flex flex-col justify-center items-center mt-5 gap-4">
+              <div className="flex flex-col justify-center mt-5 gap-4">
                 <span className="mb-2 text-base font-medium">Feature Image</span>
                 <div className="flex flex-col ml-3">
                   <ImageUpload onFileAccepted={handleFileAccepted} />
@@ -328,7 +328,7 @@ const CreatePage = () => {
               </div>
 
               {/* Meta Description */}
-              <div className="flex flex-col justify-center items-center mt-5 gap-4">
+              <div className="flex flex-col justify-center  mt-5 gap-4">
                 <span className="mb-2 text-base font-medium">Meta Description</span>
                 <textarea
                   rows={4}
