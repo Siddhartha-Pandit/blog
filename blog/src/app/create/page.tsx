@@ -35,7 +35,7 @@ import {
   Code,
   Grid3x3,
   Link,
-  Regex,
+  Regex
 } from "lucide-react";
 import {
   Select,
@@ -53,6 +53,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
+import ImageUpload from "@/components/ImageUpload";
 
 interface AutoSizeInputProps {
   value: string;
@@ -89,20 +90,9 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
         onBlur={onBlur}
         placeholder={placeholder}
         style={{ width: `${inputWidth}px` }}
-        className="
-          inline-block
-          bg-[#faf9f6] dark:bg-[#1e1e1e]
-          text-[#1e1e1e] dark:text-[#faf9f6]
-          placeholder-gray-500 dark:placeholder-gray-400
-          px-3 py-1 text-sm font-medium
-          outline-none border border-[#d1d1d1] dark:border-[#525252]
-          rounded-full transition-colors
-        "
+        className="inline-block bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6] placeholder-gray-500 dark:placeholder-gray-400 px-3 py-1 text-sm font-medium outline-none border border-[#d1d1d1] dark:border-[#525252] rounded-full transition-colors"
       />
-      <span
-        ref={spanRef}
-        className="invisible absolute whitespace-pre text-sm font-medium px-3 py-1"
-      >
+      <span ref={spanRef} className="invisible absolute whitespace-pre text-sm font-medium px-3 py-1">
         {value || placeholder}
       </span>
     </>
@@ -110,7 +100,6 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
 };
 
 const CreatePage = () => {
-  // Get session and router from next-auth and Next.js app router
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -121,21 +110,24 @@ const CreatePage = () => {
     }
   }, [session, router]);
 
-  // Local state
   const [isSavedDraft, setIsSavedDraft] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
 
-  // -------------- CATEGORY DROPDOWN --------------
+  // Category dropdown state
   const categories = ["Programming", "Design", "Marketing", "Lifestyle", "Tech"];
   const [selectedCategory, setSelectedCategory] = useState<string>(categories[0]);
   const [isOpen, setIsOpen] = useState(true);
 
-  // -------------- TAGS STATE --------------
+  // Tags state
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [uploadedFile,setUploadedFile]=useState<File |null>(null);
   const tagContainerRef = useRef<HTMLDivElement>(null);
 
+  const handleFileAccepted=(file:File)=>{
+    setUploadedFile(file);
+  }
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -148,8 +140,7 @@ const CreatePage = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isAddingTag, inputValue]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -165,7 +156,6 @@ const CreatePage = () => {
     setTags((prevTags) => prevTags.filter((_, i) => i !== index));
   };
 
-  // If session is still loading (undefined), display loading state.
   if (session === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -174,36 +164,37 @@ const CreatePage = () => {
     );
   }
 
+
   return (
     <div className="relative mt-12 mx-4 sm:mx-8 lg:mx-20">
       {/* Drawer */}
       <div
         id="drawer"
-        className={`fixed top-0 right-0 w-[300px] h-full shadow-2xl rounded-l-2xl transform transition-transform duration-300 ease-in-out mt-12 z-20
-          ${isOpen ? "right-0" : "right-[-300px]"}
-          bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6]`}
+        className={`fixed top-0 right-0 w-[300px] h-full shadow-2xl transform transition-transform duration-300 ease-in-out mt-12 z-20 ${
+          isOpen ? "right-0" : "right-[-300px]"
+        } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto max-h-[calc(100vh-3rem)]`}
       >
-        <button
-          onClick={() => setIsOpen(false)}
-          className="absolute top-3 right-3 bg-red-500 px-3 py-1 rounded"
-        >
-          X
-        </button>
-        <div className="flex flex-col pt-20 px-2 pb-2">
+        <div className="flex items-center mt-3 relative">
+          <span className="ml-3 text-2xl font-bold">Blog Setting</span>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute right-3 bg-red-500 px-3 py-1 rounded text-white"
+          >
+            X
+          </button>
+        </div>
+
+        <div className="flex flex-col mt-5 px-3 pb-3">
           <div className="flex flex-col">
-            <span className="m-2 text-base font-medium">Category</span>
-            {/* Shadcn Select for Category without extra chevron */}
+            <span className="mb-2 text-base font-medium">Category</span>
+            {/* Shadcn Select for Category */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger  className="w-full h-6 inline-flex items-center pl-3 pr-1 py-0.5 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full">
+              <SelectTrigger className="w-full sm:w-auto h-8 inline-flex items-center pl-3 pr-2 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent className="bg-[#faf9f6] dark:bg-[#1e1e1e]">
                 {categories.map((cat) => (
-                  <SelectItem
-                    key={cat}
-                    value={cat}
-                    className="text-gray-800 dark:text-gray-100 text-xs"
-                  >
+                  <SelectItem key={cat} value={cat} className="text-gray-800 dark:text-gray-100 text-xs">
                     {cat}
                   </SelectItem>
                 ))}
@@ -213,17 +204,17 @@ const CreatePage = () => {
             {/* Tags Section */}
             <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between items-start mt-5 gap-4">
               <div className="flex flex-col w-full">
-                <span className="text-base font-medium">Tags</span>
-                <div className="flex flex-wrap gap-2 mt-1 justify-start">
+                <span className="mb-2 text-base font-medium">Tags</span>
+                <div className="flex flex-wrap gap-2 mt-1">
                   {tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center h-7 px-2 py-1 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
+                      className="inline-flex items-center h-8 px-2 py-1 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
                     >
                       {tag}
                       <button
                         onClick={() => removeTag(index)}
-                        className="ml-1 inline-flex items-center h-7 px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                        className="ml-1 inline-flex items-center h-8 px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
                       >
                         &times;
                       </button>
@@ -241,12 +232,12 @@ const CreatePage = () => {
                         setInputValue("");
                         setIsAddingTag(false);
                       }}
-                      initialWidth={100}
+                      initialWidth={80}
                     />
                   ) : (
                     <span
                       onClick={() => setIsAddingTag(true)}
-                      className="inline-flex items-center h-7 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-medium hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
+                      className="inline-flex items-center h-8 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-medium hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
                     >
                       + Add tag
                     </span>
@@ -254,6 +245,22 @@ const CreatePage = () => {
                 </div>
               </div>
             </div>
+            <div className="flex flex-col justify-center items-start mt-5 gap-4">
+              <span className="mb-2 text-base font-medium">Feature Image</span>
+              <div className="flex flex-col">
+                <ImageUpload onFileAccepted={handleFileAccepted} />
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-start items-start mt-5 gap-4">
+              <span className="mb-2 text-base font-medium">Meta Description</span>
+              <textarea
+                rows={4}
+                placeholder="Enter meta description"
+                className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <Button className="cursor-pointer mt-2 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]">Save</Button>
           </div>
         </div>
       </div>
@@ -276,6 +283,7 @@ const CreatePage = () => {
                 src={session.user.image}
                 alt={session.user.name || "User"}
                 loading="lazy"
+                className="w-full h-full object-cover rounded-full"
               />
             ) : (
               <AvatarFallback className="bg-gray-500 text-white">
