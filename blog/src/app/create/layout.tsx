@@ -5,6 +5,8 @@ import { Providers } from "../providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import NavbarCreate from "@/components/NavbarCreate";
 
+
+
 export default function CreateLayout({
   children,
 }: {

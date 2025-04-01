@@ -55,7 +55,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageUpload from "@/components/ImageUpload";
-
+import ContentEditor from "@/components/ContentEditor";
 interface AutoSizeInputProps {
   value: string;
   placeholder?: string;
@@ -126,7 +126,7 @@ const CreatePage = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [words] = useState(0);
   const [savedTime] = useState("Just Now");
-  const [content] = useState("<p>Your default content here</p>");
+  const [content,setContent] = useState("");
 
   const handleFileAccepted = (file: File) => {
     setUploadedFile(file);
@@ -332,7 +332,7 @@ const CreatePage = () => {
               onClick={() => setIsOpen(false)}
               className="absolute right-3 rounded text-[#1e1e1e] dark:text-white"
             >
-              <PanelRightClose />
+              <PanelRightClose className="w-4 h-4" />
             </button>
           </div>
           <div className="flex flex-col mt-5 px-3 pb-3">
@@ -438,7 +438,7 @@ const CreatePage = () => {
           ))}
           <button className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             <span className="mr-1">
-              <MessageCircle />
+              <MessageCircle className="w-4 h-4" />
             </span>
             <span className="hidden md:inline">Message</span>
           </button>
@@ -448,11 +448,11 @@ const CreatePage = () => {
           >
             {isOpen ? (
               <span className="mr-1">
-                <PanelRightOpen />
+                <PanelRightOpen className="w-4 h-4" />
               </span>
             ) : (
               <span className="mr-1">
-                <PanelRightClose />
+                <PanelRightClose className="w-4 h-4" />
               </span>
             )}
             <span className="hidden md:inline">{isOpen ? "Close " : "Open "}Drawer</span>
@@ -475,7 +475,12 @@ const CreatePage = () => {
 
         {/* CMS Editor Components */}
         <div className="flex items-center w-full sm:w-auto">
-          <div className="border p-4 mt-2" dangerouslySetInnerHTML={{ __html: content }} />
+               {/* <div className="w-100 h-100" dangerouslySetInnerHTML={{ __html: content }}>
+                <p>My content</p>
+               </div> */}
+               <div className="w-100 h-100" >
+                <ContentEditor/>
+               </div>
         </div>
       </div>
       <div className="flex flex-row absolute bottom-0 w-full h-7 bg-gray-800 text-white items-center justify-around px-4 text-xs">
