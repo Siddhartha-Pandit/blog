@@ -6,7 +6,7 @@ import {
   Pen,
   PanelRightOpen,
   MessageCircle,
-  PanelRightClose
+  PanelRightClose,
 } from "lucide-react";
 import {
   Bold,
@@ -33,7 +33,7 @@ import {
   Code,
   Grid3x3,
   Link,
-  Regex
+  Regex,
 } from "lucide-react";
 import {
   Select,
@@ -42,20 +42,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageUpload from "@/components/ImageUpload";
 import ContentEditor from "@/components/ContentEditor";
+import FooterCreate from "@/components/FooterCreate";
 interface AutoSizeInputProps {
   value: string;
   placeholder?: string;
@@ -93,7 +88,10 @@ const AutoSizeInput: React.FC<AutoSizeInputProps> = ({
         style={{ width: `${inputWidth}px` }}
         className="inline-block bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6] placeholder-gray-500 dark:placeholder-gray-400 px-3 py-1 text-sm font-medium outline-none border border-[#d1d1d1] dark:border-[#525252] rounded-full transition-colors"
       />
-      <span ref={spanRef} className="invisible absolute whitespace-pre text-sm font-medium px-3 py-1">
+      <span
+        ref={spanRef}
+        className="invisible absolute whitespace-pre text-sm font-medium px-3 py-1"
+      >
         {value || placeholder}
       </span>
     </>
@@ -120,14 +118,11 @@ const CreatePage = () => {
   const [tags, setTags] = useState(["technology", "programming", "web dev"]);
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  // We only use the setter for uploadedFile, so ignore the first element.
   const [, setUploadedFile] = useState<File | null>(null);
   const tagContainerRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState(0);
-  const [words] = useState(0);
-  const [savedTime] = useState("Just Now");
-  const [content,setContent] = useState("");
 
+  const [activeTab, setActiveTab] = useState(0);
+  
   const handleFileAccepted = (file: File) => {
     setUploadedFile(file);
   };
@@ -144,7 +139,8 @@ const CreatePage = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, [isAddingTag, inputValue]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -317,264 +313,171 @@ const CreatePage = () => {
   ];
 
   return (
-    <>
-      <div className="relative mt-12 mx-4 sm:mx-8 lg:mx-20">
-        {/* Drawer */}
-        <div
-          id="drawer"
-          className={`fixed top-0 right-0 w-[300px] h-full shadow-2xl transform transition-transform duration-300 ease-in-out mt-12.5 z-100 ${
-            isOpen ? "right-0" : "right-[-300px]"
-          } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto max-h-[calc(100vh-3rem)]`}
-        >
-          <div className="flex items-center mt-3 relative">
-            <span className="ml-3 text-2xl font-bold">Blog Setting</span>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="absolute right-3 rounded text-[#1e1e1e] dark:text-white"
-            >
-              <PanelRightClose className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex flex-col mt-5 px-3 pb-3">
-            <div className="flex flex-col">
-              <span className="mb-2 text-base font-medium">Category</span>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-auto h-8 inline-flex items-center pl-3 pr-2 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#faf9f6] dark:bg-[#1e1e1e]">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="text-gray-800 dark:text-gray-100 text-xs">
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Tags Section */}
-              <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between items-start mt-5 gap-4">
-                <div className="flex flex-col w-full">
-                  <span className="mb-2 text-base font-medium">Tags</span>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center h-8 px-2 py-1 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
-                      >
-                        {tag}
-                        <button
-                          onClick={() => removeTag(index)}
-                          className="ml-1 inline-flex items-center h-8 px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                        >
-                          &times;
-                        </button>
-                      </span>
-                    ))}
-                    {isAddingTag ? (
-                      <AutoSizeInput
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onBlur={() => {
-                          if (inputValue.trim() !== "") {
-                            setTags((prevTags) => [...prevTags, inputValue.trim()]);
-                          }
-                          setInputValue("");
-                          setIsAddingTag(false);
-                        }}
-                        initialWidth={80}
-                      />
-                    ) : (
-                      <span
-                        onClick={() => setIsAddingTag(true)}
-                        className="inline-flex items-center h-8 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-medium hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
-                      >
-                        + Add tag
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Feature Image Section */}
-              <div className="flex flex-col justify-center mt-5 gap-4">
-                <span className="mb-2 text-base font-medium">Feature Image</span>
-                <div className="flex flex-col ml-3">
-                  <ImageUpload onFileAccepted={handleFileAccepted} />
-                </div>
-              </div>
-
-              {/* Meta Description */}
-              <div className="flex flex-col justify-center mt-5 gap-4">
-                <span className="mb-2 text-base font-medium">Meta Description</span>
-                <textarea
-                  rows={4}
-                  placeholder="Enter meta description"
-                  className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <Button className="cursor-pointer mt-2 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]">
-                Save
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Fixed Tabs Header */}
-        <div className="fixed top-10 left-0 right-0 h-12 bg-[#faf9f6] dark:bg-[#1e1e1e] border-b border-[#d1d1d1] dark:border-[#525252] z-20 flex items-center justify-evenly space-x-2">
-          {tabs.map((tab, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveTab(index)}
-              className={`px-2 py-2 text-sm flex items-center justify-center transition-colors ${
-                activeTab === index
-                  ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-bold"
-                  : "text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-              }`}
-            >
-              {tab.icon && <span className="mr-1">{tab.icon}</span>}
-              <span className="hidden md:inline">{tab.label}</span>
-            </button>
-          ))}
-          <button className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            <span className="mr-1">
-              <MessageCircle className="w-4 h-4" />
-            </span>
-            <span className="hidden md:inline">Message</span>
-          </button>
+    <div className="h-screen flex flex-col bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6]">
+      {/* Drawer */}
+      <div
+        id="drawer"
+        className={`fixed top-0  right-0 w-[300px] h-[calc(100vh-76px)] shadow-2xl transform transition-transform duration-300 ease-in-out z-40 mt-12  ${
+          isOpen ? "right-0" : "right-[-300px]"
+        } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto`}
+      >
+        <div className="flex items-center mt-3 relative">
+          <span className="ml-3 text-2xl font-bold">Blog Setting</span>
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={() => setIsOpen(false)}
+            className="absolute right-3 rounded text-[#1e1e1e] dark:text-white"
           >
-            {isOpen ? (
-              <span className="mr-1">
-                <PanelRightOpen className="w-4 h-4" />
-              </span>
-            ) : (
-              <span className="mr-1">
-                <PanelRightClose className="w-4 h-4" />
-              </span>
-            )}
-            <span className="hidden md:inline">{isOpen ? "Close " : "Open "}Drawer</span>
+            <PanelRightClose className="w-4 h-4" />
           </button>
         </div>
+        <div className="flex flex-col mt-5 px-3 pb-3">
+          <div className="flex flex-col">
+            <span className="mb-2 text-base font-medium">Category</span>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full sm:w-auto h-8 inline-flex items-center pl-3 pr-2 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#faf9f6] dark:bg-[#1e1e1e]">
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat} className="text-gray-800 dark:text-gray-100 text-xs">
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        {/* Fixed Tabs Content */}
-        <div className="fixed top-20 left-0 right-0 h-[50px] bg-[#eae9e6] dark:bg-[#2e2e2e] z-10 overflow-hidden p-3">
-          {tabs[activeTab].content}
+            {/* Tags Section */}
+            <div ref={tagContainerRef} className="flex flex-col sm:flex-row justify-between items-start mt-5 gap-4">
+              <div className="flex flex-col w-full">
+                <span className="mb-2 text-base font-medium">Tags</span>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center h-8 px-2 py-1 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full"
+                    >
+                      {tag}
+                      <button
+                        onClick={() => removeTag(index)}
+                        className="ml-1 inline-flex items-center h-8 px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                  {isAddingTag ? (
+                    <AutoSizeInput
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onBlur={() => {
+                        if (inputValue.trim() !== "") {
+                          setTags((prevTags) => [...prevTags, inputValue.trim()]);
+                        }
+                        setInputValue("");
+                        setIsAddingTag(false);
+                      }}
+                      initialWidth={80}
+                    />
+                  ) : (
+                    <span
+                      onClick={() => setIsAddingTag(true)}
+                      className="inline-flex items-center h-8 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-medium hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
+                    >
+                      + Add tag
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Image Section */}
+            <div className="flex flex-col justify-center mt-5 gap-4">
+              <span className="mb-2 text-base font-medium">Feature Image</span>
+              <div className="flex flex-col ml-3">
+                <ImageUpload onFileAccepted={handleFileAccepted} />
+              </div>
+            </div>
+
+            {/* Meta Description */}
+            <div className="flex flex-col justify-center mt-5 gap-4">
+              <span className="mb-2 text-base font-medium">Meta Description</span>
+              <textarea
+                rows={4}
+                placeholder="Enter meta description"
+                className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <Button className="cursor-pointer mt-2 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]">
+              Save
+            </Button>
+          </div>
         </div>
+      </div>
 
+      {/* Fixed Tabs Header */}
+      <div className="fixed top-10 left-0 right-0 h-12 bg-[#faf9f6] dark:bg-[#1e1e1e] border-b border-[#d1d1d1] dark:border-[#525252] z-30 flex items-center justify-evenly space-x-2">
+        {tabs.map((tab, index) => (
+          <button
+            key={index}
+            onClick={() => setActiveTab(index)}
+            className={`px-2 py-2 text-sm flex items-center justify-center transition-colors ${
+              activeTab === index
+                ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-bold"
+                : "text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+            }`}
+          >
+            {tab.icon && <span className="mr-1">{tab.icon}</span>}
+            <span className="hidden md:inline">{tab.label}</span>
+          </button>
+        ))}
+        <button className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          <span className="mr-1">
+            <MessageCircle className="w-4 h-4" />
+          </span>
+          <span className="hidden md:inline">Message</span>
+        </button>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          {isOpen ? (
+            <span className="mr-1">
+              <PanelRightOpen className="w-4 h-4" />
+            </span>
+          ) : (
+            <span className="mr-1">
+              <PanelRightClose className="w-4 h-4" />
+            </span>
+          )}
+          <span className="hidden md:inline">{isOpen ? "Close" : "Open"} Drawer</span>
+        </button>
+      </div>
+
+      {/* Fixed Tabs Content */}
+      <div className="fixed top-20 left-0 right-0 h-[50px] bg-[#eae9e6] dark:bg-[#2e2e2e] z-20 overflow-hidden p-3">
+        {tabs[activeTab].content}
+      </div>
+
+      {/* Main Content Area (non-scrollable page) */}
+      <div className="flex-1 mt-0 mb-10 px-5 pt-[calc(20vh)]">
         {/* Title Section */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-2 mt-35 px-5">
+        <div className="mb-4">
           <input
             type="text"
             placeholder="Title"
             className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none focus:border-[#d1d1d1] dark:focus:border-[#525252]"
           />
         </div>
+        {/* CMS Editor Component (scrollable) */}
+        <div className="w-full h-[500px] overflow-y-auto border border-[#d1d1d1] dark:border-[#525252] rounded-md bg-white dark:bg-[#2e2e2e]">
+          <ContentEditor />
+        </div>
+      </div>
 
-        {/* CMS Editor Components */}
-        <div className="flex items-center w-full sm:w-auto">
-               {/* <div className="w-100 h-100" dangerouslySetInnerHTML={{ __html: content }}>
-                <p>My content</p>
-               </div> */}
-               <div className="w-100 h-100" >
-                <ContentEditor/>
-               </div>
-        </div>
-      </div>
-      <div className="flex flex-row absolute bottom-0 w-full h-7 bg-gray-800 text-white items-center justify-around px-4 text-xs">
-        <span>Last Saved: {" " + savedTime}</span>
-        <div className="flex flex-row items-center space-x-1">
-          <span className="text-xs text-gray-800 dark:text-gray-200">Authors:</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Avatar className="w-4 h-4 border-0 !shadow-none">
-                  {session?.user?.image ? (
-                    <AvatarImage
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
-                      loading="lazy"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-gray-500 dark:bg-gray-700 text-white dark:text-gray-200">
-                      {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs text-gray-800 dark:text-gray-200">
-                  {session?.user?.name || "Guest"}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-      <div className="flex flex-row absolute bottom-0 w-full h-7 bg-gray-800 text-white items-center justify-around px-4 text-xs">
-        <span>Last Saved: {" " + savedTime}</span>
-        <div className="flex flex-row items-center space-x-1">
-          <span className="text-xs text-gray-200">Authors:</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Avatar className="w-4 h-4 border-0 !shadow-none">
-                  {session?.user?.image ? (
-                    <AvatarImage
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
-                      loading="lazy"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-gray-500 dark:bg-gray-700 text-white dark:text-gray-200">
-                      {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#e6e9ea] dark:bg-[#2e2e2e]">
-                <p className="text-xs text-[#1e1e1e] dark:text-[#f6f9fa]">
-                  {session?.user?.name || "Guest"}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <div className="flex flex-row items-center justify-between gap-x-4">
-          <span className="text-xs text-gray-200">Contributors:</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Avatar className="w-4 h-4 border-0 !shadow-none">
-                  {session?.user?.image ? (
-                    <AvatarImage
-                      src={session.user.image}
-                      alt={session.user.name || "User"}
-                      loading="lazy"
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-gray-500 dark:bg-gray-700 text-white dark:text-gray-200">
-                      {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              </TooltipTrigger>
-              <TooltipContent className="bg-[#e6e9ea] dark:bg-[#2e2e2e]">
-                <p className="text-xs text-[#1e1e1e] dark:text-[#f6f9fa]">
-                  {session?.user?.name || "Guest"}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        <span>{words} words</span>
-      </div>
-    </>
+      {/* Fixed Footer */}
+      <FooterCreate/>
+    </div>
   );
 };
 

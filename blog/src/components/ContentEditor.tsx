@@ -1,18 +1,33 @@
 "use client";
-import React,{useState,useRef} from 'react'
-const ContentEditor=()=>{
-  const [content,setContent]=useState("<p>Tell your story</P>");
-  const editorRef=useRef<HTMLDivElement>(null);
-  const handleInput=(e:React.FormEvent<HTMLDivElement>)=>{
-    setContent(e.currentTarget.innerHTML);
-  }
+import React, { useState, useRef, useEffect } from "react";
+
+const ContentEditor = () => {
+  const [content, setContent] = useState("<div></div>");
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Initialize content on mount
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = content;
+    }
+  }, []);
+
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const newContent = e.currentTarget.innerHTML;
+    setContent(newContent);
+    console.log(newContent);
+  };
+
   return (
-    <div contentEditable suppressContentEditableWarning={true} onInput={handleInput} ref={editorRef}  className="w-full h-full border p-4 min-h-[150px] bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6]">
-        <div dangerouslySetInnerHTML={{ __html: content }} />
-    </div>
-  )
-}
+    <div
+      contentEditable
+      suppressContentEditableWarning={true}
+      onInput={handleInput}
+      ref={editorRef}
+      dir="ltr"
+      className="w-full min-h-[150px] p-4 bg-white dark:bg-[#2e2e2e] text-[#1e1e1e] dark:text-[#faf9f6] focus:outline-none"
+    />
+  );
+};
 
-
-
-export default ContentEditor
+export default ContentEditor;
