@@ -49,7 +49,8 @@ import { useRouter } from "next/navigation";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageUpload from "@/components/ImageUpload";
-import ContentEditor from "@/components/ContentEditor";
+// import Editor from "@/components/Editor";
+import MarkdownEditor from "@/components/MarkdownEditor";
 import FooterCreate from "@/components/FooterCreate";
 interface AutoSizeInputProps {
   value: string;
@@ -471,7 +472,7 @@ const CreatePage = () => {
         </div>
         {/* CMS Editor Component (scrollable) */}
         <div className="w-full h-[500px] overflow-y-auto border border-[#d1d1d1] dark:border-[#525252] rounded-md bg-white dark:bg-[#2e2e2e]">
-          <ContentEditor />
+          <MarkdownEditor/>
         </div>
       </div>
 
