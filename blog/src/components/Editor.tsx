@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Save,
   Bold,
@@ -21,6 +21,9 @@ import {
   AlignJustify,
   Indent,
   Outdent,
+  Image,
+  Video,   // Imported the Video icon
+  Table,   // Imported the Table icon
 } from "lucide-react";
 
 // --- Helper Functions ---
@@ -61,7 +64,9 @@ const rgbToHsl = ({ r, g, b }: { r: number; g: number; b: number }) => {
     bNorm = b / 255;
   const max = Math.max(rNorm, gNorm, bNorm);
   const min = Math.min(rNorm, gNorm, bNorm);
-  let h = 0, s = 0, l = (max + min) / 2;
+  let h = 0,
+    s = 0,
+    l = (max + min) / 2;
   if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
@@ -88,7 +93,9 @@ const hslToHex = (h: number, s: number, l: number): string => {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
-  let r1 = 0, g1 = 0, b1 = 0;
+  let r1 = 0,
+    g1 = 0,
+    b1 = 0;
   if (h < 60) {
     r1 = c;
     g1 = x;
@@ -166,13 +173,106 @@ const getNearestContrastColor = (
   return candidateUp || candidateDown || originalHex;
 };
 
+// --- Table Manipulation Functions ---
+
+// Finds the table cell where the cursor is.
+const getCurrentTableCell = (): HTMLTableCellElement | null => {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return null;
+  let node = selection.getRangeAt(0).startContainer as HTMLElement;
+  while (node && node !== document.body) {
+    if (node.tagName && (node.tagName.toLowerCase() === "td" || node.tagName.toLowerCase() === "th")) {
+      return node as HTMLTableCellElement;
+    }
+    node = node.parentElement as HTMLElement;
+  }
+  return null;
+};
+
+const handleAddRow = () => {
+  const cell = getCurrentTableCell();
+  if (!cell) {
+    alert("Place the cursor inside a table cell to add a row.");
+    return;
+  }
+  const row = cell.parentElement as HTMLTableRowElement;
+  // Determine the table from the row.
+  let table = row.parentElement;
+  if (table && table.tagName.toLowerCase() === "tbody") {
+    table = table.parentElement;
+  }
+  if (!table || table.tagName.toLowerCase() !== "table") {
+    alert("Unable to locate the table.");
+    return;
+  }
+  const tableElement = table as HTMLTableElement;
+  // Get current row index.
+  const rowIndex = Array.from(tableElement.rows).indexOf(row);
+  const newRow = tableElement.insertRow(rowIndex + 1);
+  for (let i = 0; i < row.cells.length; i++) {
+    const newCell = newRow.insertCell(i);
+    newCell.innerHTML = "&nbsp;";
+    newCell.style.border = "1px solid black";
+    newCell.style.padding = "5px";
+  }
+};
+
+const handleAddColumn = () => {
+  const cell = getCurrentTableCell();
+  if (!cell) {
+    alert("Place the cursor inside a table cell to add a column.");
+    return;
+  }
+  // Get the current cell index.
+  const currentRow = cell.parentElement as HTMLTableRowElement;
+  const cellIndex = Array.from(currentRow.cells).indexOf(cell);
+  // Get the table.
+  let table = currentRow.parentElement;
+  if (table && table.tagName.toLowerCase() === "tbody") {
+    table = table.parentElement;
+  }
+  if (!table || table.tagName.toLowerCase() !== "table") {
+    alert("Unable to locate the table.");
+    return;
+  }
+  const tableElement = table as HTMLTableElement;
+  // For each row, insert a cell at position cellIndex+1.
+  for (let i = 0; i < tableElement.rows.length; i++) {
+    const row = tableElement.rows[i];
+    const newCell = row.insertCell(cellIndex + 1);
+    newCell.innerHTML = "&nbsp;";
+    newCell.style.border = "1px solid black";
+    newCell.style.padding = "5px";
+  }
+};
+
+const handleRemoveTable = () => {
+  const cell = getCurrentTableCell();
+  if (!cell) {
+    alert("Place the cursor inside a table to remove it.");
+    return;
+  }
+  let table = cell.parentElement;
+  if (table && table.tagName.toLowerCase() === "tr") {
+    table = table.parentElement;
+    if (table && table.tagName.toLowerCase() === "tbody") {
+      table = table.parentElement;
+    }
+  }
+  if (table && table.tagName.toLowerCase() === "table") {
+    table.parentNode?.removeChild(table);
+  } else {
+    alert("Unable to remove the table.");
+  }
+};
+
 // --- Editor Component ---
 
 const Editor: React.FC = () => {
   const [data, setData] = useState<string>("");
-  const [activeButtons, setActiveButtons] = useState<string[]>([]);
   const [fontNameOptions, setFontNameOptions] = useState<React.JSX.Element[]>([]);
   const [fontSizeOptions, setFontSizeOptions] = useState<React.JSX.Element[]>([]);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fontList: string[] = [
@@ -201,14 +301,49 @@ const Editor: React.FC = () => {
     setFontSizeOptions(sizeOptions);
   }, []);
 
-  const handleButtonClick = (command: string) => {
-    document.execCommand(command, false, undefined);
+  const handleButtonClick = (command: string, value?: string) => {
+    if (command === "insertImage") {
+      const url = prompt("Enter the image URL:");
+      if (url) {
+        document.execCommand("insertImage", false, url);
+      }
+      return;
+    }
+    if (command === "insertVideo") {
+      const url = prompt("Enter the video URL:");
+      if (url) {
+        const videoHTML = `<video controls src="${url}" width="320" height="240"></video>`;
+        document.execCommand("insertHTML", false, videoHTML);
+      }
+      return;
+    }
+    if (command === "insertTable") {
+      const rows = prompt("Enter number of rows:", "2");
+      const cols = prompt("Enter number of columns:", "2");
+      if (rows && cols) {
+        const rowNum = parseInt(rows);
+        const colNum = parseInt(cols);
+        let tableHTML = `<table style="border: 1px solid black; border-collapse: collapse;">`;
+        for (let i = 0; i < rowNum; i++) {
+          tableHTML += "<tr>";
+          for (let j = 0; j < colNum; j++) {
+            tableHTML += `<td style="border: 1px solid black; padding: 5px;">&nbsp;</td>`;
+          }
+          tableHTML += "</tr>";
+        }
+        tableHTML += "</table>";
+        document.execCommand("insertHTML", false, tableHTML);
+      }
+      return;
+    }
+    document.execCommand(command, false, value || undefined);
+    console.log("document exec",    document.execCommand(command, false, value || undefined)
+  )
   };
 
   const handleAdvancedOptionChange = (command: string, value: string) => {
     const threshold = 4.5;
     if (command === "formatBlock") {
-      // For headers and other block-level formatting, wrap value in angle brackets.
       document.execCommand(command, false, value.toLowerCase());
       return;
     }
@@ -222,6 +357,12 @@ const Editor: React.FC = () => {
       }
     }
     document.execCommand(command, false, value);
+  };
+
+  const handleViewHTML = () => {
+    if (editorRef.current) {
+      console.log("Editor HTML content:", editorRef.current.innerHTML);
+    }
   };
 
   const handleSetItem = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -294,6 +435,28 @@ const Editor: React.FC = () => {
           </button>
           <button id="unlink" className="option-button" onClick={() => handleButtonClick("unlink")}>
             <Unlink size={16} />
+          </button>
+          {/* Insert Image Button */}
+          <button id="insertImage" className="option-button" onClick={() => handleButtonClick("insertImage")}>
+            <Image size={16} />
+          </button>
+          {/* Insert Video Button */}
+          <button id="insertVideo" className="option-button" onClick={() => handleButtonClick("insertVideo")}>
+            <Video size={16} />
+          </button>
+          {/* Insert Table Button */}
+          <button id="insertTable" className="option-button" onClick={() => handleButtonClick("insertTable")}>
+            <Table size={16} />
+          </button>
+          {/* Table Operations using the cursor position */}
+          <button className="option-button" onClick={handleAddRow}>
+            Add Row
+          </button>
+          <button className="option-button" onClick={handleAddColumn}>
+            Add Column
+          </button>
+          <button className="option-button" onClick={handleRemoveTable}>
+            Remove Table
           </button>
           <button
             id="justifyLeft"
@@ -374,9 +537,14 @@ const Editor: React.FC = () => {
             />
             <label htmlFor="backColor">Highlight Color</label>
           </div>
+          {/* Button to view HTML content in the console */}
+          <button className="option-button" onClick={handleViewHTML}>
+            View HTML
+          </button>
         </div>
         <div
           id="text-input"
+          ref={editorRef}
           contentEditable="true"
           onInput={(e: React.FormEvent<HTMLDivElement>) =>
             setData(e.currentTarget.textContent || "")

@@ -52,6 +52,7 @@ import ImageUpload from "@/components/ImageUpload";
 // import Editor from "@/components/Editor";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import FooterCreate from "@/components/FooterCreate";
+import Editor from "@/components/Editor";
 interface AutoSizeInputProps {
   value: string;
   placeholder?: string;
@@ -472,7 +473,7 @@ const CreatePage = () => {
         </div>
         {/* CMS Editor Component (scrollable) */}
         <div className="w-full h-[500px] overflow-y-auto border border-[#d1d1d1] dark:border-[#525252] rounded-md bg-white dark:bg-[#2e2e2e]">
-          <MarkdownEditor/>
+          <Editor/>
         </div>
       </div>
 
