@@ -343,6 +343,7 @@ const Editor: React.FC = () => {
   const handleButtonClick = (command: string, value?: string) => {
     if (command === "bold") {
       const selection = window.getSelection();
+      console.log(selection)
       if (!selection || selection.rangeCount === 0) return;
       const range = selection.getRangeAt(0);
       if (range.collapsed) return;
