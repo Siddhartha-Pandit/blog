@@ -342,13 +342,40 @@ const Editor: React.FC = () => {
 
   const handleButtonClick = (command: string, value?: string) => {
     if (command === "bold") {
+      // Helper function to log full selection details
+      const logFullSelection = () => {
+        const selection = window.getSelection();
+        if (!selection) {
+          console.log("No selection available.");
+          return;
+        }
+        console.log("Full Selection Details:");
+        console.log("anchorNode:", selection.anchorNode);
+        console.log("anchorOffset:", selection.anchorOffset);
+        console.log("focusNode:", selection.focusNode);
+        console.log("focusOffset:", selection.focusOffset);
+        console.log("isCollapsed:", selection.isCollapsed);
+        console.log("rangeCount:", selection.rangeCount);
+        for (let i = 0; i < selection.rangeCount; i++) {
+          const range = selection.getRangeAt(i);
+          console.log(`Range ${i}:`);
+          console.log("  startContainer:", range.startContainer);
+          console.log("  startOffset:", range.startOffset);
+          console.log("  endContainer:", range.endContainer);
+          console.log("  endOffset:", range.endOffset);
+          console.log("  collapsed:", range.collapsed);
+          console.log("  text:", range.toString());
+        }
+      };
+    
+      logFullSelection();
+    
       const selection = window.getSelection();
-      console.log(selection)
+      console.log(selection);
       if (!selection || selection.rangeCount === 0) return;
       const range = selection.getRangeAt(0);
       if (range.collapsed) return;
-
-      // Check if the startContainer is inside a span with our custom bold style
+    
       let currentNode: Node | null = selection.anchorNode;
       while (currentNode && currentNode !== editorRef.current) {
         if (
@@ -357,7 +384,6 @@ const Editor: React.FC = () => {
           currentNode.style.fontWeight === "bold" &&
           currentNode.style.color === "rgb(230, 0, 0)" // note: custom red may be reported as rgb
         ) {
-          // Remove the bold styling by unwrapping the span element
           const parent = currentNode.parentNode;
           if (!parent) break;
           while (currentNode.firstChild) {
@@ -369,7 +395,7 @@ const Editor: React.FC = () => {
         }
         currentNode = currentNode.parentNode;
       }
-
+    
       // If not already bold, wrap the selected text in a span with custom bold styling
       const span = document.createElement("span");
       span.style.fontWeight = "bold";
@@ -379,6 +405,7 @@ const Editor: React.FC = () => {
       selection.removeAllRanges();
       return;
     }
+    
 
     if (command === "insertImage") {
       const url = prompt("Enter the image URL:");
