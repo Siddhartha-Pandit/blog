@@ -22,8 +22,8 @@ import {
   Indent,
   Outdent,
   Image,
-  Video,   // Imported the Video icon
-  Table,   // Imported the Table icon
+  Video,
+  Table,
 } from "lucide-react";
 
 // --- Helper Functions ---
@@ -31,7 +31,10 @@ import {
 const hexToRgb = (hex: string) => {
   let normalized = hex.replace("#", "");
   if (normalized.length === 3) {
-    normalized = normalized.split("").map((char) => char + char).join("");
+    normalized = normalized
+      .split("")
+      .map((char) => char + char)
+      .join("");
   }
   const bigint = parseInt(normalized, 16);
   return {
@@ -175,13 +178,15 @@ const getNearestContrastColor = (
 
 // --- Table Manipulation Functions ---
 
-// Finds the table cell where the cursor is.
 const getCurrentTableCell = (): HTMLTableCellElement | null => {
   const selection = window.getSelection();
   if (!selection || !selection.rangeCount) return null;
   let node = selection.getRangeAt(0).startContainer as HTMLElement;
   while (node && node !== document.body) {
-    if (node.tagName && (node.tagName.toLowerCase() === "td" || node.tagName.toLowerCase() === "th")) {
+    if (
+      node.tagName &&
+      (node.tagName.toLowerCase() === "td" || node.tagName.toLowerCase() === "th")
+    ) {
       return node as HTMLTableCellElement;
     }
     node = node.parentElement as HTMLElement;
@@ -196,7 +201,6 @@ const handleAddRow = () => {
     return;
   }
   const row = cell.parentElement as HTMLTableRowElement;
-  // Determine the table from the row.
   let table = row.parentElement;
   if (table && table.tagName.toLowerCase() === "tbody") {
     table = table.parentElement;
@@ -206,7 +210,6 @@ const handleAddRow = () => {
     return;
   }
   const tableElement = table as HTMLTableElement;
-  // Get current row index.
   const rowIndex = Array.from(tableElement.rows).indexOf(row);
   const newRow = tableElement.insertRow(rowIndex + 1);
   for (let i = 0; i < row.cells.length; i++) {
@@ -223,10 +226,8 @@ const handleAddColumn = () => {
     alert("Place the cursor inside a table cell to add a column.");
     return;
   }
-  // Get the current cell index.
   const currentRow = cell.parentElement as HTMLTableRowElement;
   const cellIndex = Array.from(currentRow.cells).indexOf(cell);
-  // Get the table.
   let table = currentRow.parentElement;
   if (table && table.tagName.toLowerCase() === "tbody") {
     table = table.parentElement;
@@ -236,7 +237,6 @@ const handleAddColumn = () => {
     return;
   }
   const tableElement = table as HTMLTableElement;
-  // For each row, insert a cell at position cellIndex+1.
   for (let i = 0; i < tableElement.rows.length; i++) {
     const row = tableElement.rows[i];
     const newCell = row.insertCell(cellIndex + 1);
@@ -273,6 +273,42 @@ const Editor: React.FC = () => {
   const [fontNameOptions, setFontNameOptions] = useState<React.JSX.Element[]>([]);
   const [fontSizeOptions, setFontSizeOptions] = useState<React.JSX.Element[]>([]);
   const editorRef = useRef<HTMLDivElement>(null);
+  const [htmlData, setHtmlData] = useState("");
+
+  // Define header styles in a maintainable way
+  const headerStyles = {
+    base: {
+      color: "#2c3e50",
+      fontFamily: "Arial, sans-serif",
+      margin: "10px 0",
+    },
+    H1: {
+      fontSize: "2.5em",
+      borderBottom: "2px solid #cafe00",
+    },
+    H2: {
+      fontSize: "2em",
+      color: "#3498db",
+      borderBottom: "none",
+    },
+    H3: {
+      fontSize: "1.75em",
+      color: "#2c3e50",
+    },
+    H4: {
+      fontSize: "1.5em",
+      color: "#2c3e50",
+    },
+    H5: {
+      fontSize: "1.25em",
+      color: "#2c3e50",
+    },
+    H6: {
+      fontSize: "1em",
+      color: "#2c3e50",
+      fontWeight: "bold",
+    },
+  };
 
   useEffect(() => {
     const fontList: string[] = [
@@ -299,9 +335,50 @@ const Editor: React.FC = () => {
     }
     setFontNameOptions(fontOptions);
     setFontSizeOptions(sizeOptions);
+
+    // Set default paragraph separator to <p>
+    document.execCommand("defaultParagraphSeparator", false, "p");
   }, []);
 
   const handleButtonClick = (command: string, value?: string) => {
+    if (command === "bold") {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      if (range.collapsed) return;
+
+      // Check if the startContainer is inside a span with our custom bold style
+      let currentNode: Node | null = selection.anchorNode;
+      while (currentNode && currentNode !== editorRef.current) {
+        if (
+          currentNode instanceof HTMLElement &&
+          currentNode.tagName.toLowerCase() === "span" &&
+          currentNode.style.fontWeight === "bold" &&
+          currentNode.style.color === "rgb(230, 0, 0)" // note: custom red may be reported as rgb
+        ) {
+          // Remove the bold styling by unwrapping the span element
+          const parent = currentNode.parentNode;
+          if (!parent) break;
+          while (currentNode.firstChild) {
+            parent.insertBefore(currentNode.firstChild, currentNode);
+          }
+          parent.removeChild(currentNode);
+          selection.removeAllRanges();
+          return;
+        }
+        currentNode = currentNode.parentNode;
+      }
+
+      // If not already bold, wrap the selected text in a span with custom bold styling
+      const span = document.createElement("span");
+      span.style.fontWeight = "bold";
+      span.style.color = "#e60000"; // Custom red color
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      selection.removeAllRanges();
+      return;
+    }
+
     if (command === "insertImage") {
       const url = prompt("Enter the image URL:");
       if (url) {
@@ -337,21 +414,60 @@ const Editor: React.FC = () => {
       return;
     }
     document.execCommand(command, false, value || undefined);
-    console.log("document exec",    document.execCommand(command, false, value || undefined)
-  )
   };
 
   const handleAdvancedOptionChange = (command: string, value: string) => {
     const threshold = 4.5;
     if (command === "formatBlock") {
-      document.execCommand(command, false, value.toLowerCase());
+      const tagName = value.toUpperCase();
+      document.execCommand("formatBlock", false, tagName);
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (sel?.rangeCount) {
+          const range = sel.getRangeAt(0);
+          let headerElement: Node | null = range.commonAncestorContainer;
+          while (
+            headerElement &&
+            (!(headerElement instanceof HTMLElement) ||
+              !headerElement.tagName.match(/^H[1-6]$/i))
+          ) {
+            headerElement = headerElement.parentElement;
+          }
+          if (headerElement instanceof HTMLElement) {
+            Object.keys(headerStyles.base).forEach((style) => {
+              headerElement.style[style as any] = "";
+            });
+            Object.values(headerStyles).forEach((levelStyles) => {
+              Object.keys(levelStyles).forEach((style) => {
+                headerElement.style[style as any] = "";
+              });
+            });
+            Object.entries(headerStyles.base).forEach(([prop, val]) => {
+              headerElement.style[prop as any] = val;
+            });
+            if (headerStyles[tagName]) {
+              Object.entries(headerStyles[tagName]).forEach(([prop, val]) => {
+                headerElement.style[prop as any] = val;
+              });
+            }
+            if (editorRef.current) {
+              setHtmlData(editorRef.current.innerHTML);
+            }
+          }
+        }
+      }, 10);
       return;
     }
     if (command === "foreColor" || command === "backColor") {
       const contrastDark = getContrastRatio(value, "#1e1e1e");
       const contrastLight = getContrastRatio(value, "#FAF9F6");
       if (contrastDark < threshold || contrastLight < threshold) {
-        const newColor = getNearestContrastColor(value, threshold, "#1e1e1e", "#FAF9F6");
+        const newColor = getNearestContrastColor(
+          value,
+          threshold,
+          "#1e1e1e",
+          "#FAF9F6"
+        );
         document.execCommand(command, false, newColor);
         return;
       }
@@ -397,11 +513,7 @@ const Editor: React.FC = () => {
           <button id="underline" className="option-button format" onClick={() => handleButtonClick("underline")}>
             <Underline size={16} />
           </button>
-          <button
-            id="strikeout"
-            className="option-button format"
-            onClick={() => handleButtonClick("strikeThrough")}
-          >
+          <button id="strikeout" className="option-button format" onClick={() => handleButtonClick("strikeThrough")}>
             <Strikethrough size={16} />
           </button>
           <button id="superscript" className="option-button format" onClick={() => handleButtonClick("superscript")}>
@@ -436,19 +548,15 @@ const Editor: React.FC = () => {
           <button id="unlink" className="option-button" onClick={() => handleButtonClick("unlink")}>
             <Unlink size={16} />
           </button>
-          {/* Insert Image Button */}
           <button id="insertImage" className="option-button" onClick={() => handleButtonClick("insertImage")}>
             <Image size={16} />
           </button>
-          {/* Insert Video Button */}
           <button id="insertVideo" className="option-button" onClick={() => handleButtonClick("insertVideo")}>
             <Video size={16} />
           </button>
-          {/* Insert Table Button */}
           <button id="insertTable" className="option-button" onClick={() => handleButtonClick("insertTable")}>
             <Table size={16} />
           </button>
-          {/* Table Operations using the cursor position */}
           <button className="option-button" onClick={handleAddRow}>
             Add Row
           </button>
@@ -458,32 +566,16 @@ const Editor: React.FC = () => {
           <button className="option-button" onClick={handleRemoveTable}>
             Remove Table
           </button>
-          <button
-            id="justifyLeft"
-            className="option-button align"
-            onClick={() => handleButtonClick("justifyLeft")}
-          >
+          <button id="justifyLeft" className="option-button align" onClick={() => handleButtonClick("justifyLeft")}>
             <AlignLeft size={16} />
           </button>
-          <button
-            id="justifyCenter"
-            className="option-button align"
-            onClick={() => handleButtonClick("justifyCenter")}
-          >
+          <button id="justifyCenter" className="option-button align" onClick={() => handleButtonClick("justifyCenter")}>
             <AlignCenter size={16} />
           </button>
-          <button
-            id="justifyRight"
-            className="option-button align"
-            onClick={() => handleButtonClick("justifyRight")}
-          >
+          <button id="justifyRight" className="option-button align" onClick={() => handleButtonClick("justifyRight")}>
             <AlignRight size={16} />
           </button>
-          <button
-            id="justifyFull"
-            className="option-button align"
-            onClick={() => handleButtonClick("justifyFull")}
-          >
+          <button id="justifyFull" className="option-button align" onClick={() => handleButtonClick("justifyFull")}>
             <AlignJustify size={16} />
           </button>
           <button id="indent" className="option-button spacing" onClick={() => handleButtonClick("indent")}>
@@ -537,7 +629,6 @@ const Editor: React.FC = () => {
             />
             <label htmlFor="backColor">Highlight Color</label>
           </div>
-          {/* Button to view HTML content in the console */}
           <button className="option-button" onClick={handleViewHTML}>
             View HTML
           </button>
