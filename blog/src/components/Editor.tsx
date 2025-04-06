@@ -11,7 +11,6 @@ import {
   Link2,
   Image as ImageIcon,
   Table as TableIcon,
-  Code,
   Quote,
   Heading1,
   Heading2,
@@ -23,7 +22,6 @@ import {
 } from "lucide-react";
 import TurndownService from "turndown";
 
-// The list of supported languages.
 const LANGUAGES = [
   "text",
   "javascript",
@@ -45,29 +43,21 @@ const LANGUAGES = [
 ];
 
 const Editor = () => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const savedSelection = useRef<Range | null>(null);
+  const editorRef = useRef(null);
+  const savedSelection = useRef(null);
   const [selectedLanguage, setSelectedLanguage] = useState("text");
+  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+  const [linkInputVisible, setLinkInputVisible] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const linkInputRef = useRef(null);
 
-  // SVG markup for the copy icon (from Lucide).
-  const copyIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M0 0h24v24H0z" stroke="none"/>
-    <rect x="8" y="8" width="12" height="12" rx="2"/>
-    <path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2"/>
-  </svg>`;
-
-  // Initialize with a placeholder if empty.
-  useEffect(() => {
-    if (editorRef.current && !editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = '<p class="text-gray-500">Start writing...</p>';
-    }
-  }, []);
-
-  // Save/restore selection.
+  // Floating toolbar formatting functions
   const saveSelection = () => {
     const sel = window.getSelection();
     if (sel?.rangeCount) savedSelection.current = sel.getRangeAt(0);
   };
+
   const restoreSelection = () => {
     if (savedSelection.current) {
       const sel = window.getSelection();
@@ -76,37 +66,42 @@ const Editor = () => {
     }
   };
 
-  // Basic formatting functions.
-  const handleFormat = (cmd: string, val?: string) => {
+  const handleFormat = (cmd, val) => {
     saveSelection();
     document.execCommand(cmd, false, val);
     restoreSelection();
     editorRef.current?.focus();
+    hideToolbar();
   };
 
-  const toggleHeading = (tag: string) => {
+  const toggleHeading = (tag) => {
     saveSelection();
     const current = document.queryCommandValue("formatBlock").toLowerCase();
     const clean = current.replace(/[<>]/g, "");
     document.execCommand("formatBlock", false, clean === tag.toLowerCase() ? "p" : tag);
     restoreSelection();
     editorRef.current?.focus();
+    hideToolbar();
   };
 
-  const handleInsertHTML = (html: string) => {
+  const handleInsertHTML = (html) => {
     saveSelection();
     document.execCommand("insertHTML", false, html);
     restoreSelection();
     editorRef.current?.focus();
+    hideToolbar();
   };
 
-  // Check if the selection is inside a code block.
-  const isInCodeBlock = (): boolean => {
+  // Code block helpers
+  const isInCodeBlock = () => {
     const sel = window.getSelection();
     if (!sel?.anchorNode) return false;
-    let node: Node | null = sel.anchorNode;
+    let node = sel.anchorNode;
     while (node && node !== editorRef.current) {
-      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains("code-block-container")) {
+      if (
+        node.nodeType === Node.ELEMENT_NODE &&
+        node.classList.contains("code-block-container")
+      ) {
         return true;
       }
       node = node.parentNode;
@@ -114,63 +109,16 @@ const Editor = () => {
     return false;
   };
 
-  // Inline code helper.
-  const getInlineCodeContainer = (): HTMLElement | null => {
+  const getCodeBlockContainer = () => {
     const sel = window.getSelection();
     if (!sel?.anchorNode) return null;
-    let node: Node | null = sel.anchorNode;
+    let node = sel.anchorNode;
     while (node && node !== editorRef.current) {
-      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains("inline-code-container")) {
-        return node as HTMLElement;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  };
-
-  const toggleInlineCode = () => {
-    if (isInCodeBlock()) return;
-    const container = getInlineCodeContainer();
-    if (container) {
-      // Unwrap inline code.
-      const codeEl = container.querySelector("code.inline-code");
-      const text = codeEl?.textContent || "";
-      container.replaceWith(document.createTextNode(text));
-    } else {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const text = range.toString() || "code";
-        const spanContainer = document.createElement("span");
-        spanContainer.className = "inline-code-container";
-        const codeNode = document.createElement("code");
-        codeNode.className = "inline-code";
-        codeNode.textContent = text;
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "inline-copy-btn";
-        copyBtn.innerHTML = copyIconSVG;
-        copyBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          navigator.clipboard.writeText(codeNode.textContent || "");
-          copyBtn.style.opacity = "0.6";
-          setTimeout(() => (copyBtn.style.opacity = "1"), 2000);
-        });
-        spanContainer.appendChild(codeNode);
-        spanContainer.appendChild(copyBtn);
-        range.deleteContents();
-        range.insertNode(spanContainer);
-      }
-    }
-  };
-
-  // Code-block helper.
-  const getCodeBlockContainer = (): HTMLElement | null => {
-    const sel = window.getSelection();
-    if (!sel?.anchorNode) return null;
-    let node: Node | null = sel.anchorNode;
-    while (node && node !== editorRef.current) {
-      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains("code-block-container")) {
-        return node as HTMLElement;
+      if (
+        node.nodeType === Node.ELEMENT_NODE &&
+        node.classList.contains("code-block-container")
+      ) {
+        return node;
       }
       node = node.parentNode;
     }
@@ -183,11 +131,14 @@ const Editor = () => {
   <div class="code-block-header flex justify-between items-center bg-gray-200 px-2 py-1 text-xs font-mono">
     <select class="code-lang-dropdown">
       ${LANGUAGES.map(
-        (lang) => `<option value="${lang}" ${lang === selectedLanguage ? "selected" : ""}>${lang}</option>`
+        (lang) =>
+          `<option value="${lang}" ${lang === selectedLanguage ? "selected" : ""}>${lang}</option>`
       ).join("")}
     </select>
     <div class="flex space-x-2">
-      <button class="copy-code-btn px-1 rounded bg-white hover:bg-gray-100">${copyIconSVG}</button>
+      <button class="copy-code-btn px-1 rounded bg-white hover:bg-gray-100">
+        ${"<svg xmlns='http://www.w3.org/2000/svg' class='w-4 h-4' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M0 0h24v24H0z' stroke='none'/><rect x='8' y='8' width='12' height='12' rx='2'/><path d='M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2'/></svg>"}
+      </button>
       <button class="view-md-btn px-1 rounded bg-white hover:bg-gray-100">MD</button>
     </div>
   </div>
@@ -205,126 +156,176 @@ const Editor = () => {
     }
   };
 
-  // Blockquote helper.
-  const getBlockquoteElement = (): HTMLElement | null => {
+  // Blockquote helpers
+  const getBlockquoteElement = () => {
     const sel = window.getSelection();
     if (!sel?.anchorNode) return null;
-    let node: Node | null = sel.anchorNode;
+    let node = sel.anchorNode;
     while (node && node !== editorRef.current) {
-      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "BLOCKQUOTE") {
-        return node as HTMLElement;
+      if (
+        node.nodeType === Node.ELEMENT_NODE &&
+        node.nodeName === "BLOCKQUOTE"
+      ) {
+        return node;
       }
       node = node.parentNode;
     }
     return null;
   };
 
-  // Link helper.
-  const getLinkElement = (): HTMLElement | null => {
+  const toggleBlockquote = () => {
     const sel = window.getSelection();
-    if (!sel?.anchorNode) return null;
-    let node: Node | null = sel.anchorNode;
-    while (node && node !== editorRef.current) {
-      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName === "A") {
-        return node as HTMLElement;
-      }
-      node = node.parentNode;
+    if (!sel || sel.rangeCount === 0) return;
+    if (getBlockquoteElement()) {
+      exitBlockquote();
+      return;
     }
-    return null;
-  };
-
-  // Exit functions: unwrapping elements.
-  const exitCodeBlock = () => {
-    const container = getCodeBlockContainer();
-    if (container && editorRef.current) {
-      const newParagraph = document.createElement("p");
-      newParagraph.innerHTML = "<br/>";
-      container.parentNode?.insertBefore(newParagraph, container.nextSibling);
-      const range = document.createRange();
-      range.setStart(newParagraph, 0);
-      range.collapse(true);
-      const sel = window.getSelection();
-      if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-      editorRef.current.focus();
-    }
-  };
-
-  const exitInlineCode = () => {
-    const container = getInlineCodeContainer();
-    if (container && editorRef.current) {
-      const codeEl = container.querySelector("code.inline-code");
-      const text = codeEl?.textContent || "";
-      container.replaceWith(document.createTextNode(text));
-      const range = document.createRange();
-      range.selectNodeContents(editorRef.current);
-      range.collapse(false);
-      const sel = window.getSelection();
-      if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-      editorRef.current.focus();
-    }
+    const range = sel.getRangeAt(0);
+    const blockquote = document.createElement("blockquote");
+    const fragment = range.extractContents();
+    blockquote.appendChild(fragment);
+    range.insertNode(blockquote);
+    const newRange = document.createRange();
+    newRange.selectNodeContents(blockquote);
+    newRange.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
   };
 
   const exitBlockquote = () => {
     const blockquote = getBlockquoteElement();
     if (blockquote && editorRef.current) {
-      const fragment = document.createDocumentFragment();
-      while (blockquote.firstChild) {
-        fragment.appendChild(blockquote.firstChild);
-      }
-      blockquote.replaceWith(fragment);
+      const newParagraph = document.createElement("p");
+      newParagraph.innerHTML = "<br>";
+      blockquote.parentNode?.insertBefore(newParagraph, blockquote.nextSibling);
       const range = document.createRange();
-      range.selectNodeContents(editorRef.current);
-      range.collapse(false);
+      range.setStart(newParagraph, 0);
+      range.collapse(true);
       const sel = window.getSelection();
-      if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-      editorRef.current.focus();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
     }
+  };
+
+  // Link helpers
+  const getLinkElement = () => {
+    const sel = window.getSelection();
+    if (!sel?.anchorNode) return null;
+    let node = sel.anchorNode;
+    while (node && node !== editorRef.current) {
+      if (node.nodeType === Node.ELEMENT_NODE && node.nodeName === "A") {
+        return node;
+      }
+      node = node.parentNode;
+    }
+    return null;
   };
 
   const exitLink = () => {
     const linkEl = getLinkElement();
     if (linkEl && editorRef.current) {
-      const text = linkEl.textContent || "";
-      linkEl.replaceWith(document.createTextNode(text));
+      const parent = linkEl.parentNode;
+      const offset = Array.from(parent.childNodes).indexOf(linkEl) + 1;
       const range = document.createRange();
-      range.selectNodeContents(editorRef.current);
-      range.collapse(false);
+      range.setStart(parent, offset);
+      range.collapse(true);
       const sel = window.getSelection();
-      if (sel) {
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-      editorRef.current.focus();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
     }
   };
 
-  // Listen for Escape key to exit any formatting (code block, inline code, blockquote, or link).
+  const exitCodeBlock = () => {
+    const container = getCodeBlockContainer();
+    if (container && editorRef.current) {
+      const newParagraph = document.createElement("p");
+      newParagraph.innerHTML = "<br>";
+      container.parentNode?.insertBefore(newParagraph, container.nextSibling);
+      const range = document.createRange();
+      range.setStart(newParagraph, 0);
+      range.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+  };
+
+  // Exit formatting for any active element.
+  const exitFormatting = () => {
+    if (getCodeBlockContainer()) exitCodeBlock();
+    else if (getLinkElement()) exitLink();
+    else if (getBlockquoteElement()) exitBlockquote();
+  };
+
+  // ---------- Link insertion via floating toolbar ----------
+  const handleInsertLink = () => {
+    saveSelection();
+    setLinkInputVisible(true);
+    setTimeout(() => linkInputRef.current?.focus(), 0);
+  };
+
+  const confirmInsertLink = () => {
+    const sel = window.getSelection();
+    let selectedText = sel.toString();
+    if (!selectedText) selectedText = linkUrl;
+    const linkHTML = `<a href="${linkUrl}" target="_blank" rel="noopener" class="text-blue-600 underline">${selectedText}</a>`;
+    handleInsertHTML(linkHTML);
+    setLinkUrl("");
+    setLinkInputVisible(false);
+  };
+
+  // ---------- Floating Toolbar State & Positioning ----------
+  const showToolbar = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) {
+      setToolbarVisible(false);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    setToolbarPos({
+      top: rect.top - 45 + window.scrollY,
+      left: rect.left + rect.width / 2 - 100 + window.scrollX,
+    });
+    setToolbarVisible(true);
+  };
+
+  const hideToolbar = () => {
+    setToolbarVisible(false);
+    setLinkInputVisible(false);
+  };
+
+  // Listen for selection changes to update floating toolbar.
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && editorRef.current.contains(sel.anchorNode)) {
+        showToolbar();
+      } else {
+        hideToolbar();
+      }
+    };
+    document.addEventListener("mouseup", handleSelectionChange);
+    document.addEventListener("keyup", handleSelectionChange);
+    return () => {
+      document.removeEventListener("mouseup", handleSelectionChange);
+      document.removeEventListener("keyup", handleSelectionChange);
+    };
+  }, []);
+
+  // Keydown handler – pressing Enter inside blockquote exits formatting and adds a new line.
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
-    const keydownHandler = (e: KeyboardEvent) => {
+    const keydownHandler = (e) => {
       if (e.key === "Escape") {
-        if (getCodeBlockContainer()) {
-          e.preventDefault();
-          exitCodeBlock();
-        } else if (getInlineCodeContainer()) {
-          e.preventDefault();
-          exitInlineCode();
-        } else if (getLinkElement()) {
-          e.preventDefault();
-          exitLink();
-        } else if (getBlockquoteElement()) {
+        e.preventDefault();
+        exitFormatting();
+      } else if (e.key === "Enter") {
+        if (getBlockquoteElement()) {
           e.preventDefault();
           exitBlockquote();
+          document.execCommand("insertParagraph", false, null);
         }
       }
     };
@@ -332,10 +333,10 @@ const Editor = () => {
     return () => editor.removeEventListener("keydown", keydownHandler);
   }, []);
 
-  // Handle Copy and View Markdown buttons in the code block header.
+  // Additional event listeners for code block buttons and language changes.
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+    const handler = (e) => {
+      const target = e.target;
       if (target.matches(".copy-code-btn")) {
         const codeEl = target.closest(".code-block-container")?.querySelector("code");
         if (codeEl) {
@@ -359,10 +360,9 @@ const Editor = () => {
     return () => document.removeEventListener("click", handler);
   }, []);
 
-  // Listen for changes on code block language dropdowns.
   useEffect(() => {
-    const handler = (e: Event) => {
-      const target = e.target as HTMLSelectElement;
+    const handler = (e) => {
+      const target = e.target;
       if (target && target.classList.contains("code-lang-dropdown")) {
         const newLang = target.value;
         const container = target.closest(".code-block-container");
@@ -378,7 +378,6 @@ const Editor = () => {
     return () => document.removeEventListener("change", handler);
   }, []);
 
-  // Full document Markdown view.
   const viewAllMarkdown = () => {
     if (!editorRef.current) return;
     const td = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
@@ -386,9 +385,9 @@ const Editor = () => {
       filter: (node) =>
         node.nodeName === "PRE" &&
         node.firstChild?.nodeName === "CODE" &&
-        (node.firstChild as HTMLElement).className.startsWith("language-"),
+        node.firstChild.className.startsWith("language-"),
       replacement: (_c, node) => {
-        const codeNode = node.firstChild as HTMLElement;
+        const codeNode = node.firstChild;
         const lang = codeNode.className.replace("language-", "");
         return `\`\`\`${lang}\n${codeNode.textContent}\n\`\`\`\n\n`;
       },
@@ -402,15 +401,13 @@ const Editor = () => {
     alert("Full Markdown:\n\n" + md);
   };
 
-  // Remove placeholder when user starts typing.
   const handleInput = () => {
     if (editorRef.current?.querySelector(".text-gray-500")) {
       editorRef.current.innerHTML = "";
     }
   };
 
-  // Strip formatting on paste.
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e) => {
     e.preventDefault();
     const text = e.clipboardData.getData("text/plain");
     document.execCommand("insertText", false, text);
@@ -418,8 +415,67 @@ const Editor = () => {
 
   return (
     <div>
-      <div className="border border-gray-300 rounded-md my-4">
-        {/* Toolbar */}
+      {/* Floating Toolbar */}
+      {toolbarVisible && (
+        <div
+          className="floating-toolbar flex gap-2 p-2 rounded shadow"
+          style={{
+            position: "absolute",
+            top: toolbarPos.top,
+            left: toolbarPos.left,
+            background: "white",
+            zIndex: 10,
+          }}
+        >
+          <button onMouseDown={(e) => { e.preventDefault(); handleFormat("bold"); }}>
+            <Bold className="w-4 h-4" />
+          </button>
+          <button onMouseDown={(e) => { e.preventDefault(); handleFormat("italic"); }}>
+            <Italic className="w-4 h-4" />
+          </button>
+          <button onMouseDown={(e) => { e.preventDefault(); handleFormat("underline"); }}>
+            <UnderlineIcon className="w-4 h-4" />
+          </button>
+          <button onMouseDown={(e) => { e.preventDefault(); handleFormat("strikeThrough"); }}>
+            <Strikethrough className="w-4 h-4" />
+          </button>
+          <button onMouseDown={(e) => { e.preventDefault(); handleFormat("formatBlock", "blockquote"); }}>
+            <Quote className="w-4 h-4" />
+          </button>
+          <button
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+              setLinkInputVisible(true);
+              setTimeout(() => {
+                linkInputRef.current?.focus();
+                showToolbar();
+              }, 0);
+            }}
+          >
+            <Link2 className="w-4 h-4" />
+          </button>
+          {linkInputVisible && (
+            <input
+              ref={linkInputRef}
+              type="text"
+              placeholder="Enter URL..."
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmInsertLink();
+                }
+              }}
+              style={{ padding: "0.25rem", fontSize: "0.875rem" }}
+            />
+          )}
+        </div>
+      )}
+      {/* Main Editor */}
+      <div className="border border-gray-300 rounded-md my-4 relative">
+        {/* Top toolbar (optional additional controls) */}
         <div className="flex flex-wrap gap-2 p-2 border-b border-gray-300 bg-gray-50">
           {[1, 2, 3, 4, 5, 6].map((n) => {
             const Icon = [Heading1, Heading2, Heading3, Heading4, Heading5, Heading6][n - 1];
@@ -434,29 +490,26 @@ const Editor = () => {
               </button>
             );
           })}
-          <button onClick={() => handleFormat("bold")} title="Bold" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("bold")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <Bold className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("italic")} title="Italic" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("italic")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <Italic className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("underline")} title="Underline" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("underline")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <UnderlineIcon className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("strikeThrough")} title="Strikethrough" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("strikeThrough")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <Strikethrough className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("insertUnorderedList")} title="Bullet List" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("insertUnorderedList")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <List className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("insertOrderedList")} title="Numbered List" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("insertOrderedList")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <ListOrdered className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("formatBlock", "blockquote")} title="Blockquote" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={() => handleFormat("formatBlock", "blockquote")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <Quote className="w-5 h-5" />
-          </button>
-          <button onClick={toggleInlineCode} title="Inline Code" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-            <Code className="w-5 h-5" />
           </button>
           <button
             onClick={() => {
@@ -464,11 +517,10 @@ const Editor = () => {
               if (url) {
                 const linkText = prompt("Enter link text:", url) || url;
                 handleInsertHTML(
-                  `<a href="${url}" target="_blank" rel="noopener" class="text-blue-600 underline">${linkText}</a>`
+                  `<a href=\"${url}\" target=\"_blank\" rel=\"noopener\" class=\"text-blue-600 underline\">${linkText}</a>`
                 );
               }
             }}
-            title="Link"
             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
           >
             <Link2 className="w-5 h-5" />
@@ -478,10 +530,9 @@ const Editor = () => {
               const url = prompt("Enter image URL:");
               if (url)
                 handleInsertHTML(
-                  `<img src="${url}" alt="img" class="max-w-full h-auto my-4 rounded" />`
+                  `<img src=\"${url}\" alt=\"img\" class=\"max-w-full h-auto my-4 rounded\" />`
                 );
             }}
-            title="Image"
             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
           >
             <ImageIcon className="w-5 h-5" />
@@ -489,19 +540,18 @@ const Editor = () => {
           <button
             onClick={() =>
               handleInsertHTML(
-                `<table class="mx-auto border-collapse w-full my-4">
+                `<table class=\"mx-auto border-collapse w-full my-4\">
   <tr>
-    <th class="border p-2 bg-gray-50">Header</th>
-    <th class="border p-2 bg-gray-50">Header</th>
+    <th class=\"border p-2 bg-gray-50\">Header</th>
+    <th class=\"border p-2 bg-gray-50\">Header</th>
   </tr>
   <tr>
-    <td class="border p-2">Cell</td>
-    <td class="border p-2">Cell</td>
+    <td class=\"border p-2\">Cell</td>
+    <td class=\"border p-2\">Cell</td>
   </tr>
 </table>`
               )
             }
-            title="Table"
             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
           >
             <TableIcon className="w-5 h-5" />
@@ -517,11 +567,25 @@ const Editor = () => {
               </option>
             ))}
           </select>
-          <button onClick={toggleCodeBlock} title="Code Block" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={toggleCodeBlock} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <Code2 className="w-5 h-5" />
           </button>
-          <button onClick={viewAllMarkdown} title="View Markdown" className="ml-auto p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+          <button onClick={viewAllMarkdown} className="ml-auto p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             View MD
+          </button>
+          <button 
+            onClick={exitFormatting} 
+            title="Exit Formatting (Esc)"
+            className="hidden sm:inline-block p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
+          >
+            Exit
+          </button>
+          <button 
+            onClick={exitFormatting} 
+            title="Exit Formatting"
+            className="sm:hidden p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
+          >
+            Exit
           </button>
         </div>
         <div
@@ -534,54 +598,65 @@ const Editor = () => {
         />
       </div>
       <style jsx global>{`
-        .inline-code-container {
-          background: #f0f0f0;
-          padding: 0.2em 0.4em;
-          border-radius: 3px;
-          font-family: monospace;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.3em;
-        }
-        .inline-copy-btn {
+        .floating-toolbar button {
           background: transparent;
           border: none;
           cursor: pointer;
         }
+        .floating-toolbar button:hover {
+          color: #555;
+        }
         .editor-content {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           line-height: 1.6;
+          padding: 1.5rem;
+          font-size: 1.125rem;
+          background: #fff;
+          color: #333;
         }
         .editor-content:focus {
           outline: none;
         }
         .editor-content h1 {
-          font-size: 2rem;
-          font-weight: 600;
-          margin: 1rem 0;
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin: 1.5rem 0;
         }
         .editor-content h2 {
-          font-size: 1.75rem;
-          font-weight: 600;
-          margin: 0.875rem 0;
+          font-size: 2rem;
+          font-weight: 700;
+          margin: 1.25rem 0;
         }
         .editor-content h3 {
-          font-size: 1.5rem;
-          font-weight: 600;
-          margin: 0.75rem 0;
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin: 1rem 0;
         }
-        .editor-content ul {
-          list-style: disc;
-          padding-left: 2rem;
-        }
-        .editor-content ol {
-          list-style: decimal;
-          padding-left: 2rem;
+        .editor-content p {
+          margin: 1rem 0;
         }
         .editor-content blockquote {
           border-left: 4px solid #ddd;
           padding-left: 1rem;
           color: #666;
+          margin: 1rem 0;
+          font-style: italic;
+        }
+        @media (max-width: 640px) {
+          .flex.flex-wrap {
+            flex-direction: column;
+          }
+          .editor-content {
+            padding: 1rem;
+            min-height: 300px;
+          }
+          button {
+            font-size: 1rem;
+            padding: 0.5rem;
+          }
+          .floating-toolbar {
+            left: 10px !important;
+          }
         }
       `}</style>
     </div>
