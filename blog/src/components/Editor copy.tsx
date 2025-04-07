@@ -652,7 +652,7 @@ const Editor: React.FC = () => {
 
 export default Editor;
 
-// /////////////////////////////////////////
+// // /////////////////////////////////////////
 // "use client";
 
 // import { useState, useRef, useEffect } from "react";
@@ -666,7 +666,6 @@ export default Editor;
 //   Link2,
 //   Image as ImageIcon,
 //   Table as TableIcon,
-//   Code,
 //   Quote,
 //   Heading1,
 //   Heading2,
@@ -699,23 +698,24 @@ export default Editor;
 // ];
 
 // const Editor = () => {
-//   const editorRef = useRef<HTMLDivElement>(null);
-//   const savedSelection = useRef<Range | null>(null);
+//   const editorRef = useRef(null);
+//   const savedSelection = useRef(null);
 //   const [selectedLanguage, setSelectedLanguage] = useState("text");
+//   const [toolbarVisible, setToolbarVisible] = useState(false);
+//   const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+//   // Use modal state for link insertion
+//   const [linkModalVisible, setLinkModalVisible] = useState(false);
+//   const [linkUrl, setLinkUrl] = useState("");
+//   const linkInputRef = useRef(null);
 
-//   // Placeholder on mount
-//   useEffect(() => {
-//     if (editorRef.current && !editorRef.current.innerHTML) {
-//       editorRef.current.innerHTML =
-//         '<p class="text-gray-500">Start writing...</p>';
-//     }
-//   }, []);
-
-//   // Save/restore selection for execCommand
+//   // Save and restore selection functions
 //   const saveSelection = () => {
 //     const sel = window.getSelection();
-//     if (sel?.rangeCount) savedSelection.current = sel.getRangeAt(0);
+//     if (sel?.rangeCount) {
+//       savedSelection.current = sel.getRangeAt(0);
+//     }
 //   };
+
 //   const restoreSelection = () => {
 //     if (savedSelection.current) {
 //       const sel = window.getSelection();
@@ -724,81 +724,79 @@ export default Editor;
 //     }
 //   };
 
-//   // Formatting helpers
-//   const handleFormat = (cmd: string, val?: string) => {
+//   const handleFormat = (cmd, val) => {
 //     saveSelection();
 //     document.execCommand(cmd, false, val);
 //     restoreSelection();
 //     editorRef.current?.focus();
+//     hideToolbar();
 //   };
-//   const toggleHeading = (tag: string) => {
+
+//   const toggleHeading = (tag) => {
 //     saveSelection();
 //     const current = document.queryCommandValue("formatBlock").toLowerCase();
 //     const clean = current.replace(/[<>]/g, "");
-//     document.execCommand(
-//       "formatBlock",
-//       false,
-//       clean === tag.toLowerCase() ? "p" : tag
-//     );
+//     document.execCommand("formatBlock", false, clean === tag.toLowerCase() ? "p" : tag);
 //     restoreSelection();
 //     editorRef.current?.focus();
+//     hideToolbar();
 //   };
-//   const handleInsertHTML = (html: string) => {
+
+//   const handleInsertHTML = (html) => {
 //     saveSelection();
 //     document.execCommand("insertHTML", false, html);
 //     restoreSelection();
 //     editorRef.current?.focus();
+//     hideToolbar();
 //   };
 
-//   // Inline code toggle
-//   const getInlineCodeElement = (): HTMLElement | null => {
+//   // Code block helpers
+//   const isInCodeBlock = () => {
 //     const sel = window.getSelection();
-//     if (!sel?.anchorNode) return null;
-//     let node: Node | null = sel.anchorNode;
+//     if (!sel?.anchorNode) return false;
+//     let node = sel.anchorNode;
 //     while (node && node !== editorRef.current) {
 //       if (
 //         node.nodeType === Node.ELEMENT_NODE &&
-//         (node as HTMLElement).tagName === "CODE" &&
-//         (node as HTMLElement).classList.contains("inline-code")
+//         node.classList.contains("code-block-container")
 //       ) {
-//         return node as HTMLElement;
+//         return true;
+//       }
+//       node = node.parentNode;
+//     }
+//     return false;
+//   };
+
+//   const getCodeBlockContainer = () => {
+//     const sel = window.getSelection();
+//     if (!sel?.anchorNode) return null;
+//     let node = sel.anchorNode;
+//     while (node && node !== editorRef.current) {
+//       if (
+//         node.nodeType === Node.ELEMENT_NODE &&
+//         node.classList.contains("code-block-container")
+//       ) {
+//         return node;
 //       }
 //       node = node.parentNode;
 //     }
 //     return null;
 //   };
-//   const toggleInlineCode = () => {
-//     const codeEl = getInlineCodeElement();
-//     if (codeEl) {
-//       codeEl.remove();
-//     } else {
-//       handleInsertHTML('<code class="inline-code">code</code>');
-//     }
-//   };
 
-//   // Code-block toggle
-//   const getCodeBlockContainer = (): HTMLElement | null => {
-//     const sel = window.getSelection();
-//     if (!sel?.anchorNode) return null;
-//     let node: Node | null = sel.anchorNode;
-//     while (node && node !== editorRef.current) {
-//       if (
-//         node.nodeType === Node.ELEMENT_NODE &&
-//         (node as HTMLElement).classList.contains("code-block-container")
-//       ) {
-//         return node as HTMLElement;
-//       }
-//       node = node.parentNode;
-//     }
-//     return null;
-//   };
 //   const insertCodeBlock = () => {
 //     const html = `
 // <div class="code-block-container my-4 border rounded overflow-hidden max-w-2xl">
 //   <div class="code-block-header flex justify-between items-center bg-gray-200 px-2 py-1 text-xs font-mono">
-//     <span>${selectedLanguage}</span>
+//     <select class="code-lang-dropdown">
+//       ${LANGUAGES.map(
+//         (lang) =>
+//           `<option value="${lang}" ${lang === selectedLanguage ? "selected" : ""}>${lang}</option>`
+//       ).join("")}
+//     </select>
 //     <div class="flex space-x-2">
-//       <button class="copy-code-btn px-1 rounded bg-white hover:bg-gray-100">Copy</button>
+//       <button class="copy-code-btn px-1 rounded bg-white hover:bg-gray-100">
+//         ${"<svg xmlns='http://www.w3.org/2000/svg' class='w-4 h-4' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M0 0h24v24H0z' stroke='none'/><rect x='8' y='8' width='12' height='12' rx='2'/><path d='M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h2'/></svg>"}
+//       </button>
 //       <button class="view-md-btn px-1 rounded bg-white hover:bg-gray-100">MD</button>
 //     </div>
 //   </div>
@@ -806,6 +804,7 @@ export default Editor;
 // </div>`;
 //     handleInsertHTML(html);
 //   };
+
 //   const toggleCodeBlock = () => {
 //     const container = getCodeBlockContainer();
 //     if (container) {
@@ -815,15 +814,194 @@ export default Editor;
 //     }
 //   };
 
-//   // Copy / View MD for individual blocks
+//   // Blockquote helpers
+//   const getBlockquoteElement = () => {
+//     const sel = window.getSelection();
+//     if (!sel?.anchorNode) return null;
+//     let node = sel.anchorNode;
+//     while (node && node !== editorRef.current) {
+//       if (
+//         node.nodeType === Node.ELEMENT_NODE &&
+//         node.nodeName === "BLOCKQUOTE"
+//       ) {
+//         return node;
+//       }
+//       node = node.parentNode;
+//     }
+//     return null;
+//   };
+
+//   const toggleBlockquote = () => {
+//     const sel = window.getSelection();
+//     if (!sel || sel.rangeCount === 0) return;
+//     if (getBlockquoteElement()) {
+//       exitBlockquote();
+//       return;
+//     }
+//     const range = sel.getRangeAt(0);
+//     const blockquote = document.createElement("blockquote");
+//     const fragment = range.extractContents();
+//     blockquote.appendChild(fragment);
+//     range.insertNode(blockquote);
+//     const newRange = document.createRange();
+//     newRange.selectNodeContents(blockquote);
+//     newRange.collapse(false);
+//     sel.removeAllRanges();
+//     sel.addRange(newRange);
+//   };
+
+//   const exitBlockquote = () => {
+//     const blockquote = getBlockquoteElement();
+//     if (blockquote && editorRef.current) {
+//       const newParagraph = document.createElement("p");
+//       newParagraph.innerHTML = "<br>";
+//       blockquote.parentNode?.insertBefore(newParagraph, blockquote.nextSibling);
+//       const range = document.createRange();
+//       range.setStart(newParagraph, 0);
+//       range.collapse(true);
+//       const sel = window.getSelection();
+//       sel?.removeAllRanges();
+//       sel?.addRange(range);
+//     }
+//   };
+
+//   // Link helpers
+//   const getLinkElement = () => {
+//     const sel = window.getSelection();
+//     if (!sel?.anchorNode) return null;
+//     let node = sel.anchorNode;
+//     while (node && node !== editorRef.current) {
+//       if (node.nodeType === Node.ELEMENT_NODE && node.nodeName === "A") {
+//         return node;
+//       }
+//       node = node.parentNode;
+//     }
+//     return null;
+//   };
+
+//   const exitLink = () => {
+//     const linkEl = getLinkElement();
+//     if (linkEl && editorRef.current) {
+//       const parent = linkEl.parentNode;
+//       const offset = Array.from(parent.childNodes).indexOf(linkEl) + 1;
+//       const range = document.createRange();
+//       range.setStart(parent, offset);
+//       range.collapse(true);
+//       const sel = window.getSelection();
+//       sel?.removeAllRanges();
+//       sel?.addRange(range);
+//     }
+//   };
+
+//   const exitCodeBlock = () => {
+//     const container = getCodeBlockContainer();
+//     if (container && editorRef.current) {
+//       const newParagraph = document.createElement("p");
+//       newParagraph.innerHTML = "<br>";
+//       container.parentNode?.insertBefore(newParagraph, container.nextSibling);
+//       const range = document.createRange();
+//       range.setStart(newParagraph, 0);
+//       range.collapse(true);
+//       const sel = window.getSelection();
+//       sel?.removeAllRanges();
+//       sel?.addRange(range);
+//     }
+//   };
+
+//   // Exit formatting for any active element.
+//   const exitFormatting = () => {
+//     if (getCodeBlockContainer()) exitCodeBlock();
+//     else if (getLinkElement()) exitLink();
+//     else if (getBlockquoteElement()) exitBlockquote();
+//   };
+
+//   // ---------- Link insertion via modal ----------
+//   const confirmInsertLink = () => {
+//     // Restore the saved selection before applying the link.
+//     restoreSelection();
+//     const sel = window.getSelection();
+//     let selectedText = sel ? sel.toString() : "";
+//     if (!selectedText) {
+//       selectedText = linkUrl;
+//     }
+//     const linkHTML = `<a href="${linkUrl}" target="_blank" rel="noopener" class="text-blue-600 underline">${selectedText}</a>`;
+//     document.execCommand("insertHTML", false, linkHTML);
+//     setLinkUrl("");
+//     setLinkModalVisible(false);
+//     editorRef.current?.focus();
+//   };
+
+//   // ---------- Floating Toolbar State & Positioning ----------
+//   const showToolbar = () => {
+//     const sel = window.getSelection();
+//     if (!sel || sel.isCollapsed) {
+//       setToolbarVisible(false);
+//       return;
+//     }
+//     const range = sel.getRangeAt(0);
+//     const rect = range.getBoundingClientRect();
+//     setToolbarPos({
+//       top: rect.top - 45 + window.scrollY,
+//       left: rect.left + rect.width / 2 - 100 + window.scrollX,
+//     });
+//     setToolbarVisible(true);
+//   };
+
+//   const hideToolbar = () => {
+//     setToolbarVisible(false);
+//     // We don't want to close the modal if it's already open
+//     if (!linkModalVisible) {
+//       setLinkModalVisible(false);
+//     }
+//   };
+
+//   // Listen for selection changes to update floating toolbar.
 //   useEffect(() => {
-//     const handler = (e: MouseEvent) => {
-//       const target = e.target as HTMLElement;
-//       // Copy
+//     const handleSelectionChange = () => {
+//       // If the link modal is open, do not auto-hide the toolbar.
+//       if (linkModalVisible) return;
+//       const sel = window.getSelection();
+//       if (sel && !sel.isCollapsed && editorRef.current.contains(sel.anchorNode)) {
+//         showToolbar();
+//       } else {
+//         hideToolbar();
+//       }
+//     };
+//     document.addEventListener("mouseup", handleSelectionChange);
+//     document.addEventListener("keyup", handleSelectionChange);
+//     return () => {
+//       document.removeEventListener("mouseup", handleSelectionChange);
+//       document.removeEventListener("keyup", handleSelectionChange);
+//     };
+//   }, [linkModalVisible]);
+
+//   // Keydown handler – pressing Escape cancels formatting.
+//   useEffect(() => {
+//     const editor = editorRef.current;
+//     if (!editor) return;
+//     const keydownHandler = (e) => {
+//       if (e.key === "Escape") {
+//         e.preventDefault();
+//         exitFormatting();
+//         setLinkModalVisible(false);
+//       } else if (e.key === "Enter") {
+//         if (getBlockquoteElement()) {
+//           e.preventDefault();
+//           exitBlockquote();
+//           document.execCommand("insertParagraph", false, null);
+//         }
+//       }
+//     };
+//     editor.addEventListener("keydown", keydownHandler);
+//     return () => editor.removeEventListener("keydown", keydownHandler);
+//   }, []);
+
+//   // Additional event listeners for code block buttons and language changes.
+//   useEffect(() => {
+//     const handler = (e) => {
+//       const target = e.target;
 //       if (target.matches(".copy-code-btn")) {
-//         const codeEl = target
-//           .closest(".code-block-container")
-//           ?.querySelector("code");
+//         const codeEl = target.closest(".code-block-container")?.querySelector("code");
 //         if (codeEl) {
 //           navigator.clipboard.writeText(codeEl.textContent || "");
 //           target.textContent = "Copied!";
@@ -831,11 +1009,8 @@ export default Editor;
 //         }
 //         e.stopPropagation();
 //       }
-//       // View MD
 //       if (target.matches(".view-md-btn")) {
-//         const codeEl = target
-//           .closest(".code-block-container")
-//           ?.querySelector("code");
+//         const codeEl = target.closest(".code-block-container")?.querySelector("code");
 //         if (codeEl) {
 //           const lang = codeEl.className.replace("language-", "");
 //           const text = codeEl.textContent || "";
@@ -848,41 +1023,64 @@ export default Editor;
 //     return () => document.removeEventListener("click", handler);
 //   }, []);
 
-//   // Full-document Markdown
+//   useEffect(() => {
+//     const handler = (e) => {
+//       const target = e.target;
+//       if (target && target.classList.contains("code-lang-dropdown")) {
+//         const newLang = target.value;
+//         const container = target.closest(".code-block-container");
+//         if (container) {
+//           const codeEl = container.querySelector("pre code");
+//           if (codeEl) {
+//             codeEl.className = `language-${newLang}`;
+//           }
+//         }
+//       }
+//     };
+//     document.addEventListener("change", handler);
+//     return () => document.removeEventListener("change", handler);
+//   }, []);
+
 //   const viewAllMarkdown = () => {
 //     if (!editorRef.current) return;
-//     const turndown = new TurndownService({
-//       headingStyle: "atx",
-//       codeBlockStyle: "fenced",
-//     });
-//     turndown.addRule("codeBlocks", {
+//     const td = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
+//     // Convert code blocks as before
+//     td.addRule("codeBlocks", {
 //       filter: (node) =>
 //         node.nodeName === "PRE" &&
 //         node.firstChild?.nodeName === "CODE" &&
-//         (node.firstChild as HTMLElement).className.startsWith("language-"),
-//       replacement: (_content, node) => {
-//         const codeNode = node.firstChild as HTMLElement;
+//         node.firstChild.className.startsWith("language-"),
+//       replacement: (_c, node) => {
+//         const codeNode = node.firstChild;
 //         const lang = codeNode.className.replace("language-", "");
 //         return `\`\`\`${lang}\n${codeNode.textContent}\n\`\`\`\n\n`;
 //       },
 //     });
-//     turndown.addRule("inlineCode", {
+//     // Convert inline code as before
+//     td.addRule("inlineCode", {
 //       filter: "code",
 //       replacement: (content, node) =>
 //         node.parentNode?.nodeName === "PRE" ? content : `\`${content}\``,
 //     });
-//     const md = turndown.turndown(editorRef.current.innerHTML);
+//     // New rule for links: converts <a> to markdown link syntax
+//     td.addRule("links", {
+//       filter: (node) => node.nodeName === "A",
+//       replacement: (content, node) => {
+//         const href = node.getAttribute("href");
+//         return `[${content}](${href})`;
+//       },
+//     });
+//     const md = td.turndown(editorRef.current.innerHTML);
 //     alert("Full Markdown:\n\n" + md);
 //   };
 
-//   // Clear placeholder on input
 //   const handleInput = () => {
 //     if (editorRef.current?.querySelector(".text-gray-500")) {
 //       editorRef.current.innerHTML = "";
 //     }
 //   };
-//   // Strip formatting on paste
-//   const handlePaste = (e: React.ClipboardEvent) => {
+
+//   const handlePaste = (e) => {
 //     e.preventDefault();
 //     const text = e.clipboardData.getData("text/plain");
 //     document.execCommand("insertText", false, text);
@@ -890,19 +1088,52 @@ export default Editor;
 
 //   return (
 //     <div>
-//       <div className="border border-gray-300 rounded-md my-4">
-//         {/* Toolbar */}
+//       {/* Floating Toolbar */}
+//       {toolbarVisible && (
+//         <div
+//           className="floating-toolbar flex gap-2 p-2 rounded shadow"
+//           style={{
+//             position: "absolute",
+//             top: toolbarPos.top,
+//             left: toolbarPos.left,
+//             background: "white",
+//             zIndex: 10,
+//           }}
+//         >
+//           <button onMouseDown={(e) => { e.preventDefault(); handleFormat("bold"); }}>
+//             <Bold className="w-4 h-4" />
+//           </button>
+//           <button onMouseDown={(e) => { e.preventDefault(); handleFormat("italic"); }}>
+//             <Italic className="w-4 h-4" />
+//           </button>
+//           <button onMouseDown={(e) => { e.preventDefault(); handleFormat("underline"); }}>
+//             <UnderlineIcon className="w-4 h-4" />
+//           </button>
+//           <button onMouseDown={(e) => { e.preventDefault(); handleFormat("strikeThrough"); }}>
+//             <Strikethrough className="w-4 h-4" />
+//           </button>
+//           <button onMouseDown={(e) => { e.preventDefault(); handleFormat("formatBlock", "blockquote"); }}>
+//             <Quote className="w-4 h-4" />
+//           </button>
+//           <button
+//             onMouseDown={(e) => {
+//               e.preventDefault();
+//               saveSelection();
+//               setLinkModalVisible(true);
+//               // Delay focus so that the modal input is rendered
+//               setTimeout(() => linkInputRef.current?.focus(), 0);
+//             }}
+//           >
+//             <Link2 className="w-4 h-4" />
+//           </button>
+//         </div>
+//       )}
+//       {/* Main Editor */}
+//       <div className="border border-gray-300 rounded-md my-4 relative">
+//         {/* Top toolbar with additional controls */}
 //         <div className="flex flex-wrap gap-2 p-2 border-b border-gray-300 bg-gray-50">
-//           {/* Headings */}
 //           {[1, 2, 3, 4, 5, 6].map((n) => {
-//             const Icon = [
-//               Heading1,
-//               Heading2,
-//               Heading3,
-//               Heading4,
-//               Heading5,
-//               Heading6,
-//             ][n - 1];
+//             const Icon = [Heading1, Heading2, Heading3, Heading4, Heading5, Heading6][n - 1];
 //             return (
 //               <button
 //                 key={n}
@@ -914,47 +1145,37 @@ export default Editor;
 //               </button>
 //             );
 //           })}
-
-//           {/* Text formatting */}
-//           <button onClick={() => handleFormat("bold")} title="Bold" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("bold")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <Bold className="w-5 h-5" />
 //           </button>
-//           <button onClick={() => handleFormat("italic")} title="Italic" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("italic")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <Italic className="w-5 h-5" />
 //           </button>
-//           <button onClick={() => handleFormat("underline")} title="Underline" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("underline")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <UnderlineIcon className="w-5 h-5" />
 //           </button>
-//           <button onClick={() => handleFormat("strikeThrough")} title="Strikethrough" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("strikeThrough")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <Strikethrough className="w-5 h-5" />
 //           </button>
-
-//           {/* Lists & quote */}
-//           <button onClick={() => handleFormat("insertUnorderedList")} title="Bullet List" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("insertUnorderedList")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <List className="w-5 h-5" />
 //           </button>
-//           <button onClick={() => handleFormat("insertOrderedList")} title="Numbered List" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("insertOrderedList")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <ListOrdered className="w-5 h-5" />
 //           </button>
-//           <button onClick={() => handleFormat("formatBlock", "blockquote")} title="Blockquote" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
+//           <button onClick={() => handleFormat("formatBlock", "blockquote")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <Quote className="w-5 h-5" />
 //           </button>
-
-//           {/* Inline code */}
-//           <button onClick={toggleInlineCode} title="Inline Code" className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-//             <Code className="w-5 h-5" />
-//           </button>
-
-//           {/* Link & image */}
 //           <button
 //             onClick={() => {
 //               const url = prompt("Enter URL:");
-//               if (url)
+//               if (url) {
+//                 const linkText = prompt("Enter link text:", url) || url;
 //                 handleInsertHTML(
-//                   `<a href="${url}" target="_blank" rel="noopener" class="text-blue-600 underline">${url}</a>`
+//                   `<a href="${url}" target="_blank" rel="noopener" class="text-blue-600 underline">${linkText}</a>`
 //                 );
+//               }
 //             }}
-//             title="Link"
 //             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
 //           >
 //             <Link2 className="w-5 h-5" />
@@ -967,29 +1188,29 @@ export default Editor;
 //                   `<img src="${url}" alt="img" class="max-w-full h-auto my-4 rounded" />`
 //                 );
 //             }}
-//             title="Image"
 //             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
 //           >
 //             <ImageIcon className="w-5 h-5" />
 //           </button>
-
-//           {/* Table */}
 //           <button
 //             onClick={() =>
 //               handleInsertHTML(
 //                 `<table class="mx-auto border-collapse w-full my-4">
-//   <tr><th class="border p-2 bg-gray-50">Header</th><th class="border p-2 bg-gray-50">Header</th></tr>
-//   <tr><td class="border p-2">Cell</td><td class="border p-2">Cell</td></tr>
+//   <tr>
+//     <th class="border p-2 bg-gray-50">Header</th>
+//     <th class="border p-2 bg-gray-50">Header</th>
+//   </tr>
+//   <tr>
+//     <td class="border p-2">Cell</td>
+//     <td class="border p-2">Cell</td>
+//   </tr>
 // </table>`
 //               )
 //             }
-//             title="Table"
 //             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
 //           >
 //             <TableIcon className="w-5 h-5" />
 //           </button>
-
-//           {/* Language selector */}
 //           <select
 //             value={selectedLanguage}
 //             onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -1001,86 +1222,162 @@ export default Editor;
 //               </option>
 //             ))}
 //           </select>
-
-//           {/* Code-block toggle */}
-//           <button
-//             onClick={toggleCodeBlock}
-//             title="Code Block"
-//             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-//           >
+//           <button onClick={toggleCodeBlock} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             <Code2 className="w-5 h-5" />
 //           </button>
-
-//           {/* View all Markdown */}
-//           <button
-//             onClick={viewAllMarkdown}
-//             title="View Markdown"
-//             className="ml-auto p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-//           >
+//           <button onClick={viewAllMarkdown} className="ml-auto p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
 //             View MD
 //           </button>
+//           <button 
+//             onClick={exitFormatting} 
+//             title="Exit Formatting (Esc)"
+//             className="hidden sm:inline-block p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
+//           >
+//             Exit
+//           </button>
+//           <button 
+//             onClick={exitFormatting} 
+//             title="Exit Formatting"
+//             className="sm:hidden p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
+//           >
+//             Exit
+//           </button>
 //         </div>
-
-//         {/* Editable area */}
 //         <div
 //           ref={editorRef}
-//           className="editor-content min-h-[500px] p-4 outline-none"
+//           className="editor-content min-h-[500px] p-4 outline-none bg-[#f0f0ff]"
 //           contentEditable
 //           onInput={handleInput}
 //           onPaste={handlePaste}
 //           suppressContentEditableWarning
 //         />
 //       </div>
+      
+//       {/* Link Modal Overlay */}
+//       {linkModalVisible && (
+//         <div
+//           className="link-modal-overlay"
+//           style={{
+//             position: "fixed",
+//             top: 0,
+//             left: 0,
+//             width: "100%",
+//             height: "100%",
+//             background: "rgba(0, 0, 0, 0.3)",
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//             zIndex: 20,
+//           }}
+//         >
+//           <div
+//             className="link-modal"
+//             style={{
+//               background: "white",
+//               padding: "1rem",
+//               borderRadius: "4px",
+//               boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+//             }}
+//           >
+//             <input
+//               ref={linkInputRef}
+//               type="text"
+//               placeholder="Enter URL..."
+//               value={linkUrl}
+//               onChange={(e) => setLinkUrl(e.target.value)}
+//               onKeyDown={(e) => {
+//                 if (e.key === "Enter") {
+//                   e.preventDefault();
+//                   confirmInsertLink();
+//                 }
+//               }}
+//               style={{ padding: "0.5rem", fontSize: "1rem", width: "300px" }}
+//             />
+//             <div style={{ marginTop: "0.5rem", textAlign: "right" }}>
+//               <button
+//                 onClick={confirmInsertLink}
+//                 style={{ marginRight: "0.5rem", padding: "0.5rem 1rem" }}
+//               >
+//                 Confirm
+//               </button>
+//               <button
+//                 onClick={() => {
+//                   setLinkModalVisible(false);
+//                   setLinkUrl("");
+//                 }}
+//                 style={{ padding: "0.5rem 1rem" }}
+//               >
+//                 Cancel
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
 
-//       {/* Styles */}
 //       <style jsx global>{`
-//         .inline-code {
-//           background: #f0f0f0;
-//           padding: 0.2em 0.4em;
-//           border-radius: 3px;
-//           font-family: monospace;
+//         .floating-toolbar button {
+//           background: transparent;
+//           border: none;
+//           cursor: pointer;
+//         }
+//         .floating-toolbar button:hover {
+//           color: #555;
 //         }
 //         .editor-content {
-//           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-//             sans-serif;
+//           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 //           line-height: 1.6;
+//           padding: 1.5rem;
+//           font-size: 1.125rem;
+//           background: #fff;
+//           color: #333;
 //         }
 //         .editor-content:focus {
 //           outline: none;
 //         }
 //         .editor-content h1 {
-//           font-size: 2rem;
-//           font-weight: 600;
-//           margin: 1rem 0;
+//           font-size: 2.5rem;
+//           font-weight: 700;
+//           margin: 1.5rem 0;
 //         }
 //         .editor-content h2 {
-//           font-size: 1.75rem;
-//           font-weight: 600;
-//           margin: 0.875rem 0;
+//           font-size: 2rem;
+//           font-weight: 700;
+//           margin: 1.25rem 0;
 //         }
 //         .editor-content h3 {
-//           font-size: 1.5rem;
-//           font-weight: 600;
-//           margin: 0.75rem 0;
+//           font-size: 1.75rem;
+//           font-weight: 700;
+//           margin: 1rem 0;
 //         }
-//         .editor-content ul {
-//           list-style: disc;
-//           padding-left: 2rem;
-//         }
-//         .editor-content ol {
-//           list-style: decimal;
-//           padding-left: 2rem;
+//         .editor-content p {
+//           margin: 1rem 0;
 //         }
 //         .editor-content blockquote {
 //           border-left: 4px solid #ddd;
 //           padding-left: 1rem;
 //           color: #666;
+//           margin: 1rem 0;
+//           font-style: italic;
+//         }
+//         @media (max-width: 640px) {
+//           .flex.flex-wrap {
+//             flex-direction: column;
+//           }
+//           .editor-content {
+//             padding: 1rem;
+//             min-height: 300px;
+//           }
+//           button {
+//             font-size: 1rem;
+//             padding: 0.5rem;
+//           }
+//           .floating-toolbar {
+//             left: 10px !important;
+//           }
 //         }
 //       `}</style>
 //     </div>
-//   );
-// };
+  );
+};
 
-// export default Editor;
-
-// suppose when i writting the inlcine code by and clicked in the code but now i dont decided to write this in code then i click on code again then it should remove the code but it should retain the text i wrote there and do similar for the code blocks write the full code
+export default Editor;

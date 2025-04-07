@@ -48,14 +48,17 @@ const Editor = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("text");
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
-  const [linkInputVisible, setLinkInputVisible] = useState(false);
+  // Use modal state for link insertion
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const linkInputRef = useRef(null);
 
-  // Floating toolbar formatting functions
+  // Save and restore selection functions
   const saveSelection = () => {
     const sel = window.getSelection();
-    if (sel?.rangeCount) savedSelection.current = sel.getRangeAt(0);
+    if (sel?.rangeCount) {
+      savedSelection.current = sel.getRangeAt(0);
+    }
   };
 
   const restoreSelection = () => {
@@ -257,21 +260,20 @@ const Editor = () => {
     else if (getBlockquoteElement()) exitBlockquote();
   };
 
-  // ---------- Link insertion via floating toolbar ----------
-  const handleInsertLink = () => {
-    saveSelection();
-    setLinkInputVisible(true);
-    setTimeout(() => linkInputRef.current?.focus(), 0);
-  };
-
+  // ---------- Link insertion via modal ----------
   const confirmInsertLink = () => {
+    // Restore the saved selection before applying the link.
+    restoreSelection();
     const sel = window.getSelection();
-    let selectedText = sel.toString();
-    if (!selectedText) selectedText = linkUrl;
+    let selectedText = sel ? sel.toString() : "";
+    if (!selectedText) {
+      selectedText = linkUrl;
+    }
     const linkHTML = `<a href="${linkUrl}" target="_blank" rel="noopener" class="text-blue-600 underline">${selectedText}</a>`;
-    handleInsertHTML(linkHTML);
+    document.execCommand("insertHTML", false, linkHTML);
     setLinkUrl("");
-    setLinkInputVisible(false);
+    setLinkModalVisible(false);
+    editorRef.current?.focus();
   };
 
   // ---------- Floating Toolbar State & Positioning ----------
@@ -292,12 +294,17 @@ const Editor = () => {
 
   const hideToolbar = () => {
     setToolbarVisible(false);
-    setLinkInputVisible(false);
+    // We don't want to close the modal if it's already open
+    if (!linkModalVisible) {
+      setLinkModalVisible(false);
+    }
   };
 
   // Listen for selection changes to update floating toolbar.
   useEffect(() => {
     const handleSelectionChange = () => {
+      // If the link modal is open, do not auto-hide the toolbar.
+      if (linkModalVisible) return;
       const sel = window.getSelection();
       if (sel && !sel.isCollapsed && editorRef.current.contains(sel.anchorNode)) {
         showToolbar();
@@ -311,9 +318,9 @@ const Editor = () => {
       document.removeEventListener("mouseup", handleSelectionChange);
       document.removeEventListener("keyup", handleSelectionChange);
     };
-  }, []);
+  }, [linkModalVisible]);
 
-  // Keydown handler – pressing Enter inside blockquote exits formatting and adds a new line.
+  // Keydown handler – pressing Escape cancels formatting.
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -321,6 +328,7 @@ const Editor = () => {
       if (e.key === "Escape") {
         e.preventDefault();
         exitFormatting();
+        setLinkModalVisible(false);
       } else if (e.key === "Enter") {
         if (getBlockquoteElement()) {
           e.preventDefault();
@@ -381,6 +389,7 @@ const Editor = () => {
   const viewAllMarkdown = () => {
     if (!editorRef.current) return;
     const td = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
+    // Convert code blocks as before
     td.addRule("codeBlocks", {
       filter: (node) =>
         node.nodeName === "PRE" &&
@@ -392,10 +401,19 @@ const Editor = () => {
         return `\`\`\`${lang}\n${codeNode.textContent}\n\`\`\`\n\n`;
       },
     });
+    // Convert inline code as before
     td.addRule("inlineCode", {
       filter: "code",
       replacement: (content, node) =>
         node.parentNode?.nodeName === "PRE" ? content : `\`${content}\``,
+    });
+    // New rule for links: converts <a> to markdown link syntax
+    td.addRule("links", {
+      filter: (node) => node.nodeName === "A",
+      replacement: (content, node) => {
+        const href = node.getAttribute("href");
+        return `[${content}](${href})`;
+      },
     });
     const md = td.turndown(editorRef.current.innerHTML);
     alert("Full Markdown:\n\n" + md);
@@ -446,36 +464,18 @@ const Editor = () => {
             onMouseDown={(e) => {
               e.preventDefault();
               saveSelection();
-              setLinkInputVisible(true);
-              setTimeout(() => {
-                linkInputRef.current?.focus();
-                showToolbar();
-              }, 0);
+              setLinkModalVisible(true);
+              // Delay focus so that the modal input is rendered
+              setTimeout(() => linkInputRef.current?.focus(), 0);
             }}
           >
             <Link2 className="w-4 h-4" />
           </button>
-          {linkInputVisible && (
-            <input
-              ref={linkInputRef}
-              type="text"
-              placeholder="Enter URL..."
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  confirmInsertLink();
-                }
-              }}
-              style={{ padding: "0.25rem", fontSize: "0.875rem" }}
-            />
-          )}
         </div>
       )}
       {/* Main Editor */}
       <div className="border border-gray-300 rounded-md my-4 relative">
-        {/* Top toolbar (optional additional controls) */}
+        {/* Top toolbar with additional controls */}
         <div className="flex flex-wrap gap-2 p-2 border-b border-gray-300 bg-gray-50">
           {[1, 2, 3, 4, 5, 6].map((n) => {
             const Icon = [Heading1, Heading2, Heading3, Heading4, Heading5, Heading6][n - 1];
@@ -490,47 +490,21 @@ const Editor = () => {
               </button>
             );
           })}
-          <button onClick={() => handleFormat("bold")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-            <Bold className="w-5 h-5" />
-          </button>
-          <button onClick={() => handleFormat("italic")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-            <Italic className="w-5 h-5" />
-          </button>
-          <button onClick={() => handleFormat("underline")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-            <UnderlineIcon className="w-5 h-5" />
-          </button>
-          <button onClick={() => handleFormat("strikeThrough")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-            <Strikethrough className="w-5 h-5" />
-          </button>
+         
           <button onClick={() => handleFormat("insertUnorderedList")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <List className="w-5 h-5" />
           </button>
           <button onClick={() => handleFormat("insertOrderedList")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
             <ListOrdered className="w-5 h-5" />
           </button>
-          <button onClick={() => handleFormat("formatBlock", "blockquote")} className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100">
-            <Quote className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => {
-              const url = prompt("Enter URL:");
-              if (url) {
-                const linkText = prompt("Enter link text:", url) || url;
-                handleInsertHTML(
-                  `<a href=\"${url}\" target=\"_blank\" rel=\"noopener\" class=\"text-blue-600 underline\">${linkText}</a>`
-                );
-              }
-            }}
-            className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
-          >
-            <Link2 className="w-5 h-5" />
-          </button>
+         
+          
           <button
             onClick={() => {
               const url = prompt("Enter image URL:");
               if (url)
                 handleInsertHTML(
-                  `<img src=\"${url}\" alt=\"img\" class=\"max-w-full h-auto my-4 rounded\" />`
+                  `<img src="${url}" alt="img" class="max-w-full h-auto my-4 rounded" />`
                 );
             }}
             className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-100"
@@ -540,14 +514,14 @@ const Editor = () => {
           <button
             onClick={() =>
               handleInsertHTML(
-                `<table class=\"mx-auto border-collapse w-full my-4\">
+                `<table class="mx-auto border-collapse w-full my-4">
   <tr>
-    <th class=\"border p-2 bg-gray-50\">Header</th>
-    <th class=\"border p-2 bg-gray-50\">Header</th>
+    <th class="border p-2 bg-gray-50">Header</th>
+    <th class="border p-2 bg-gray-50">Header</th>
   </tr>
   <tr>
-    <td class=\"border p-2\">Cell</td>
-    <td class=\"border p-2\">Cell</td>
+    <td class="border p-2">Cell</td>
+    <td class="border p-2">Cell</td>
   </tr>
 </table>`
               )
@@ -597,6 +571,68 @@ const Editor = () => {
           suppressContentEditableWarning
         />
       </div>
+      
+      {/* Link Modal Overlay */}
+      {linkModalVisible && (
+        <div
+          className="link-modal-overlay"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.3)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 20,
+          }}
+        >
+          <div
+            className="link-modal"
+            style={{
+              background: "white",
+              padding: "1rem",
+              borderRadius: "4px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+            }}
+          >
+            <input
+              ref={linkInputRef}
+              type="text"
+              placeholder="Enter URL..."
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmInsertLink();
+                }
+              }}
+              style={{ padding: "0.5rem", fontSize: "1rem", width: "300px" }}
+            />
+            <div style={{ marginTop: "0.5rem", textAlign: "right" }}>
+              <button
+                onClick={confirmInsertLink}
+                style={{ marginRight: "0.5rem", padding: "0.5rem 1rem" }}
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => {
+                  setLinkModalVisible(false);
+                  setLinkUrl("");
+                }}
+                style={{ padding: "0.5rem 1rem" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
         .floating-toolbar button {
           background: transparent;
