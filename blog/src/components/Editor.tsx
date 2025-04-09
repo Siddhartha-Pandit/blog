@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import FloatingTool, { FloatingToolItem } from './FloatingTool';
-import { Bold, Italic, Underline, Heading, Heading1, Heading2, Heading3, Heading4, ListTree, ListOrdered, List, ListTodo, Ellipsis, Highlighter, Strikethrough, Superscript, Subscript, Code, Regex, Link } from 'lucide-react';
+import { Bold, Italic, Underline, Heading, Heading1, Heading2, Heading3, Heading4, ListTree, ListOrdered, List, ListTodo, Ellipsis, Highlighter, Strikethrough, Superscript, Subscript, Code, Regex, Link,Image, Video,  Table, Minus ,Braces,CheckSquare} from 'lucide-react';
+import AddTool from './AddTool';
 
 function Editor() {
   const [floatingVisible, setFloatingVisible] = useState(false);
@@ -99,7 +100,7 @@ function Editor() {
           tooltip: 'TL',
           onClick: () => alert('TL clicked!'),
         },
-        {
+         {
           id: 'OL',
           icon: <ListOrdered size={14} />,
           tooltip: 'OL',
@@ -162,7 +163,63 @@ function Editor() {
       ],
     },
   ];
-
+  const tools = [
+    {
+      id: "image",
+      label: "Image",
+      icon: <Image size={16} />,
+      onClick: () => alert("Image tool"),
+    },
+    {
+      id: "video",
+      label: "Video",
+      icon: <Video size={16} />,
+      onClick: () => alert("Video tool"),
+    },
+    {
+      id: "code",
+      label: "Code",
+      icon: <Braces size={16} />,
+      onClick: () => alert("Code block"),
+    },
+    {
+      id: "table",
+      label: "Table",
+      icon: <Table size={16} />,
+      onClick: () => alert("Insert table"),
+    },
+    {
+      id: "list",
+      label: "List",
+      icon: <List size={16} />,
+      dropdownItems: [
+        {
+          id: "bullet-list",
+          label: "Bullet List",
+          icon: <List size={14} />,
+          onClick: () => alert("Insert bullet list"),
+        },
+        {
+          id: "numbered-list",
+          label: "Numbered List",
+          icon: <ListOrdered size={14} />,
+          onClick: () => alert("Insert numbered list"),
+        },
+        {
+          id: "checklist",
+          label: "Checklist",
+          icon: <CheckSquare size={14} />,
+          onClick: () => alert("Insert checklist"),
+        },
+      ],
+    },
+    {
+      id: "divider",
+      label: "Divider",
+      icon: <Minus size={16} />,
+      onClick: () => alert("Divider"),
+    },
+  ];
   useEffect(() => {
     if (!editor) return;
 
@@ -181,7 +238,7 @@ function Editor() {
       const rect = range.getBoundingClientRect();
 
       setPosition({
-        top: rect.top + window.scrollY - 48,
+        top: rect.top + window.scrollY - 100,
         left: rect.left + window.scrollX + rect.width / 2,
       });
       setFloatingVisible(true);
@@ -214,6 +271,7 @@ function Editor() {
           onMouseDown={(e) => e.preventDefault()}
         />
       )}
+      <AddTool tools={tools}/>
     </>
   );
 }

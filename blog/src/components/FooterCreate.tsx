@@ -12,12 +12,12 @@ import { useSession } from "next-auth/react";
 
 function FooterCreate() {
 const [words] = useState(0);
-  const [savedTime] = useState("Just Now");
+  const [savedTime] = useState("1 min ago");
   const { data: session } = useSession();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 h-7 bg-gray-800 text-white flex items-center justify-around px-4 text-xs z-50">
-        <span>Last Saved: {savedTime}</span>
+        <span>Saved: {savedTime}</span>
         <div className="flex flex-row items-center space-x-1">
           <span className="text-xs text-gray-200">Authors:</span>
           <TooltipProvider>
