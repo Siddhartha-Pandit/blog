@@ -107,7 +107,7 @@ const CreatePage = () => {
   // Redirect if not authenticated.
   useEffect(() => {
     if (session === null) {
-      router.push("/");
+      // router.push("/");
     }
   }, [session, router]);
 

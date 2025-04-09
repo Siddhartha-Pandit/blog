@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern CMS Editor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Tiptap Editor -->
+    <script src="https://unpkg.com/@tiptap/core@2.0.0-beta.199/dist/tiptap-core.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/starter-kit@2.0.0-beta.193/dist/starter-kit.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-image@2.0.0-beta.39/dist/image.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-link@2.0.0-beta.38/dist/link.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-table@2.0.0-beta.42/dist/table.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-table-row@2.0.0-beta.30/dist/table-row.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-table-cell@2.0.0-beta.30/dist/table-cell.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-table-header@2.0.0-beta.30/dist/table-header.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-task-list@2.0.0-beta.30/dist/task-list.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-task-item@2.0.0-beta.30/dist/task-item.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-highlight@2.0.0-beta.30/dist/highlight.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-horizontal-rule@2.0.0-beta.30/dist/horizontal-rule.umd.min.js"></script>
+    <script src="https://unpkg.com/@tiptap/extension-code-block-lowlight@2.0.0-beta.30/dist/code-block-lowlight.umd.min.js"></script>
+    <script src="https://unpkg.com/lowlight@0.17.0/lib/core.umd.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .ProseMirror {
+            min-height: 300px;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .ProseMirror:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        .floating-toolbar {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+        .floating-toolbar.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 640px) {
+            .toolbar-group {
+                display: none;
+            }
+            .toolbar-group.mobile-visible {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Modern CMS Editor</h1>
+        
+        <div class="editor-container bg-white rounded-lg shadow-sm p-4">
+            <!-- Floating Toolbar (will be positioned dynamically) -->
+            <div id="floating-toolbar" class="floating-toolbar absolute z-10 bg-white shadow-lg rounded-md p-1 flex items-center border border-gray-200">
+                <!-- Formatting buttons will be added here via JavaScript -->
+            </div>
+
+            <!-- Main Toolbar -->
+            <div class="toolbar flex flex-wrap gap-1 mb-2 p-1 bg-gray-50 rounded-md">
+                <!-- Basic Formatting -->
+                <div class="toolbar-group flex gap-1">
+                    <button data-command="bold" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button data-command="italic" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button data-command="underline" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <button data-command="strike" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-strikethrough"></i>
+                    </button>
+                    <button data-command="highlight" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-highlighter"></i>
+                    </button>
+                </div>
+
+                <!-- Headings and Text Styles -->
+                <div class="toolbar-group flex gap-1">
+                    <select data-command="heading" class="p-2 rounded border border-gray-300 bg-white">
+                        <option value="">Paragraph</option>
+                        <option value="1">Heading 1</option>
+                        <option value="2">Heading 2</option>
+                    </select>
+                    <button data-command="code" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-code"></i>
+                    </button>
+                    <button data-command="blockquote" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-quote-right"></i>
+                    </button>
+                </div>
+
+                <!-- Lists -->
+                <div class="toolbar-group flex gap-1">
+                    <button data-command="bulletList" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button data-command="orderedList" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <button data-command="taskList" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-tasks"></i>
+                    </button>
+                </div>
+
+                <!-- Links and Media -->
+                <div class="toolbar-group flex gap-1">
+                    <button data-command="link" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <button data-command="image" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button data-command="table" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-table"></i>
+                    </button>
+                    <button data-command="horizontalRule" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+
+                <!-- Undo/Redo -->
+                <div class="toolbar-group flex gap-1 ml-auto">
+                    <button data-command="undo" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button data-command="redo" class="toolbar-btn p-2 rounded hover:bg-gray-200">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Editor Content -->
+            <div id="editor" class="prose max-w-none"></div>
+        </div>
+    </div>
+
+    <script src="editor.js"></script>
+</body>
+</html>
