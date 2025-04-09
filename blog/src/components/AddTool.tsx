@@ -122,11 +122,11 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
                     {openDropdown === tool.id && (
                       <div
                         className={`
-                          absolute bottom-full mb-2 z-60
-                          grid grid-flow-col grid-rows-2 gap-0.5
+                          absolute bottom-full mb-0.5 z-60
+                          grid grid-flow-col grid-rows-2 
                           bg-[#FAF9F6] dark:bg-[#1E1E1E]
                           border border-neutral-200 dark:border-neutral-700
-                          rounded-md shadow-lg p-0.5
+                          rounded-md shadow-lg p-0.2
                         `}
                       >
                         {tool.dropdownItems!.map((sub, subIdx) => (
