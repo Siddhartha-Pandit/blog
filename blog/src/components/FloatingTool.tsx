@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 export type FloatingToolItem = {
@@ -8,12 +8,15 @@ export type FloatingToolItem = {
   tooltip?: string;
   onClick?: () => void;
   dropdownItems?: FloatingToolItem[];
+  inputType?: "number";
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
 
 export type FloatingToolProps = {
   items: FloatingToolItem[];
-  top?: string;
-  left?: string;
+  top?: number;
+  left?: number;
+  onMouseDown?: (e: React.MouseEvent) => void; // Added missing prop
 };
 
 const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) => {
@@ -41,7 +44,7 @@ const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) =>
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
         title={item.tooltip}
-        className="flex flex-row p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition justify-center items-center"
+        className="flex flex-row p-[2px] hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition justify-center items-center"
       >
         {item.icon}
         {dropdownOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
@@ -57,7 +60,7 @@ const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) =>
                 setDropdownOpen(false);
               }}
               title={subItem.tooltip}
-              className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition"
+              className="p-[2px] hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition"
             >
               {subItem.icon}
             </button>
@@ -68,55 +71,49 @@ const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) =>
   );
 };
 
-const FloatingTool: React.FC<FloatingToolProps> = ({ items, top, left }) => {
-  const toolRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ top: number; left: number }>({
-    top: top ? parseInt(top) : window.innerHeight - 80,
-    left: left ? parseInt(left) : window.innerWidth - 80,
-  });
+const FloatingTool: React.FC<FloatingToolProps> = ({ items, top = 0, left = 0, onMouseDown }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [adjustedPos, setAdjustedPos] = useState({ top, left });
 
-  useEffect(() => {
-    const adjustPosition = () => {
-      const tool = toolRef.current;
-      if (tool) {
-        const rect = tool.getBoundingClientRect();
-        const padding = 10;
-        let adjustedTop = position.top;
-        let adjustedLeft = position.left;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
 
-        if (rect.bottom > window.innerHeight) {
-          adjustedTop = window.innerHeight - rect.height - padding;
-        } else if (rect.top < 0) {
-          adjustedTop = padding;
-        }
+    const { width, height } = el.getBoundingClientRect();
+    const padding = 8;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
 
-        if (rect.right > window.innerWidth) {
-          adjustedLeft = window.innerWidth - rect.width - padding;
-        } else if (rect.left < 0) {
-          adjustedLeft = padding;
-        }
+    let newLeft = left;
+    let newTop = top;
 
-        setPosition({ top: adjustedTop, left: adjustedLeft });
-      }
-    };
+    const halfWidth = width / 2;
+    if (left - halfWidth < padding) {
+      newLeft = padding + halfWidth;
+    } else if (left + halfWidth > windowWidth - padding) {
+      newLeft = windowWidth - halfWidth - padding;
+    }
 
-    adjustPosition();
-    window.addEventListener("resize", adjustPosition);
-    return () => {
-      window.removeEventListener("resize", adjustPosition);
-    };
-  }, [position.top, position.left]);
+    const aboveTop = top - height;
+    if (aboveTop < padding) {
+      newTop = height + padding;
+    }
+
+    setAdjustedPos({ top: newTop, left: newLeft });
+  }, [top, left, items]);
 
   return (
     <div
-      ref={toolRef}
-      className="fixed z-50 bg-[#FAF9F6] dark:bg-[#1E1E1E] p-1 rounded-lg transition shadow-lg border border-neutral-200 dark:border-neutral-700"
+      ref={ref}
+      className="fixed z-50 bg-[#FAF9F6] dark:bg-[#1E1E1E] p-1 rounded-xl transition shadow-xl border border-neutral-200 dark:border-neutral-700"
       style={{
-        top: position.top,
-        left: position.left,
+        top: `${adjustedPos.top}px`,
+        left: `${adjustedPos.left}px`,
+        transform: "translate(-50%, -100%)",
       }}
+      onMouseDown={onMouseDown} // Added mouse down handler
     >
-      <div className="flex flex-row items-end space-x-1">
+      <div className="flex flex-row items-center space-x-[2px]">
         {items.map((item) => {
           if (item.type === "separator") {
             return (
@@ -131,12 +128,24 @@ const FloatingTool: React.FC<FloatingToolProps> = ({ items, top, left }) => {
             return <FloatingToolDropdown key={`dropdown-${item.id}`} item={item} />;
           }
 
+          if (item.inputType === "number") {
+            return (
+              <input
+                key={`input-${item.id}`}
+                type="number"
+                {...item.inputProps}
+                className="w-16 text-sm px-2 py-1 rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title={item.tooltip}
+              />
+            );
+          }
+
           return (
             <button
               key={`button-${item.id}`}
               onClick={item.onClick}
               title={item.tooltip}
-              className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition"
+              className="p-[2px] hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-md transition"
             >
               {item.icon}
             </button>
