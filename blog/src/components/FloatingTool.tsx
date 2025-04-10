@@ -25,7 +25,10 @@ const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) =>
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     };
@@ -51,7 +54,7 @@ const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) =>
       </button>
 
       {dropdownOpen && (
-        <div className="absolute top-full mt-1 grid grid-rows-2 grid-flow-col bg-[#FAF9F6] dark:bg-[#1E1E1E] shadow-md p-1 rounded-md w-fit z-50 gap-1 border border-neutral-200 dark:border-neutral-700">
+        <div className="absolute top-full mt-1.75 grid grid-rows-2 grid-flow-col bg-[#FAF9F6] dark:bg-[#1E1E1E] shadow-md p-1 rounded-md w-fit z-50 gap-1 border border-neutral-200 dark:border-neutral-700">
           {item.dropdownItems?.map((subItem, index) => (
             <button
               key={`${item.id}-${subItem.id}-${index}`}
@@ -71,7 +74,12 @@ const FloatingToolDropdown: React.FC<{ item: FloatingToolItem }> = ({ item }) =>
   );
 };
 
-const FloatingTool: React.FC<FloatingToolProps> = ({ items, top = 0, left = 0, onMouseDown }) => {
+const FloatingTool: React.FC<FloatingToolProps> = ({
+  items,
+  top = 0,
+  left = 0,
+  onMouseDown,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   const [adjustedPos, setAdjustedPos] = useState({ top, left });
 
@@ -105,15 +113,17 @@ const FloatingTool: React.FC<FloatingToolProps> = ({ items, top = 0, left = 0, o
   return (
     <div
       ref={ref}
-      className="fixed z-50 bg-[#FAF9F6] dark:bg-[#1E1E1E] p-1 rounded-xl transition shadow-xl border border-neutral-200 dark:border-neutral-700"
+      className="fixed z-50 bg-[#FAF9F6] dark:bg-[#1E1E1E] 
+                 px-3 py-1 rounded-full transition shadow-xl 
+                 border border-neutral-200 dark:border-neutral-700"
       style={{
         top: `${adjustedPos.top}px`,
         left: `${adjustedPos.left}px`,
         transform: "translate(-50%, -100%)",
       }}
-      onMouseDown={onMouseDown} // Added mouse down handler
+      onMouseDown={onMouseDown}
     >
-      <div className="flex flex-row items-center space-x-[2px]">
+      <div className="flex flex-row items-center space-x-2">
         {items.map((item) => {
           if (item.type === "separator") {
             return (
@@ -125,7 +135,9 @@ const FloatingTool: React.FC<FloatingToolProps> = ({ items, top = 0, left = 0, o
           }
 
           if (item.dropdownItems?.length) {
-            return <FloatingToolDropdown key={`dropdown-${item.id}`} item={item} />;
+            return (
+              <FloatingToolDropdown key={`dropdown-${item.id}`} item={item} />
+            );
           }
 
           if (item.inputType === "number") {

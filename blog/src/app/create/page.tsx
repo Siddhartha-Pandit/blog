@@ -319,7 +319,7 @@ const CreatePage = () => {
       {/* Drawer */}
       <div
         id="drawer"
-        className={`fixed top-0  right-0 w-[300px] h-[calc(100vh-76px)] shadow-2xl transform transition-transform duration-300 ease-in-out z-40 mt-12  ${
+        className={`fixed top-0  right-0 w-[300px] h-[calc(100vh-76px)] shadow-2xl transform transition-transform duration-300 ease-in-out z-100 mt-12  ${
           isOpen ? "right-0" : "right-[-300px]"
         } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto`}
       >

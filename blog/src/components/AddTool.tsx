@@ -2,15 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { Plus, X, ChevronDown, ChevronUp } from "lucide-react";
 
 export type AddToolItem = {
-  /** Unique identifier */
   id: string;
-  /** Tooltip text */
   label: string;
-  /** Icon element */
   icon: React.ReactElement;
-  /** Click handler (for non‑dropdown items) */
   onClick?: () => void;
-  /** Dropdown options, if any */
   dropdownItems?: Array<{
     id: string;
     label: string;
@@ -27,10 +22,10 @@ export interface AddToolProps {
 const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
   const [open, setOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  // We'll stash refs here so we can detect outside clicks for each dropdown
+  // Refs to each dropdown wrapper so we can detect outside clicks
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Close any open dropdown if you click outside it
+  // Close any open dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -42,8 +37,7 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openDropdown]);
 
   return (
@@ -51,12 +45,12 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
       <div
         className={`
           flex flex-row-reverse items-center
+          ${open ? "px-2" : ""}
           rounded-full shadow-lg
-          overflow-visible      /* allow dropdown to show */
           transition-all duration-300 ease-in-out
-          ${open ? "w-72" : ""}
           bg-[#FAF9F6] text-[#1E1E1E]
           dark:bg-[#1E1E1E] dark:text-[#FAF9F6]
+          border border-neutral-200 dark:border-neutral-700
         `}
       >
         {/* Main + / X toggle */}
@@ -78,7 +72,7 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
 
         {/* Tool buttons */}
         {open && (
-          <div className="flex items-center gap-1 px-2">
+          <div className="flex items-center gap-1">
             {tools.map((tool, idx) => {
               const hasDropdown = tool.dropdownItems?.length! > 0;
               const keyBase = `tool-${tool.id}-${idx}`;
@@ -89,7 +83,6 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
                     key={keyBase}
                     className="relative flex flex-col items-center"
                     ref={(el) => {
-                      // Callback ref; we're storing the element in our ref object
                       dropdownRefs.current[tool.id] = el;
                     }}
                   >
@@ -115,18 +108,14 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
                       )}
                     </button>
 
-                    {/* Dropdown items in grid layout:
-                        Display only the icons in a grid with 2 rows.
-                        The grid-flow-col class fills the first column first.
-                        The gap and padding are reduced */}
                     {openDropdown === tool.id && (
                       <div
                         className={`
                           absolute bottom-full mb-0.5 z-60
-                          grid grid-flow-col grid-rows-2 
+                          grid grid-flow-col grid-rows-2
                           bg-[#FAF9F6] dark:bg-[#1E1E1E]
                           border border-neutral-200 dark:border-neutral-700
-                          rounded-md shadow-lg p-0.2
+                          rounded-md shadow-lg p-0.5
                         `}
                       >
                         {tool.dropdownItems!.map((sub, subIdx) => (
@@ -139,7 +128,7 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
                             title={sub.label}
                             className={`
                               flex items-center justify-center
-                              w-10 h-10 rounded-md
+                              p-1.5 rounded-md
                               hover:bg-[#E0E0E0] dark:hover:bg-[#333]
                             `}
                           >
@@ -152,7 +141,7 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
                 );
               }
 
-              // Plain tool button if no dropdown is defined
+              // Plain tool button
               return (
                 <button
                   key={keyBase}
