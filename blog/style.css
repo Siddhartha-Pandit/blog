@@ -1,152 +1,199 @@
- h1 {
-    font-size: 2.5rem;
-    color: #1a202c;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  
- h2 {
-    font-size: 2rem;
-    color: #2d3748;
-    margin-top: 0.75rem;
-    margin-bottom: 0.5rem;
-  }
-  
- h3 {
-    font-size: 1.75rem;
-    color: #4a5568;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  
+/* Headings */
+h1, h2, h3, h4 {
+  margin-bottom: 0.5rem;
+}
+h1 {
+  font-size: 2.5rem;
+  margin-top: 1rem;
+}
+h2 {
+  font-size: 2rem;
+  margin-top: 0.75rem;
+}
+h3 {
+  font-size: 1.75rem;
+  margin-top: 0.5rem;
+}
 h4 {
-    font-size: 1.5rem;
-    color: #718096;
-    margin-top: 0.25rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  ul,
-  ol {
-    padding: 0 1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem;
-    list-style-position: outside; /* optional: controls whether bullet/number is inside or outside the content box */
-  }
-  
-  ul {
-    list-style-type: disc; /* ensures bullets for ul */
-  }
-  
-  ol {
-    list-style-type: decimal; /* ensures numbers for ol */
-  }
-  
-  li p {
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-  }
-  
-  pre {
-    background: var(--black);
-    border-radius: 0.5rem;
-    color: var(--white);
-    font-family: 'JetBrainsMono', monospace;
-    margin: 1.5rem 0;
-    padding: 0.75rem 1rem;
-  }
-  
-  pre code {
-    background: none;
-    color: inherit;
-    font-size: 0.8rem;
-    padding: 0;
-  }
-  
-  /* Code styling */
-  pre .hljs-comment,
-  pre .hljs-quote {
-    color: #616161;
-  }
-  
-  pre .hljs-variable,
-  pre .hljs-template-variable,
-  pre .hljs-attribute,
-  pre .hljs-tag,
-  pre .hljs-regexp,
-  pre .hljs-link,
-  pre .hljs-name,
-  pre .hljs-selector-id,
-  pre .hljs-selector-class {
-    color: #f98181;
-  }
-  
-  pre .hljs-number,
-  pre .hljs-meta,
-  pre .hljs-built_in,
-  pre .hljs-builtin-name,
-  pre .hljs-literal,
-  pre .hljs-type,
-  pre .hljs-params {
-    color: #fbbc88;
-  }
-  
-  pre .hljs-string,
-  pre .hljs-symbol,
-  pre .hljs-bullet {
-    color: #b9f18d;
-  }
-  
-  pre .hljs-title,
-  pre .hljs-section {
-    color: #faf594;
-  }
-  
-  pre .hljs-keyword,
-  pre .hljs-selector-tag {
-    color: #70cff8;
-  }
-  
-  pre .hljs-emphasis {
-    font-style: italic;
-  }
-  
-  pre .hljs-strong {
-    font-weight: 700;
-  }
-  /* code {
-    background-color: #f5f2ff;
-    border-radius: 0.4rem;
-    color: #000000;
-    font-size: 0.85rem;
-    padding: 0.25em 0.3em;
-  } */
-  
-  /* Default styling for light mode */
+  font-size: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+/* Lists */
+ul,
+ol {
+  padding: 0 1rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+  list-style-position: outside;
+}
+ul {
+  list-style-type: disc;
+}
+ol {
+  list-style-type: decimal;
+}
+li p,
+ul li p,
+ol li p {
+  margin: 0.25em 0;
+}
+
+/* Task List Specific Styles */
+ul[data-type="taskList"] {
+  list-style: none;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+  padding: 0 1rem;
+}
+ul[data-type="taskList"] li {
+  display: flex;
+  align-items: center;
+}
+ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
+ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+}
+ul[data-type="taskList"] input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Definition Lists */
+dl {
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+}
+dt {
+  font-weight: 600;
+  padding: 0 1rem;
+  margin: 1.25rem 1rem 1.25rem 0.4rem;
+}
+dd {
+  margin: 0.25em 0;
+}
+
+/* Code Blocks and Preformatted Text */
+pre {
+  background-color: #2d2d2d;
+  color: #f5f5f5;
+  border-radius: 0.5rem;
+  font-family: 'JetBrainsMono', monospace;
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
+}
+pre code {
+  background: none;
+  color: inherit;
+  font-size: 0.8rem;
+  padding: 0;
+}
+
+/* Syntax Highlighting for Code Blocks */
+pre .hljs-comment,
+pre .hljs-quote {
+  color: #616161;
+}
+pre .hljs-variable,
+pre .hljs-template-variable,
+pre .hljs-attribute,
+pre .hljs-tag,
+pre .hljs-regexp,
+pre .hljs-link,
+pre .hljs-name,
+pre .hljs-selector-id,
+pre .hljs-selector-class {
+  color: #f98181;
+}
+pre .hljs-number,
+pre .hljs-meta,
+pre .hljs-built_in,
+pre .hljs-builtin-name,
+pre .hljs-literal,
+pre .hljs-type,
+pre .hljs-params {
+  color: #fbbc88;
+}
+pre .hljs-string,
+pre .hljs-symbol,
+pre .hljs-bullet {
+  color: #b9f18d;
+}
+pre .hljs-title,
+pre .hljs-section {
+  color: #faf594;
+}
+pre .hljs-keyword,
+pre .hljs-selector-tag {
+  color: #70cff8;
+}
+pre .hljs-emphasis {
+  font-style: italic;
+}
+pre .hljs-strong {
+  font-weight: 700;
+}
+
+/* Inline Code Styling */
 code {
-    font-family: 'Courier New', monospace;
-    font-size: 1rem;
-    background-color: #f5f5f5; /* Light background */
-    color: #333333; /* Dark text for good contrast */
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  background-color: #f5f5f5;
+  color: #333333;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 3px solid #ff0fff;
+  margin: 1.5rem 0;
+  padding-left: 1rem;
+}
+a {
+  position: relative;
+  color: #1a0dab; /* Base link color */
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease; /* Smooth color change on hover */
+}
+
+a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px; /* Adjust to sit just below text */
+  width: 100%;
+  height: 2px; /* Thickness of the underline */
+  background: linear-gradient(90deg, #ff6ec4, #7873f5); /* Pink to purple gradient */
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease; /* Animate the growth */
+}
+
+a:hover {
+  color: #7873f5; /* Text fades to match gradient end */
+}
+
+a:hover::after {
+  transform: scaleX(1); /* Grow underline from left to right */
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  code {
+    background-color: #2d2d2d;
+    color: #f5f5f5;
+    box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
   }
 
-  blockquote {
-    border-left: 3px solid #ff0fff;
-    margin: 1.5rem 0;
-    padding-left: 1rem;
+  /* Definition List Dark Mode */
+  dt {
+    color: #e2e8f0;
   }
-  
-  
-  /* Dark mode styling */
-  @media (prefers-color-scheme: dark) {
-    code {
-      background-color: #2d2d2d; /* Dark background */
-      color: #f5f5f5; /* Light text */
-      box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
-    }
+  dd {
+    color: #cbd5e0;
   }
-  
-  
-  
+}

@@ -15,7 +15,6 @@ export type AddToolItem = {
 };
 
 export interface AddToolProps {
-  /** Array of tools to show when expanded */
   tools?: AddToolItem[];
 }
 

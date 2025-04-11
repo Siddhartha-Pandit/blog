@@ -24,9 +24,12 @@ import ts from 'highlight.js/lib/languages/typescript';
 import html from 'highlight.js/lib/languages/xml';
 import { all, createLowlight } from 'lowlight';
 
+import TaskItem from '@tiptap/extension-task-item';
+import TaskList from '@tiptap/extension-task-list';
+
 import FloatingTool, { FloatingToolItem } from './FloatingTool';
 import AddTool, { AddToolItem } from './AddTool';
-
+import Modal from './Modal';
 import {
   Bold,
   Italic,
@@ -57,21 +60,70 @@ import {
   Quote,
   X, // close icon
 } from 'lucide-react';
+import { Node, CommandProps } from '@tiptap/core';
+import ImageUpload from './ImageUpload';
+// Extend tiptap commands for definition list
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    definitionList: {
+      toggleDefinitionList: () => ReturnType;
+    };
+  }
+}
 
-// Create a lowlight instance with all languages loaded
+const DefinitionList = Node.create({
+  name: 'definitionList',
+  group: 'block',
+  content: '(definitionTerm definitionDescription)+',
+  parseHTML: () => [{ tag: 'dl' }],
+  renderHTML: ({ HTMLAttributes }) => ['dl', HTMLAttributes, 0],
+  addCommands() {
+    return {
+      toggleDefinitionList:
+        () =>
+        (props: CommandProps) => {
+          return props.commands.toggleWrap('definitionList');
+        },
+    };
+  },
+});
+
+// <dt>
+const DefinitionTerm = Node.create({
+  name: 'definitionTerm',
+  group: 'block',
+  content: 'inline*',
+  parseHTML: () => [{ tag: 'dt' }],
+  renderHTML: ({ HTMLAttributes }) => ['dt', HTMLAttributes, 0],
+});
+
+// <dd>
+const DefinitionDescription = Node.create({
+  name: 'definitionDescription',
+  group: 'block',
+  content: 'block+',
+  parseHTML: () => [{ tag: 'dd' }],
+  renderHTML: ({ HTMLAttributes }) => ['dd', HTMLAttributes, 0],
+});
+
 const lowlight = createLowlight(all);
 lowlight.register('html', html);
 lowlight.register('css', css);
-lowlight.register('js', js);
-lowlight.register('ts', ts);
+lowlight.register('javascript', js);
+lowlight.register('typescript', ts);
 
 export default function Editor() {
+  // State for floating toolbar, source view, and selected code language
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showSource, setShowSource] = useState(false);
   const [sourceType, setSourceType] = useState<'html' | 'markdown'>('html');
+  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const isMouseDownRef = useRef(false);
 
+  const [isModalImageOpen, setModalImageOpen] = useState<boolean>(false);
+  const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false); 
+  const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false); 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -83,15 +135,15 @@ export default function Editor() {
         },
         orderedList: false,
         listItem: false,
-        codeBlock: false, // disable default CodeBlock so we can use CodeBlockLowlight
+        codeBlock: false,
       }),
-      // Add CodeBlockLowlight with lowlight configuration
       CodeBlockLowlight.configure({ lowlight }),
-      // Re‑add heading, lists, etc.
       Heading.configure({ levels: [1, 2, 3, 4] }),
       BulletList,
       OrderedList,
       ListItem,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       Blockquote,
       Code,             
       Underline,
@@ -103,32 +155,17 @@ export default function Editor() {
       Superscript,
       Subscript,
       Link.configure({ openOnClick: false }),
-      // Markdown extension added last
       Markdown.configure({ html: true }),
     ],
     content: `
-        <p>
-          That's a boring paragraph followed by a fenced code block:
-        </p>
-        <pre><code class="language-javascript">
-        for (var i=1; i <= 20; i++)
-        {
-          if (i % 15 == 0)
-            console.log("FizzBuzz");
-          else if (i % 3 == 0)
-            console.log("Fizz");
-          else if (i % 5 == 0)
-            console.log("Buzz");
-          else
-            console.log(i);
-        }</code></pre>
-        <p>
-          Press Command/Ctrl + Enter to leave the fenced code block and continue typing in boring paragraphs.
-        </p>
-      `,
+    <dl>
+      <dt>Term</dt>
+      <dd>Description</dd>
+    </dl>
+    `,
   });
 
-  // Floating toolbar items (shown on text selection)
+  // Define floating toolbar items shown on text selection
   const floatingItems: FloatingToolItem[] = [
     { id: 'bold', icon: <Bold size={16} />, tooltip: 'Bold', onClick: () => editor?.chain().focus().toggleBold().run() },
     { id: 'italic', icon: <Italic size={16} />, tooltip: 'Italic', onClick: () => editor?.chain().focus().toggleItalic().run() },
@@ -153,9 +190,9 @@ export default function Editor() {
       tooltip: 'Lists',
       dropdownItems: [
         { id: 'UL', icon: <ListIcon size={14} />, tooltip: 'Unordered List', onClick: () => editor?.chain().focus().toggleBulletList().run() },
-        { id: 'TL', icon: <ListTodo size={14} />, tooltip: 'Task List', onClick: () => alert('Add Task List extension!') },
+        { id: 'TL', icon: <ListTodo size={14} />, tooltip: 'Task List', onClick: () => editor?.chain().focus().toggleTaskList().run() },
         { id: 'OL', icon: <ListOrdered size={14} />, tooltip: 'Ordered List', onClick: () => editor?.chain().focus().toggleOrderedList().run() },
-        { id: 'DL', icon: <ListTree size={14} />, tooltip: 'Definition List', onClick: () => alert('Definition List not built‑in') },
+        { id: 'DL', icon: <ListTree size={14} />, tooltip: 'Definition List', onClick: () => editor?.chain().focus().toggleDefinitionList().run() },
       ],
     },
     { id: 'separator3', type: 'separator' },
@@ -174,7 +211,8 @@ export default function Editor() {
           tooltip: 'Link',
           onClick: () => {
             const url = prompt('Enter URL') || '';
-            if (url) editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+            if (url)
+              editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
           },
         },
         { id: 'footnote', icon: <Regex size={14} />, tooltip: 'Footnote', onClick: () => alert('Footnote extension not configured') },
@@ -182,7 +220,6 @@ export default function Editor() {
     },
   ];
 
-  // Bottom toolbar (AddTool)
   const tools: AddToolItem[] = [
     {
       id: "image",
@@ -206,19 +243,22 @@ export default function Editor() {
       id: "code-block",
       label: "Code block",
       icon: <Braces size={16} />,
-      onClick: () => editor?.chain().focus().toggleCodeBlock().run(),
+      onClick: () =>
+        editor?.chain().focus().toggleCodeBlock({ language: selectedLanguage }).run(),
     },
     {
       id: "table",
       label: "Table",
       icon: <Table size={16} />,
-      onClick: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      onClick: () =>
+        editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
     },
     {
       id: "quote",
       label: "Blockquote",
       icon: <Quote size={16} />,
-      onClick: () => editor?.chain().focus().toggleBlockquote().run(),
+      onClick: () =>
+        editor?.chain().focus().toggleBlockquote().run(),
     },
     {
       id: "list",
@@ -243,8 +283,52 @@ export default function Editor() {
       onClick: () => setShowSource(true),
     },
   ];
+  const uploadImageModalData = [
+    {
+      id: "dragAndDrop",
+      name: "Image Drop",
+      title: "Drag & Drop",
+      content: <ImageUpload />,
+    },
+    {
+      id: "url",
+      name: "URL",
+      title: "Embed Your Image",
+      inputPlaceholders: ["Image URL"],
+    },
+  ];
+  
+  const handleImageModalOk = (values: string[], activeTabIndex: number) => {
+    console.log("User input:", values);
+    console.log("Selected tab:", activeTabIndex);
+    setModalImageOpen(false);
+  };
 
-  // Floating toolbar positioning logic
+  const handleModalImageClose = () => {
+    setModalImageOpen(false);
+  };
+
+  
+  const handleUrlModalOk = (values: string[], activeTabIndex: number) => {
+    console.log("User input:", values);
+    console.log("Selected tab:", activeTabIndex);
+    setModalUrlOpen(false);
+  };
+
+  const handleModalUrlClose = () => {
+    setModalUrlOpen(false);
+  };
+
+  const handleVideoUrlModalOk = (values: string[], activeTabIndex: number) => {
+    console.log("User input:", values);
+    console.log("Selected tab:", activeTabIndex);
+    setModalVideoUrlOpen(false);
+  };
+
+  const handleModalVideoUrlClose = () => {
+    setModalVideoUrlOpen(false);
+  };
+
   useEffect(() => {
     if (!editor) return;
     const updateFloating = () => {
@@ -275,9 +359,11 @@ export default function Editor() {
   }, [editor]);
 
   return (
-    <>
+    <div>
+      {/* Editor Area */}
       <EditorContent editor={editor} />
 
+      {/* Floating Toolbar */}
       {floatingVisible && (
         <FloatingTool
           items={floatingItems}
@@ -287,8 +373,29 @@ export default function Editor() {
         />
       )}
 
+      {/* Bottom Toolbar */}
       <AddTool tools={tools} />
-      <div className="flex gap-2">
+
+      {/* Language Selector for Code Block */}
+      <div style={{ marginTop: '1rem' }}>
+        <label htmlFor="language-select" style={{ marginRight: '0.5rem' }}>
+          Select Code Block Language:
+        </label>
+        <select
+          id="language-select"
+          value={selectedLanguage}
+          onChange={(e) => setSelectedLanguage(e.target.value)}
+        >
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="css">CSS</option>
+          <option value="html">HTML</option>
+          {/* Additional languages can be added here */}
+        </select>
+      </div>
+
+      {/* Source View Toggler */}
+      <div className="flex gap-2" style={{ marginTop: '1rem' }}>
         <button
           onClick={() => setSourceType('html')}
           className={`px-3 py-1 rounded ${sourceType === 'html' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
@@ -302,6 +409,7 @@ export default function Editor() {
           Markdown
         </button>
       </div>
+
       {showSource && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-3/4 max-h-[80vh] overflow-auto">
@@ -318,6 +426,35 @@ export default function Editor() {
           </div>
         </div>
       )}
-    </>
+
+      {isModalImageOpen && (
+        <Modal
+        modalTitle="User Access"
+        tabs={uploadImageModalData}
+        onOk={handleImageModalOk}
+        onClose={handleModalImageClose}
+      />
+      )}
+     {isModalUrlOpen && (
+          <Modal
+          modalTitle="Enter url"
+          modalTextTitle="Enter url to add the link"
+          inputPlaceholders={["url"]}
+          onOk={handleUrlModalOk}
+          onClose={handleModalUrlClose}
+        />
+      )}
+
+      {isModalVideoUrlOpen && (
+          <Modal
+          modalTitle="Enter video url"
+          modalTextTitle="Enter video url"
+          inputPlaceholders={["video url"]}
+          onOk={handleVideoUrlModalOk}
+          onClose={handleModalVideoUrlClose}
+        />
+      )}
+
+    </div>
   );
 }
