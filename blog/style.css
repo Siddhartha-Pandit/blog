@@ -181,6 +181,34 @@ a:hover::after {
   transform: scaleX(1); /* Grow underline from left to right */
 }
 
+
+div[data-youtube-video] {
+
+  margin: 2rem 0;  /* Increased vertical margin */
+  position: relative;
+  width: 100%;
+  max-width: 640px; /* Optional: Set max width for better responsiveness */
+}
+
+div[data-youtube-video] iframe {
+  display: block;
+  width: 100%;
+  min-height: 200px;
+  aspect-ratio: 16/9; /* Maintain video aspect ratio */
+  margin: 0 auto;
+  background: #000; /* Black background for loading state */
+}
+
+/* Add pseudo-elements for spacing in the editor */
+div[data-youtube-video]::before,
+div[data-youtube-video]::after {
+  content: '\200b'; /* Zero-width space character */
+  display: block;
+  height: 1rem; /* Adjust spacing height */
+  visibility: hidden;
+}
+
+
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
   code {

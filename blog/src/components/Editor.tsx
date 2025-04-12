@@ -15,6 +15,9 @@ import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
 import Blockquote from '@tiptap/extension-blockquote';
+import Youtube from '@tiptap/extension-youtube'
+import Image from '@tiptap/extension-image'
+
 import { Markdown } from 'tiptap-markdown';
 
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
@@ -51,7 +54,7 @@ import {
   Code as CodeIcon,
   Regex,
   Link as LinkIcon,
-  Image,
+  Image as ImageIcon,
   Video,
   Table,
   Minus,
@@ -70,6 +73,7 @@ declare module '@tiptap/core' {
     };
   }
 }
+
 
 const DefinitionList = Node.create({
   name: 'definitionList',
@@ -113,7 +117,6 @@ lowlight.register('javascript', js);
 lowlight.register('typescript', ts);
 
 export default function Editor() {
-  // State for floating toolbar, source view, and selected code language
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showSource, setShowSource] = useState(false);
@@ -123,6 +126,8 @@ export default function Editor() {
 
   const [isModalImageOpen, setModalImageOpen] = useState<boolean>(false);
   const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false); 
+  const [height, setHeight] = React.useState(480)
+  const [width, setWidth] = React.useState(640)
   const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false); 
   const editor = useEditor({
     extensions: [
@@ -156,12 +161,17 @@ export default function Editor() {
       Subscript,
       Link.configure({ openOnClick: false }),
       Markdown.configure({ html: true }),
+      Youtube.configure({
+        controls:true,
+        nocookie:true,
+      }),
+      Image.configure({
+        inline:false,
+        allowBase64:true
+      })
     ],
     content: `
-    <dl>
-      <dt>Term</dt>
-      <dd>Description</dd>
-    </dl>
+   <div data-youtube-video=""><iframe width="640" height="480" allowfullscreen="true" autoplay="false" disablekbcontrols="false" enableiframeapi="false" endtime="0" ivloadpolicy="0" loop="false" modestbranding="false" origin="" playlist="" rel="1" src="https://www.youtube-nocookie.com/embed/gCRNEJxDJKM?rel=1" start="0"></iframe></div>
     `,
   });
 
@@ -210,9 +220,7 @@ export default function Editor() {
           icon: <LinkIcon size={14} />,
           tooltip: 'Link',
           onClick: () => {
-            const url = prompt('Enter URL') || '';
-            if (url)
-              editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+            setModalUrlOpen(true)
           },
         },
         { id: 'footnote', icon: <Regex size={14} />, tooltip: 'Footnote', onClick: () => alert('Footnote extension not configured') },
@@ -224,10 +232,9 @@ export default function Editor() {
     {
       id: "image",
       label: "Image",
-      icon: <Image size={16} />,
+      icon: <ImageIcon size={16} />,
       onClick: () => {
-        const src = prompt('Image URL') || '';
-        if (src) editor?.chain().focus().setImage({ src }).run();
+        setModalImageOpen(true);
       },
     },
     {
@@ -235,8 +242,7 @@ export default function Editor() {
       label: "Video",
       icon: <Video size={16} />,
       onClick: () => {
-        const src = prompt('Video URL') || '';
-        if (src) editor?.chain().focus().setVideo({ src }).run();
+        setModalVideoUrlOpen(true)
       },
     },
     {
@@ -299,8 +305,10 @@ export default function Editor() {
   ];
   
   const handleImageModalOk = (values: string[], activeTabIndex: number) => {
-    console.log("User input:", values);
-    console.log("Selected tab:", activeTabIndex);
+   const url=values[0];
+   if(url){
+    editor?.chain().focus().setImage({src:url}).run();
+   }
     setModalImageOpen(false);
   };
 
@@ -310,8 +318,10 @@ export default function Editor() {
 
   
   const handleUrlModalOk = (values: string[], activeTabIndex: number) => {
-    console.log("User input:", values);
-    console.log("Selected tab:", activeTabIndex);
+    const url=values[0];
+    if(url){
+      editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    }
     setModalUrlOpen(false);
   };
 
@@ -320,8 +330,14 @@ export default function Editor() {
   };
 
   const handleVideoUrlModalOk = (values: string[], activeTabIndex: number) => {
-    console.log("User input:", values);
-    console.log("Selected tab:", activeTabIndex);
+    const url=values[0];
+    if(url){
+      editor?.commands.setYoutubeVideo({
+        src:url,
+        width: 640,
+        height:480,
+      })
+    }
     setModalVideoUrlOpen(false);
   };
 
@@ -429,7 +445,7 @@ export default function Editor() {
 
       {isModalImageOpen && (
         <Modal
-        modalTitle="User Access"
+        modalTitle="Upload Image"
         tabs={uploadImageModalData}
         onOk={handleImageModalOk}
         onClose={handleModalImageClose}
