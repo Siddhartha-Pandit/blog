@@ -15,8 +15,8 @@ import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
 import Blockquote from '@tiptap/extension-blockquote';
-import Youtube from '@tiptap/extension-youtube'
-import Image from '@tiptap/extension-image'
+import Youtube from '@tiptap/extension-youtube';
+import Image from '@tiptap/extension-image';
 
 import { Markdown } from 'tiptap-markdown';
 
@@ -61,11 +61,11 @@ import {
   Braces,
   CheckSquare,
   Quote,
-  X, // close icon
+  X,
 } from 'lucide-react';
 import { Node, CommandProps } from '@tiptap/core';
 import ImageUpload from './ImageUpload';
-// Extend tiptap commands for definition list
+
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     definitionList: {
@@ -73,7 +73,6 @@ declare module '@tiptap/core' {
     };
   }
 }
-
 
 const DefinitionList = Node.create({
   name: 'definitionList',
@@ -83,16 +82,13 @@ const DefinitionList = Node.create({
   renderHTML: ({ HTMLAttributes }) => ['dl', HTMLAttributes, 0],
   addCommands() {
     return {
-      toggleDefinitionList:
-        () =>
-        (props: CommandProps) => {
-          return props.commands.toggleWrap('definitionList');
-        },
+      toggleDefinitionList: () => (props: CommandProps) => {
+        return props.commands.toggleWrap('definitionList');
+      },
     };
   },
 });
 
-// <dt>
 const DefinitionTerm = Node.create({
   name: 'definitionTerm',
   group: 'block',
@@ -101,7 +97,6 @@ const DefinitionTerm = Node.create({
   renderHTML: ({ HTMLAttributes }) => ['dt', HTMLAttributes, 0],
 });
 
-// <dd>
 const DefinitionDescription = Node.create({
   name: 'definitionDescription',
   group: 'block',
@@ -125,19 +120,43 @@ export default function Editor() {
   const isMouseDownRef = useRef(false);
 
   const [isModalImageOpen, setModalImageOpen] = useState<boolean>(false);
-  const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false); 
-  const [height, setHeight] = React.useState(480)
-  const [width, setWidth] = React.useState(640)
-  const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false); 
+  const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false);
+  const [dragAndDropImage, setDragAndDropImage] = useState<File | null>(null);
+  const [base64Image, setBase64Image] = useState<string | null>(null);
+
+  // Convert a file into a base64 string
+  const convertBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Convert file to base64 and update state
+  const handleImageConvertToBase64 = async (file: File) => {
+    try {
+      const base64 = await convertBase64(file);
+      setBase64Image(base64);
+    } catch (error) {
+      console.error("Error converting to base64:", error);
+    }
+  };
+
+  // When a file is dragged and dropped, call conversion immediately
+  const handleImageDragAndDrop = (file: File) => {
+    setDragAndDropImage(file);
+    handleImageConvertToBase64(file);
+  };
+
+  const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: false,
-        bulletList: {
-          HTMLAttributes: {
-            class: "list-disc ml-10",
-          },
-        },
+        bulletList: { HTMLAttributes: { class: "list-disc ml-10" } },
         orderedList: false,
         listItem: false,
         codeBlock: false,
@@ -150,7 +169,7 @@ export default function Editor() {
       TaskList,
       TaskItem.configure({ nested: true }),
       Blockquote,
-      Code,             
+      Code,
       Underline,
       Strike,
       Highlight.configure({
@@ -161,18 +180,20 @@ export default function Editor() {
       Subscript,
       Link.configure({ openOnClick: false }),
       Markdown.configure({ html: true }),
-      Youtube.configure({
-        controls:true,
-        nocookie:true,
-      }),
+      Youtube.configure({ controls: true, nocookie: true }),
       Image.configure({
-        inline:false,
-        allowBase64:true
-      })
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: { class: 'w-[200px] h-[200px] border' },
+      }),
+      // Custom definition list extensions
+      DefinitionList,
+      DefinitionTerm,
+      DefinitionDescription,
     ],
-    content: `
-   <div data-youtube-video=""><iframe width="640" height="480" allowfullscreen="true" autoplay="false" disablekbcontrols="false" enableiframeapi="false" endtime="0" ivloadpolicy="0" loop="false" modestbranding="false" origin="" playlist="" rel="1" src="https://www.youtube-nocookie.com/embed/gCRNEJxDJKM?rel=1" start="0"></iframe></div>
-    `,
+    content: `<div data-youtube-video="">
+      <iframe width="640" height="480" allowfullscreen="true" autoplay="false" disablekbcontrols="false" enableiframeapi="false" endtime="0" ivloadpolicy="0" loop="false" modestbranding="false" origin="" playlist="" rel="1" src="https://www.youtube-nocookie.com/embed/gCRNEJxDJKM?rel=1" start="0"></iframe>
+    </div>`,
   });
 
   // Define floating toolbar items shown on text selection
@@ -219,9 +240,7 @@ export default function Editor() {
           id: 'link',
           icon: <LinkIcon size={14} />,
           tooltip: 'Link',
-          onClick: () => {
-            setModalUrlOpen(true)
-          },
+          onClick: () => setModalUrlOpen(true),
         },
         { id: 'footnote', icon: <Regex size={14} />, tooltip: 'Footnote', onClick: () => alert('Footnote extension not configured') },
       ],
@@ -233,38 +252,31 @@ export default function Editor() {
       id: "image",
       label: "Image",
       icon: <ImageIcon size={16} />,
-      onClick: () => {
-        setModalImageOpen(true);
-      },
+      onClick: () => setModalImageOpen(true),
     },
     {
       id: "video",
       label: "Video",
       icon: <Video size={16} />,
-      onClick: () => {
-        setModalVideoUrlOpen(true)
-      },
+      onClick: () => setModalVideoUrlOpen(true),
     },
     {
       id: "code-block",
       label: "Code block",
       icon: <Braces size={16} />,
-      onClick: () =>
-        editor?.chain().focus().toggleCodeBlock({ language: selectedLanguage }).run(),
+      onClick: () => editor?.chain().focus().toggleCodeBlock({ language: selectedLanguage }).run(),
     },
     {
       id: "table",
       label: "Table",
       icon: <Table size={16} />,
-      onClick: () =>
-        editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      onClick: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
     },
     {
       id: "quote",
       label: "Blockquote",
       icon: <Quote size={16} />,
-      onClick: () =>
-        editor?.chain().focus().toggleBlockquote().run(),
+      onClick: () => editor?.chain().focus().toggleBlockquote().run(),
     },
     {
       id: "list",
@@ -289,37 +301,46 @@ export default function Editor() {
       onClick: () => setShowSource(true),
     },
   ];
+
   const uploadImageModalData = [
     {
       id: "dragAndDrop",
-      name: "Image Drop",
+      name: "Upload",
       title: "Drag & Drop",
-      content: <ImageUpload />,
+      content: <ImageUpload onFileAccepted={handleImageDragAndDrop} />,
     },
     {
       id: "url",
       name: "URL",
-      title: "Embed Your Image",
-      inputPlaceholders: ["Image URL"],
+      title: "Image URL",
+      inputPlaceholders: ["Enter image URL"],
     },
   ];
   
+  // When the modal OK is triggered, choose the base64 image if available; otherwise, use the manually entered URL.
   const handleImageModalOk = (values: string[], activeTabIndex: number) => {
-   const url=values[0];
-   if(url){
-    editor?.chain().focus().setImage({src:url}).run();
-   }
+    const url = values[0];
+    const imageSrc = base64Image ? base64Image : url;
+
+    if (imageSrc) {
+      editor?.chain().focus().setImage({ src: imageSrc }).run();
+    } else {
+      console.error("No image source available.");
+    }
+    // Optionally, clear the base64 state after using it.
+    setBase64Image(null);
     setModalImageOpen(false);
   };
 
   const handleModalImageClose = () => {
+    // Optionally clear any stored base64 image when closing the modal
+    setBase64Image(null);
     setModalImageOpen(false);
   };
-
-  
+    
   const handleUrlModalOk = (values: string[], activeTabIndex: number) => {
-    const url=values[0];
-    if(url){
+    const url = values[0];
+    if (url) {
       editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }
     setModalUrlOpen(false);
@@ -330,13 +351,13 @@ export default function Editor() {
   };
 
   const handleVideoUrlModalOk = (values: string[], activeTabIndex: number) => {
-    const url=values[0];
-    if(url){
+    const url = values[0];
+    if (url) {
       editor?.commands.setYoutubeVideo({
-        src:url,
+        src: url,
         width: 640,
-        height:480,
-      })
+        height: 480,
+      });
     }
     setModalVideoUrlOpen(false);
   };
@@ -406,7 +427,6 @@ export default function Editor() {
           <option value="typescript">TypeScript</option>
           <option value="css">CSS</option>
           <option value="html">HTML</option>
-          {/* Additional languages can be added here */}
         </select>
       </div>
 
@@ -445,14 +465,14 @@ export default function Editor() {
 
       {isModalImageOpen && (
         <Modal
-        modalTitle="Upload Image"
-        tabs={uploadImageModalData}
-        onOk={handleImageModalOk}
-        onClose={handleModalImageClose}
-      />
+          modalTitle="Upload Image"
+          tabs={uploadImageModalData}
+          onOk={handleImageModalOk}
+          onClose={handleModalImageClose}
+        />
       )}
-     {isModalUrlOpen && (
-          <Modal
+      {isModalUrlOpen && (
+        <Modal
           modalTitle="Enter url"
           modalTextTitle="Enter url to add the link"
           inputPlaceholders={["url"]}
@@ -460,9 +480,8 @@ export default function Editor() {
           onClose={handleModalUrlClose}
         />
       )}
-
       {isModalVideoUrlOpen && (
-          <Modal
+        <Modal
           modalTitle="Enter video url"
           modalTextTitle="Enter video url"
           inputPlaceholders={["video url"]}
@@ -470,7 +489,6 @@ export default function Editor() {
           onClose={handleModalVideoUrlClose}
         />
       )}
-
     </div>
   );
 }
