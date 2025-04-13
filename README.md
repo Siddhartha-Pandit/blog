@@ -164,3 +164,13 @@ Task list
 
 
 ---
+
+
+# To do
+- Backend and database
+- Containerize
+- Deploy on k8s ( AKS)
+- CI ( build, build docker container, push to container registry )
+- CD ( Deploy )
+- Failover scenarios
+

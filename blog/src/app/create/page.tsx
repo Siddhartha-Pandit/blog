@@ -50,7 +50,6 @@ import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageUpload from "@/components/ImageUpload";
 // import Editor from "@/components/Editor";
-import MarkdownEditor from "@/components/MarkdownEditor";
 import FooterCreate from "@/components/FooterCreate";
 import Editor from "@/components/Editor";
 interface AutoSizeInputProps {
@@ -167,152 +166,7 @@ const CreatePage = () => {
   }
 
   // Define tabs with icons and labels.
-  const tabs = [
-    {
-      icon: <Bold className="w-4 h-4" />,
-      label: "Text Format",
-      content: (
-        <div className="flex items-center space-x-3 w-full rounded">
-          <Toggle>
-            <span>
-              <Bold />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Italic />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Underline />
-            </span>
-          </Toggle>
-          <ToggleGroup type="single">
-            <ToggleGroupItem value="UL">
-              <span>
-                <List />
-              </span>
-            </ToggleGroupItem>
-            <ToggleGroupItem value="OL">
-              <span>
-                <ListOrdered />
-              </span>
-            </ToggleGroupItem>
-            <ToggleGroupItem value="DL">
-              <span>
-                <ListTree />
-              </span>
-            </ToggleGroupItem>
-            <ToggleGroupItem value="SL">
-              <span>
-                <ListChecks />
-              </span>
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-      ),
-    },
-    {
-      icon: <Pen className="w-4 h-4" />,
-      label: "Text Design",
-      content: (
-        <div className="flex items-center space-x-3 w-full rounded">
-          <Toggle>
-            <span>
-              <Link />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Regex />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Highlighter />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Strikethrough />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Superscript />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Subscript />
-            </span>
-          </Toggle>
-        </div>
-      ),
-    },
-    {
-      icon: <Heading className="w-4 h-4" />,
-      label: "Heading",
-      content: (
-        <div className="flex items-center space-x-3 w-full rounded">
-          <ToggleGroup type="single">
-            <ToggleGroupItem value="H1">
-              <Heading1 />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="H2">
-              <Heading2 />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="H3">
-              <Heading3 />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="H4">
-              <Heading4 />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="H5">
-              <Heading5 />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="H6">
-              <Heading6 />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-      ),
-    },
-    {
-      icon: <Plus className="w-4 h-4" />,
-      label: "Insert",
-      content: (
-        <div className="flex items-center space-x-3 w-full rounded">
-          <Toggle>
-            <span>
-              <Quote />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <ImageIcon aria-label="Image icon" />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <VideoIcon aria-label="Video icon" />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Code />
-            </span>
-          </Toggle>
-          <Toggle>
-            <span>
-              <Grid3x3 />
-            </span>
-          </Toggle>
-        </div>
-      ),
-    },
-  ];
+  
 
   return (
     <div className="h-screen flex flex-col bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6]">
@@ -417,22 +271,7 @@ const CreatePage = () => {
         </div>
       </div>
 
-      {/* Fixed Tabs Header */}
-      <div className="fixed top-10 left-0 right-0 h-12 bg-[#faf9f6] dark:bg-[#1e1e1e] border-b border-[#d1d1d1] dark:border-[#525252] z-30 flex items-center justify-evenly space-x-2">
-        {tabs.map((tab, index) => (
-          <button
-            key={index}
-            onClick={() => setActiveTab(index)}
-            className={`px-2 py-2 text-sm flex items-center justify-center transition-colors ${
-              activeTab === index
-                ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-bold"
-                : "text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-            }`}
-          >
-            {tab.icon && <span className="mr-1">{tab.icon}</span>}
-            <span className="hidden md:inline">{tab.label}</span>
-          </button>
-        ))}
+      <div className="fixed top-10 left-0 right-0 h-12 bg-[#faf9f6] dark:bg-[#1e1e1e] border-b border-[#d1d1d1] dark:border-[#525252] z-30 flex items-center justify-end space-x-2">
         <button className="px-4 py-2 text-sm flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
           <span className="mr-1">
             <MessageCircle className="w-4 h-4" />
@@ -455,29 +294,12 @@ const CreatePage = () => {
           <span className="hidden md:inline">{isOpen ? "Close" : "Open"} Drawer</span>
         </button>
       </div>
-
-      {/* Fixed Tabs Content */}
-      <div className="fixed top-20 left-0 right-0 h-[50px] bg-[#eae9e6] dark:bg-[#2e2e2e] z-20 overflow-hidden p-3">
-        {tabs[activeTab].content}
-      </div>
-
-      {/* Main Content Area (non-scrollable page) */}
-      <div className="flex-1 mt-0 mb-10 px-5 pt-[calc(20vh)]">
-        {/* Title Section */}
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Title"
-            className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none focus:border-[#d1d1d1] dark:focus:border-[#525252]"
-          />
-        </div>
-        {/* CMS Editor Component (scrollable) */}
-        <div className="w-full h-[500px] overflow-y-auto border border-[#d1d1d1] dark:border-[#525252] rounded-md bg-white dark:bg-[#2e2e2e]">
+      <div className="flex-1 mt-0 mb-6 px-5 pt-[calc(15vh)]">
+       
+        <div className="w-full overflow-y-auto  rounded-md bg-white dark:bg-[#2e2e2e]">
           <Editor/>
         </div>
       </div>
-
-      {/* Fixed Footer */}
       <FooterCreate/>
     </div>
   );

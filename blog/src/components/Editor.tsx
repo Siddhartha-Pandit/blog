@@ -30,11 +30,11 @@ import { all, createLowlight } from 'lowlight';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 
-import Table from '@tiptap/extension-table'
-import TableCell from '@tiptap/extension-table-cell'
-import TableHeader from '@tiptap/extension-table-header'
-import TableRow from '@tiptap/extension-table-row'
-
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
+import Placeholder from '@tiptap/extension-placeholder';
 
 import FloatingTool, { FloatingToolItem } from './FloatingTool';
 import AddTool, { AddToolItem } from './AddTool';
@@ -120,12 +120,10 @@ lowlight.register('typescript', ts);
 
 export default function Editor() {
   const [floatingVisible, setFloatingVisible] = useState(false);
-  const [tableFloatingToolVisible,setTableFloatingToolVisible]=useState(false)
+  const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
   const [tablePosition, setTablePosition] = useState({ top: 0, left: 0 });
-
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showSource, setShowSource] = useState(false);
-  const [sourceType, setSourceType] = useState<'html' | 'markdown'>('html');
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const isMouseDownRef = useRef(false);
 
@@ -133,6 +131,7 @@ export default function Editor() {
   const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false);
   const [dragAndDropImage, setDragAndDropImage] = useState<File | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
+
   // Convert a file into a base64 string
   const convertBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -158,13 +157,13 @@ export default function Editor() {
     setDragAndDropImage(file);
     handleImageConvertToBase64(file);
   };
-  const resetImageStates=()=>{
+
+  const resetImageStates = () => {
     setDragAndDropImage(null);
     setBase64Image(null);
-    const fileInput =document.querySelector('.file-input') as HTMLInputElement;
-    if(fileInput) fileInput.value='';
-  }
-  
+    const fileInput = document.querySelector('.file-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
 
   const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false);
 
@@ -176,6 +175,12 @@ export default function Editor() {
         orderedList: false,
         listItem: false,
         codeBlock: false,
+      }),
+      Placeholder.configure({
+        placeholder: 'Write your story...',
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: true,
+        includeChildren: true,
       }),
       CodeBlockLowlight.configure({ lowlight }),
       Heading.configure({ levels: [1, 2, 3, 4] }),
@@ -201,25 +206,21 @@ export default function Editor() {
         inline: false,
         allowBase64: true,
         HTMLAttributes: {
-           class: 'w-[200px] h-[200px] border',
-           'data-keep':true
-           },
+          class: 'w-[200px] h-[200px] border',
+          'data-keep': true
+        },
       }),
-      // Custom definition list extensions
       DefinitionList,
       DefinitionTerm,
       DefinitionDescription,
       Table.configure({
-        resizable:true,
+        resizable: true,
       }),
       TableRow,
       TableHeader,
-      TableCell,  
+      TableCell,
     ],
-    content: 
-    ` 
-    
-    `,
+    content: "",
   });
 
   // Define floating toolbar items shown on text selection
@@ -235,8 +236,8 @@ export default function Editor() {
       tooltip: 'Heading',
       dropdownItems: [
         { id: 'H1', icon: <Heading1 size={14} />, tooltip: 'H1', onClick: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
-        { id: 'H2', icon: <Heading2 size={14} />, tooltip: 'H2', onClick: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
         { id: 'H3', icon: <Heading3 size={14} />, tooltip: 'H3', onClick: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
+        { id: 'H2', icon: <Heading2 size={14} />, tooltip: 'H2', onClick: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
         { id: 'H4', icon: <Heading4 size={14} />, tooltip: 'H4', onClick: () => editor?.chain().focus().toggleHeading({ level: 4 }).run() },
       ],
     },
@@ -272,17 +273,18 @@ export default function Editor() {
       ],
     },
   ];
+  
   const tableFloatingTool: FloatingToolItem[] = [
-    {id:'addColumnBefore',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_column_left</span>, tooltip:"Add column before",onClick:()=>editor?.chain().focus().addColumnBefore().run()},
-    {id:'addColumnAfter',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_column_right</span>, tooltip:"Add column after",onClick:()=>editor?.chain().focus().addColumnAfter().run()},
-    {id:'deleteColumn',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>splitscreen_left</span>, tooltip:"Delete column",onClick:()=>editor?.chain().focus().deleteColumn().run()},
-    {id:'addRowAbove',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_row_above</span>, tooltip:"Add row above",onClick:()=>editor?.chain().focus().addRowBefore().run()},
-    {id:'addRowBelow',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_row_below</span>, tooltip:"Add row below",onClick:()=>editor?.chain().focus().addRowAfter().run()},
-    {id:'deleteRow',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>splitscreen_bottom</span>, tooltip:"Delete row",onClick:()=>editor?.chain().focus().deleteRow().run()},
-    {id:'deleteTable',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>delete</span>, tooltip:"Delete table",onClick:()=>editor?.chain().focus().deleteTable().run()},
-    {id:'mergeOrSplit',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>combine_columns</span>, tooltip:"Split & Merge",onClick:()=>editor?.chain().focus().mergeOrSplit().run()},
-];
-// delete
+    { id: 'addColumnBefore', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>add_column_left</span>, tooltip: "Add column before", onClick: () => editor?.chain().focus().addColumnBefore().run() },
+    { id: 'addColumnAfter', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>add_column_right</span>, tooltip: "Add column after", onClick: () => editor?.chain().focus().addColumnAfter().run() },
+    { id: 'deleteColumn', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>splitscreen_left</span>, tooltip: "Delete column", onClick: () => editor?.chain().focus().deleteColumn().run() },
+    { id: 'addRowAbove', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>add_row_above</span>, tooltip: "Add row above", onClick: () => editor?.chain().focus().addRowBefore().run() },
+    { id: 'addRowBelow', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>add_row_below</span>, tooltip: "Add row below", onClick: () => editor?.chain().focus().addRowAfter().run() },
+    { id: 'deleteRow', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>splitscreen_bottom</span>, tooltip: "Delete row", onClick: () => editor?.chain().focus().deleteRow().run() },
+    { id: 'deleteTable', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>delete</span>, tooltip: "Delete table", onClick: () => editor?.chain().focus().deleteTable().run() },
+    { id: 'mergeOrSplit', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>combine_columns</span>, tooltip: "Split & Merge", onClick: () => editor?.chain().focus().mergeOrSplit().run() },
+  ];
+
   const tools: AddToolItem[] = [
     {
       id: "image",
@@ -352,7 +354,6 @@ export default function Editor() {
       inputPlaceholders: ["Enter image URL"],
     },
   ];
-  
 
   // When the modal OK is triggered, choose the base64 image if available; otherwise, use the manually entered URL.
   const handleImageModalOk = (values: string[], activeTabIndex: number) => {
@@ -375,7 +376,7 @@ export default function Editor() {
     setBase64Image(null);
     setModalImageOpen(false);
   };
-    
+
   const handleUrlModalOk = (values: string[], activeTabIndex: number) => {
     const url = values[0];
     if (url) {
@@ -406,7 +407,6 @@ export default function Editor() {
 
   useEffect(() => {
     if (!editor) return;
-    
     const updateFloating = () => {
       const { from, to } = editor.state.selection;
       if (from === to || isMouseDownRef.current) {
@@ -433,6 +433,7 @@ export default function Editor() {
       window.removeEventListener('mousedown', handleMouseDown);
     };
   }, [editor]);
+
   useEffect(() => {
     if (!editor) return;
     const updateTableFloating = () => {
@@ -440,7 +441,6 @@ export default function Editor() {
       const { from } = state.selection;
       const dom = view.domAtPos(from);
       let node = dom.node as HTMLElement;
-      // climb up to see if we’re in a <table>
       while (node && node.nodeName.toLowerCase() !== 'table' && node.parentElement) {
         node = node.parentElement;
       }
@@ -460,6 +460,7 @@ export default function Editor() {
       editor.off('selectionUpdate', updateTableFloating);
     };
   }, [editor]);
+
   useEffect(() => {
     const handleResizeScroll = () => {
       if (!tableFloatingToolVisible || !editor) return;
@@ -485,14 +486,19 @@ export default function Editor() {
       window.removeEventListener('scroll', handleResizeScroll, true);
     };
   }, [tableFloatingToolVisible, editor]);
- 
 
   return (
-    <div>
-      {/* Editor Area */}
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e]">
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Title"
+          className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none focus:border-[#d1d1d1] dark:focus:border-[#525252]"
+        />
+      </div>
+
       <EditorContent editor={editor} />
 
-      {/* Floating Toolbar */}
       {floatingVisible && (
         <FloatingTool
           items={floatingItems}
@@ -523,37 +529,7 @@ export default function Editor() {
       </div>
 
       {/* Source View Toggler */}
-      <div className="flex gap-2" style={{ marginTop: '1rem' }}>
-        <button
-          onClick={() => setSourceType('html')}
-          className={`px-3 py-1 rounded ${sourceType === 'html' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-        >
-          HTML
-        </button>
-        <button
-          onClick={() => setSourceType('markdown')}
-          className={`px-3 py-1 rounded ${sourceType === 'markdown' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-        >
-          Markdown
-        </button>
-      </div>
-
-      {showSource && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-3/4 max-h-[80vh] overflow-auto">
-            <div className="flex justify-between items-center mb-4">
-              <button onClick={() => setShowSource(false)} aria-label="Close">
-                <X size={16} />
-              </button>
-            </div>
-            <pre className="whitespace-pre-wrap text-sm">
-              {sourceType === 'html'
-                ? editor?.getHTML()
-                : editor?.storage.markdown.getMarkdown()}
-            </pre>
-          </div>
-        </div>
-      )}
+     
 
       {isModalImageOpen && (
         <Modal
@@ -583,10 +559,10 @@ export default function Editor() {
       )}
       {tableFloatingToolVisible && (
         <FloatingTool 
-        items={tableFloatingTool}
-        top={tablePosition.top}
-        left={tablePosition.left}
-        onMouseDown={e => e.preventDefault()}
+          items={tableFloatingTool}
+          top={tablePosition.top}
+          left={tablePosition.left}
+          onMouseDown={e => e.preventDefault()}
         />
       )}
     </div>

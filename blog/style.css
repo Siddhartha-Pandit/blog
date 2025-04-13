@@ -1,4 +1,5 @@
 /* Headings */
+
 h1, h2, h3, h4 {
   margin-bottom: 0.5rem;
 }
@@ -291,12 +292,40 @@ table .column-resize-handle {
     'opsz' 24;
 }
 
+.ProseMirror {
+  border: none !important;
+  min-height: 150px;
+  position: relative;
+  padding: 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
 
+.ProseMirror:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
 
+/* Add position relative to the first paragraph */
+.ProseMirror p:first-child {
+  position: relative;
+}
 
+/* Adjusted placeholder styling */
+.ProseMirror p.is-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #6b7280;
+  position: absolute;
+  font-size: 1rem; /* Match editor font size */
+  left: 0rem; /* Match editor padding */
+  top: 0.2rem; /* Match editor padding */
+  pointer-events: none;
+  opacity: 0.75;
+  font-style: italic;
+  line-height: 1.5; /* Match editor line height */
+}
 
-
-/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   code {
     background-color: #2d2d2d;
@@ -304,7 +333,6 @@ table .column-resize-handle {
     box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.1);
   }
 
-  /* Definition List Dark Mode */
   dt {
     color: #e2e8f0;
   }
