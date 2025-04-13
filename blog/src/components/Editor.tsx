@@ -30,6 +30,12 @@ import { all, createLowlight } from 'lowlight';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 
+import Table from '@tiptap/extension-table'
+import TableCell from '@tiptap/extension-table-cell'
+import TableHeader from '@tiptap/extension-table-header'
+import TableRow from '@tiptap/extension-table-row'
+
+
 import FloatingTool, { FloatingToolItem } from './FloatingTool';
 import AddTool, { AddToolItem } from './AddTool';
 import Modal from './Modal';
@@ -56,13 +62,14 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   Video,
-  Table,
+  Table as TableIcon,
   Minus,
   Braces,
   CheckSquare,
   Quote,
-  X,
+  X
 } from 'lucide-react';
+
 import { Node, CommandProps } from '@tiptap/core';
 import ImageUpload from './ImageUpload';
 
@@ -113,6 +120,9 @@ lowlight.register('typescript', ts);
 
 export default function Editor() {
   const [floatingVisible, setFloatingVisible] = useState(false);
+  const [tableFloatingToolVisible,setTableFloatingToolVisible]=useState(false)
+  const [tablePosition, setTablePosition] = useState({ top: 0, left: 0 });
+
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showSource, setShowSource] = useState(false);
   const [sourceType, setSourceType] = useState<'html' | 'markdown'>('html');
@@ -123,7 +133,6 @@ export default function Editor() {
   const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false);
   const [dragAndDropImage, setDragAndDropImage] = useState<File | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
-
   // Convert a file into a base64 string
   const convertBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -149,6 +158,13 @@ export default function Editor() {
     setDragAndDropImage(file);
     handleImageConvertToBase64(file);
   };
+  const resetImageStates=()=>{
+    setDragAndDropImage(null);
+    setBase64Image(null);
+    const fileInput =document.querySelector('.file-input') as HTMLInputElement;
+    if(fileInput) fileInput.value='';
+  }
+  
 
   const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false);
 
@@ -184,16 +200,26 @@ export default function Editor() {
       Image.configure({
         inline: false,
         allowBase64: true,
-        HTMLAttributes: { class: 'w-[200px] h-[200px] border' },
+        HTMLAttributes: {
+           class: 'w-[200px] h-[200px] border',
+           'data-keep':true
+           },
       }),
       // Custom definition list extensions
       DefinitionList,
       DefinitionTerm,
       DefinitionDescription,
+      Table.configure({
+        resizable:true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,  
     ],
-    content: `<div data-youtube-video="">
-      <iframe width="640" height="480" allowfullscreen="true" autoplay="false" disablekbcontrols="false" enableiframeapi="false" endtime="0" ivloadpolicy="0" loop="false" modestbranding="false" origin="" playlist="" rel="1" src="https://www.youtube-nocookie.com/embed/gCRNEJxDJKM?rel=1" start="0"></iframe>
-    </div>`,
+    content: 
+    ` 
+    
+    `,
   });
 
   // Define floating toolbar items shown on text selection
@@ -246,7 +272,17 @@ export default function Editor() {
       ],
     },
   ];
-
+  const tableFloatingTool: FloatingToolItem[] = [
+    {id:'addColumnBefore',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_column_left</span>, tooltip:"Add column before",onClick:()=>editor?.chain().focus().addColumnBefore().run()},
+    {id:'addColumnAfter',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_column_right</span>, tooltip:"Add column after",onClick:()=>editor?.chain().focus().addColumnAfter().run()},
+    {id:'deleteColumn',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>splitscreen_left</span>, tooltip:"Delete column",onClick:()=>editor?.chain().focus().deleteColumn().run()},
+    {id:'addRowAbove',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_row_above</span>, tooltip:"Add row above",onClick:()=>editor?.chain().focus().addRowBefore().run()},
+    {id:'addRowBelow',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>add_row_below</span>, tooltip:"Add row below",onClick:()=>editor?.chain().focus().addRowAfter().run()},
+    {id:'deleteRow',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>splitscreen_bottom</span>, tooltip:"Delete row",onClick:()=>editor?.chain().focus().deleteRow().run()},
+    {id:'deleteTable',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>delete</span>, tooltip:"Delete table",onClick:()=>editor?.chain().focus().deleteTable().run()},
+    {id:'mergeOrSplit',icon:<span className="material-symbols-outlined icon-small" style={{fontSize:'14px'}}>combine_columns</span>, tooltip:"Split & Merge",onClick:()=>editor?.chain().focus().mergeOrSplit().run()},
+];
+// delete
   const tools: AddToolItem[] = [
     {
       id: "image",
@@ -269,7 +305,7 @@ export default function Editor() {
     {
       id: "table",
       label: "Table",
-      icon: <Table size={16} />,
+      icon: <TableIcon size={16} />,
       onClick: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
     },
     {
@@ -317,6 +353,7 @@ export default function Editor() {
     },
   ];
   
+
   // When the modal OK is triggered, choose the base64 image if available; otherwise, use the manually entered URL.
   const handleImageModalOk = (values: string[], activeTabIndex: number) => {
     const url = values[0];
@@ -329,6 +366,7 @@ export default function Editor() {
     }
     // Optionally, clear the base64 state after using it.
     setBase64Image(null);
+    setDragAndDropImage(null);
     setModalImageOpen(false);
   };
 
@@ -368,6 +406,7 @@ export default function Editor() {
 
   useEffect(() => {
     if (!editor) return;
+    
     const updateFloating = () => {
       const { from, to } = editor.state.selection;
       if (from === to || isMouseDownRef.current) {
@@ -394,6 +433,59 @@ export default function Editor() {
       window.removeEventListener('mousedown', handleMouseDown);
     };
   }, [editor]);
+  useEffect(() => {
+    if (!editor) return;
+    const updateTableFloating = () => {
+      const { view, state } = editor;
+      const { from } = state.selection;
+      const dom = view.domAtPos(from);
+      let node = dom.node as HTMLElement;
+      // climb up to see if we’re in a <table>
+      while (node && node.nodeName.toLowerCase() !== 'table' && node.parentElement) {
+        node = node.parentElement;
+      }
+      if (node?.nodeName.toLowerCase() === 'table') {
+        const rect = node.getBoundingClientRect();
+        setTablePosition({
+          top: rect.top + window.scrollY - 40,
+          left: rect.left + window.scrollX,
+        });
+        setTableFloatingToolVisible(true);
+      } else {
+        setTableFloatingToolVisible(false);
+      }
+    };
+    editor.on('selectionUpdate', updateTableFloating);
+    return () => {
+      editor.off('selectionUpdate', updateTableFloating);
+    };
+  }, [editor]);
+  useEffect(() => {
+    const handleResizeScroll = () => {
+      if (!tableFloatingToolVisible || !editor) return;
+      const { view, state } = editor;
+      const { from } = state.selection;
+      const dom = view.domAtPos(from);
+      let node = dom.node as HTMLElement;
+      while (node && node.nodeName.toLowerCase() !== 'table' && node.parentElement) {
+        node = node.parentElement;
+      }
+      if (node?.nodeName.toLowerCase() === 'table') {
+        const tableRect = node.getBoundingClientRect();
+        setTablePosition({
+          top: tableRect.top + window.scrollY - 40,
+          left: tableRect.left + window.scrollX,
+        });
+      }
+    };
+    window.addEventListener('resize', handleResizeScroll);
+    window.addEventListener('scroll', handleResizeScroll, true);
+    return () => {
+      window.removeEventListener('resize', handleResizeScroll);
+      window.removeEventListener('scroll', handleResizeScroll, true);
+    };
+  }, [tableFloatingToolVisible, editor]);
+ 
 
   return (
     <div>
@@ -487,6 +579,14 @@ export default function Editor() {
           inputPlaceholders={["video url"]}
           onOk={handleVideoUrlModalOk}
           onClose={handleModalVideoUrlClose}
+        />
+      )}
+      {tableFloatingToolVisible && (
+        <FloatingTool 
+        items={tableFloatingTool}
+        top={tablePosition.top}
+        left={tablePosition.left}
+        onMouseDown={e => e.preventDefault()}
         />
       )}
     </div>
