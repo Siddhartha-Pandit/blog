@@ -17,14 +17,6 @@ import ListItem from '@tiptap/extension-list-item';
 import Blockquote from '@tiptap/extension-blockquote';
 import Youtube from '@tiptap/extension-youtube';
 import Image from '@tiptap/extension-image';
-
-import { Markdown } from 'tiptap-markdown';
-
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import css from 'highlight.js/lib/languages/css';
-import js from 'highlight.js/lib/languages/javascript';
-import ts from 'highlight.js/lib/languages/typescript';
-import html from 'highlight.js/lib/languages/xml';
 import { all, createLowlight } from 'lowlight';
 
 import TaskItem from '@tiptap/extension-task-item';
@@ -72,7 +64,7 @@ import {
 
 import { Node, CommandProps } from '@tiptap/core';
 import ImageUpload from './ImageUpload';
-
+import { CustomCodeBlock } from '@/lib/CustomCodeBlock';
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     definitionList: {
@@ -113,10 +105,6 @@ const DefinitionDescription = Node.create({
 });
 
 const lowlight = createLowlight(all);
-lowlight.register('html', html);
-lowlight.register('css', css);
-lowlight.register('javascript', js);
-lowlight.register('typescript', ts);
 
 export default function Editor() {
   const [floatingVisible, setFloatingVisible] = useState(false);
@@ -167,63 +155,121 @@ export default function Editor() {
 
   const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: false,
-        bulletList: { HTMLAttributes: { class: "list-disc ml-10" } },
-        orderedList: false,
-        listItem: false,
-        codeBlock: false,
-      }),
-      Placeholder.configure({
-        placeholder: 'Write your story...',
-        showOnlyWhenEditable: true,
-        showOnlyCurrent: true,
-        includeChildren: true,
-      }),
-      CodeBlockLowlight.configure({ lowlight }),
-      Heading.configure({ levels: [1, 2, 3, 4] }),
-      BulletList,
-      OrderedList,
-      ListItem,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Blockquote,
-      Code,
-      Underline,
-      Strike,
-      Highlight.configure({
-        multicolor: false,
-        HTMLAttributes: { class: 'bg-yellow-200' },
-      }),
-      Superscript,
-      Subscript,
-      Link.configure({ openOnClick: false }),
-      Markdown.configure({ html: true }),
-      Youtube.configure({ controls: true, nocookie: true }),
-      Image.configure({
-        inline: false,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'w-[200px] h-[200px] border',
-          'data-keep': true
-        },
-      }),
-      DefinitionList,
-      DefinitionTerm,
-      DefinitionDescription,
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      TableHeader,
-      TableCell,
-    ],
-    content: "",
-  });
+  const textColor = 'text-[#333333] dark:text-[#dddddd]'
 
-  // Define floating toolbar items shown on text selection
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+      heading: false,
+      bulletList: { HTMLAttributes: { class: `list-disc ml-10 ${textColor}` } },
+      orderedList: false,
+      listItem: false,
+      codeBlock: false,
+    }),
+    Placeholder.configure({
+      placeholder: 'Write your story here...',
+      showOnlyWhenEditable: true,
+      showOnlyCurrent: true,
+      includeChildren: false,
+      // note: Placeholder doesn’t support HTMLAttributes, but the root class will catch it
+    }),
+    CustomCodeBlock.configure({
+      lowlight,
+      HTMLAttributes: { class: `p-4 rounded ${textColor}` },
+    }),
+    Heading.configure({
+      levels: [1, 2, 3, 4],
+      HTMLAttributes: { class: textColor },
+    }),
+    BulletList.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    OrderedList.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    ListItem.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    TaskList.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    TaskItem.configure({
+      nested: true,
+      HTMLAttributes: { class: textColor },
+    }),
+    Blockquote.configure({
+      HTMLAttributes: { class: `border-l-4 pl-4 italic ${textColor}` },
+    }),
+    Code.configure({
+      HTMLAttributes: {
+        class: `bg-[#faf9f6] dark:bg-[#1e1e1e] rounded px-1 ${textColor}`,
+      },
+    }),
+    Underline.configure({
+      HTMLAttributes: { class: `${textColor} underline` },
+    }),
+    Strike.configure({
+      HTMLAttributes: { class: `${textColor} line-through` },
+    }),
+    Highlight.configure({
+      multicolor: false,
+      HTMLAttributes: { class: `bg-yellow-200 ${textColor}` },
+    }),
+    Superscript.configure({
+      HTMLAttributes: { class: `${textColor} align-super` },
+    }),
+    Subscript.configure({
+      HTMLAttributes: { class: `${textColor} align-sub` },
+    }),
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: {
+        class: `underline underline-offset-2 decoration-current ${textColor}`,
+      },
+    }),
+    Youtube.configure({
+      controls: true,
+      nocookie: true,
+      HTMLAttributes: { class: textColor },
+    }),
+    Image.configure({
+      inline: false,
+      allowBase64: true,
+      HTMLAttributes: {
+        class: `w-[200px] h-[200px] border ${textColor}`,
+        'data-keep': true,
+      },
+    }),
+    DefinitionList.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    DefinitionTerm.configure({
+      HTMLAttributes: { class: `${textColor} font-bold` },
+    }),
+    DefinitionDescription.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    Table.configure({
+      resizable: true,
+      HTMLAttributes: { class: `table-auto border-collapse ${textColor}` },
+    }),
+    TableRow.configure({
+      HTMLAttributes: { class: textColor },
+    }),
+    TableHeader.configure({
+      HTMLAttributes: { class: `${textColor} font-semibold border px-2 py-1` },
+    }),
+    TableCell.configure({
+      HTMLAttributes: { class: `${textColor} border px-2 py-1` },
+    }),
+  ],
+  content: '',
+  editorProps: {
+    attributes: {
+      class: `prose ${textColor}`,
+    },
+  },
+})
   const floatingItems: FloatingToolItem[] = [
     { id: 'bold', icon: <Bold size={16} />, tooltip: 'Bold', onClick: () => editor?.chain().focus().toggleBold().run() },
     { id: 'italic', icon: <Italic size={16} />, tooltip: 'Italic', onClick: () => editor?.chain().focus().toggleItalic().run() },
@@ -302,19 +348,26 @@ export default function Editor() {
       id: "code-block",
       label: "Code block",
       icon: <Braces size={16} />,
-      onClick: () => editor?.chain().focus().toggleCodeBlock({ language: selectedLanguage }).run(),
+      onClick: () => editor?.chain().focus().insertContent('<p></p>').toggleCodeBlock({ language: selectedLanguage }).run(),
     },
     {
       id: "table",
       label: "Table",
       icon: <TableIcon size={16} />,
-      onClick: () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      onClick: () => {
+
+        editor?.chain().focus()
+        .insertContent('<p></p>')
+        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+        .insertContent('<p></p>')
+        .run()
+      }
     },
     {
       id: "quote",
       label: "Blockquote",
       icon: <Quote size={16} />,
-      onClick: () => editor?.chain().focus().toggleBlockquote().run(),
+      onClick: () => editor?.chain().focus().insertContent('<p></p>').toggleBlockquote().run(),
     },
     {
       id: "list",
@@ -355,7 +408,6 @@ export default function Editor() {
     },
   ];
 
-  // When the modal OK is triggered, choose the base64 image if available; otherwise, use the manually entered URL.
   const handleImageModalOk = (values: string[], activeTabIndex: number) => {
     const url = values[0];
     const imageSrc = base64Image ? base64Image : url;
@@ -365,14 +417,12 @@ export default function Editor() {
     } else {
       console.error("No image source available.");
     }
-    // Optionally, clear the base64 state after using it.
     setBase64Image(null);
     setDragAndDropImage(null);
     setModalImageOpen(false);
   };
 
   const handleModalImageClose = () => {
-    // Optionally clear any stored base64 image when closing the modal
     setBase64Image(null);
     setModalImageOpen(false);
   };
@@ -526,11 +576,7 @@ export default function Editor() {
           <option value="css">CSS</option>
           <option value="html">HTML</option>
         </select>
-      </div>
-
-      {/* Source View Toggler */}
-     
-
+      </div>  
       {isModalImageOpen && (
         <Modal
           modalTitle="Upload Image"

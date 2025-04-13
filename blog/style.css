@@ -1,5 +1,3 @@
-/* Headings */
-
 h1, h2, h3, h4 {
   margin-bottom: 0.5rem;
 }
@@ -20,7 +18,6 @@ h4 {
   margin-top: 0.25rem;
 }
 
-/* Lists */
 ul,
 ol {
   padding: 0 1rem;
@@ -39,7 +36,6 @@ ol li p {
   margin: 0.25em 0;
 }
 
-/* Task List Specific Styles */
 ul[data-type="taskList"] {
   list-style: none;
   margin: 1.25rem 1rem 1.25rem 0.4rem;
@@ -61,7 +57,6 @@ ul[data-type="taskList"] input[type="checkbox"] {
   cursor: pointer;
 }
 
-/* Definition Lists */
 dl {
   margin: 1.5rem 0;
   padding-left: 1rem;
@@ -75,7 +70,6 @@ dd {
   margin: 0.25em 0;
 }
 
-/* Code Blocks and Preformatted Text */
 pre {
   background-color: #2d2d2d;
   color: #f5f5f5;
@@ -91,7 +85,6 @@ pre code {
   padding: 0;
 }
 
-/* Syntax Highlighting for Code Blocks */
 pre .hljs-comment,
 pre .hljs-quote {
   color: #616161;
@@ -136,7 +129,6 @@ pre .hljs-strong {
   font-weight: 700;
 }
 
-/* Inline Code Styling */
 code {
   font-family: 'Courier New', monospace;
   font-size: 1rem;
@@ -147,40 +139,39 @@ code {
   box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Blockquotes */
 blockquote {
-  border-left: 3px solid #ff0fff;
+  border-left: 3px solid #333333;
   margin: 1.5rem 0;
   padding-left: 1rem;
 }
-a {
+/* a {
   position: relative;
-  color: #1a0dab; /* Base link color */
-  text-decoration: none;
+  color: #1a0dab; 
+  text-decoration: underline;
   font-weight: 500;
-  transition: color 0.3s ease; /* Smooth color change on hover */
+  transition: color 0.3s ease; 
 }
 
 a::after {
   content: '';
   position: absolute;
   left: 0;
-  bottom: -2px; /* Adjust to sit just below text */
+  bottom: -2px; 
   width: 100%;
-  height: 2px; /* Thickness of the underline */
-  background: linear-gradient(90deg, #ff6ec4, #7873f5); /* Pink to purple gradient */
+  height: 2px; 
+  background: linear-gradient(90deg, #ff6ec4, #7873f5);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.3s ease; /* Animate the growth */
+  transition: transform 0.3s ease; 
 }
 
 a:hover {
-  color: #7873f5; /* Text fades to match gradient end */
+  color: #7873f5;
 }
 
 a:hover::after {
-  transform: scaleX(1); /* Grow underline from left to right */
-}
+  transform: scaleX(1); 
+} */
 
 
 div[data-youtube-video] {
@@ -317,14 +308,16 @@ table .column-resize-handle {
   content: attr(data-placeholder);
   color: #6b7280;
   position: absolute;
-  font-size: 1rem; /* Match editor font size */
-  left: 0rem; /* Match editor padding */
-  top: 0.2rem; /* Match editor padding */
+  font-size: 1rem; 
+  left: 0rem;
+  top: 0.2rem; 
   pointer-events: none;
   opacity: 0.75;
   font-style: italic;
-  line-height: 1.5; /* Match editor line height */
+  line-height: 1.5;
 }
+
+
 
 @media (prefers-color-scheme: dark) {
   code {
