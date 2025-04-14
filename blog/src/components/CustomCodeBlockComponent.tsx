@@ -43,7 +43,7 @@ const CustomCodeBlockComponent: React.FC<CustomCodeBlockComponentProps> = ({
   return (
     <NodeViewWrapper className="relative rounded-md my-4 bg-white dark:bg-gray-800">
       <select
-        className="absolute top-0 right-0 bg-white dark:bg-gray-800 px-1 py-0.5 text-xs rounded-bl-md shadow-sm focus:outline-none"
+        className="absolute top-0 right-0 bg-[#131313]  px-1 py-0.5 text-xs rounded-bl-md shadow-sm focus:outline-none"
         value={language || 'javascript'}
         onChange={handleLanguageChange}
       >

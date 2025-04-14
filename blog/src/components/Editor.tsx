@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import "../../style.css";
-
+// 13131C (dark color) CCCCCC (light color)
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -27,6 +27,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import Placeholder from '@tiptap/extension-placeholder';
+import Paragraph from '@tiptap/extension-paragraph'
 
 import FloatingTool, { FloatingToolItem } from './FloatingTool';
 import AddTool, { AddToolItem } from './AddTool';
@@ -109,6 +110,7 @@ const lowlight = createLowlight(all);
 export default function Editor() {
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
+  const [imageFloatingToolVisible, setImageFloatingToolVisible] = useState(false);
   const [tablePosition, setTablePosition] = useState({ top: 0, left: 0 });
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [showSource, setShowSource] = useState(false);
@@ -130,7 +132,6 @@ export default function Editor() {
     });
   };
 
-  // Convert file to base64 and update state
   const handleImageConvertToBase64 = async (file: File) => {
     try {
       const base64 = await convertBase64(file);
@@ -171,7 +172,6 @@ const editor = useEditor({
       showOnlyWhenEditable: true,
       showOnlyCurrent: true,
       includeChildren: false,
-      // note: Placeholder doesn’t support HTMLAttributes, but the root class will catch it
     }),
     CustomCodeBlock.configure({
       lowlight,
@@ -202,7 +202,7 @@ const editor = useEditor({
     }),
     Code.configure({
       HTMLAttributes: {
-        class: `bg-[#faf9f6] dark:bg-[#1e1e1e] rounded px-1 ${textColor}`,
+        class: `bg-[#131313] dark:bg-[#131313] rounded px-1 ${textColor}`,
       },
     }),
     Underline.configure({
@@ -213,7 +213,7 @@ const editor = useEditor({
     }),
     Highlight.configure({
       multicolor: false,
-      HTMLAttributes: { class: `bg-yellow-200 ${textColor}` },
+      HTMLAttributes: { class: `bg-[#554D56] text-[#faf9f6] p-0.3 rounded-[1px] ${textColor}` },
     }),
     Superscript.configure({
       HTMLAttributes: { class: `${textColor} align-super` },
@@ -230,16 +230,17 @@ const editor = useEditor({
     Youtube.configure({
       controls: true,
       nocookie: true,
-      HTMLAttributes: { class: textColor },
+      HTMLAttributes: { class: `block mx-auto w-[150px] sm:w-[200px] md:w-[250px] lg:w-[300px] xl:w-[350px] h-auto ${textColor}` },
     }),
     Image.configure({
       inline: false,
       allowBase64: true,
       HTMLAttributes: {
-        class: `w-[200px] h-[200px] border ${textColor}`,
+        class: `mx-auto mx-auto w-[150px] sm:w-[200px] md:w-[250px] lg:w-[300px] xl:w-[350px] h-auto border ${textColor}`,
         'data-keep': true,
       },
     }),
+    Paragraph,
     DefinitionList.configure({
       HTMLAttributes: { class: textColor },
     }),
@@ -251,13 +252,13 @@ const editor = useEditor({
     }),
     Table.configure({
       resizable: true,
-      HTMLAttributes: { class: `table-auto border-collapse ${textColor}` },
+      HTMLAttributes: { class: `table-auto border-collapse` },
     }),
     TableRow.configure({
       HTMLAttributes: { class: textColor },
     }),
     TableHeader.configure({
-      HTMLAttributes: { class: `${textColor} font-semibold border px-2 py-1` },
+      HTMLAttributes: { class: `text-[#faf9f6] bg-[#1e1e1e] dark:text-[#1e1e1e] dark:bg-[#faf9f6] font-semibold border px-2 py-1` },
     }),
     TableCell.configure({
       HTMLAttributes: { class: `${textColor} border px-2 py-1` },
@@ -308,7 +309,15 @@ const editor = useEditor({
         { id: 'highlighter', icon: <Highlighter size={14} />, tooltip: 'Highlight', onClick: () => editor?.chain().focus().toggleHighlight().run() },
         { id: 'superscript', icon: <SupIcon size={14} />, tooltip: 'Superscript', onClick: () => editor?.chain().focus().toggleSuperscript().run() },
         { id: 'subscript', icon: <SubIcon size={14} />, tooltip: 'Subscript', onClick: () => editor?.chain().focus().toggleSubscript().run() },
-        { id: 'code', icon: <CodeIcon size={14} />, tooltip: 'Inline Code', onClick: () => editor?.chain().focus().toggleCode().run() },
+        { id: 'code', icon: <CodeIcon size={14} />, tooltip: 'Inline Code', onClick: () => {
+          // editor?.chain().focus().toggleCode().run()
+          editor?.chain()
+          .focus()
+          .setParagraph()  // new line
+          .toggleCode()       // enable inline code mark
+          .setParagraph() 
+          .run()
+        } },
         {
           id: 'link',
           icon: <LinkIcon size={14} />,
@@ -329,6 +338,11 @@ const editor = useEditor({
     { id: 'deleteRow', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>splitscreen_bottom</span>, tooltip: "Delete row", onClick: () => editor?.chain().focus().deleteRow().run() },
     { id: 'deleteTable', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>delete</span>, tooltip: "Delete table", onClick: () => editor?.chain().focus().deleteTable().run() },
     { id: 'mergeOrSplit', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '14px' }}>combine_columns</span>, tooltip: "Split & Merge", onClick: () => editor?.chain().focus().mergeOrSplit().run() },
+  ];
+  const imageWidthFloatingTool: FloatingToolItem[] = [
+    { id: 'normalWidth', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '20px' }}>width_normal</span>, tooltip: "Add column before", onClick: () => editor?.chain().focus().addColumnBefore().run() },
+    { id: 'mediumWidth', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '20px' }}>width_wide</span>, tooltip: "Add column after", onClick: () => editor?.chain().focus().addColumnAfter().run() },
+    { id: 'fullWidth', icon: <span className="material-symbols-outlined icon-small" style={{ fontSize: '20px' }}>width_full</span>, tooltip: "Delete column", onClick: () => editor?.chain().focus().deleteColumn().run() },
   ];
 
   const tools: AddToolItem[] = [
@@ -557,26 +571,16 @@ const editor = useEditor({
           onMouseDown={e => e.preventDefault()}
         />
       )}
+      
+      {imageFloatingToolVisible && <FloatingTool 
+        items={imageWidthFloatingTool}
+        onMouseDown={e => e.preventDefault()}
 
+      />}
       {/* Bottom Toolbar */}
       <AddTool tools={tools} />
 
-      {/* Language Selector for Code Block */}
-      <div style={{ marginTop: '1rem' }}>
-        <label htmlFor="language-select" style={{ marginRight: '0.5rem' }}>
-          Select Code Block Language:
-        </label>
-        <select
-          id="language-select"
-          value={selectedLanguage}
-          onChange={(e) => setSelectedLanguage(e.target.value)}
-        >
-          <option value="javascript">JavaScript</option>
-          <option value="typescript">TypeScript</option>
-          <option value="css">CSS</option>
-          <option value="html">HTML</option>
-        </select>
-      </div>  
+     
       {isModalImageOpen && (
         <Modal
           modalTitle="Upload Image"
