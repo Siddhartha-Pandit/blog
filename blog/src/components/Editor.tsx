@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect,forwardRef, useImperativeHandle } from 'react';
 import "../../style.css";
 // 13131C (dark color) CCCCCC (light color)
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -108,7 +108,7 @@ const DefinitionDescription = Node.create({
 
 const lowlight = createLowlight(all);
 
-export default function Editor() {
+const Editor = forwardRef((props, ref) => {
 
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
@@ -284,6 +284,15 @@ const editor = useEditor({
     },
   },
 })
+
+useImperativeHandle(ref, () => ({
+  getJSON: () => (editor ? editor.getJSON() : {} as JSONContent),
+  getMarkdown: () => {
+    const json: JSONContent = editor ? editor.getJSON() : {} as JSONContent;
+    return convertToMarkdown(json);
+  },
+}));
+
   const floatingItems: FloatingToolItem[] = [
     { id: 'bold', icon: <Bold size={16} />, tooltip: 'Bold', onClick: () => editor?.chain().focus().toggleBold().run() },
     { id: 'italic', icon: <Italic size={16} />, tooltip: 'Italic', onClick: () => editor?.chain().focus().toggleItalic().run() },
@@ -568,13 +577,13 @@ const editor = useEditor({
 
   return (
     <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e]">
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <input
           type="text"
           placeholder="Title"
           className="w-full p-2 border-b-2 border-transparent rounded-md text-4xl focus:outline-none focus:border-[#d1d1d1] dark:focus:border-[#525252]"
         />
-      </div>
+      </div> */}
 
       <EditorContent editor={editor} />
 
@@ -632,4 +641,7 @@ const editor = useEditor({
       )}
     </div>
   );
-}
+})
+Editor.displayName = "Editor";
+
+export default Editor;

@@ -1,58 +1,79 @@
-import mongoose,{Schema,Document} from "mongoose";
+import mongoose, { Schema, Document, model, models } from "mongoose";
 
-export interface Content extends Document{
-    title: string;
-    contentBody: string;
-    author: mongoose.Schema.Types.ObjectId;
-    shares: number;
-    likes:  mongoose.Types.ObjectId[]; 
-    tags: string[];
-    isPublished: boolean;
-    category: mongoose.Schema.Types.ObjectId;
-    publishDateTime: Date;
+export interface Content extends Document {
+  title: string;
+  content: string;                    // renamed from contentBody
+  author: mongoose.Schema.Types.ObjectId;
+  category?: mongoose.Schema.Types.ObjectId; // now optional
+  tags: string[];
+  featureImage: string;
+  metaDescription: string;
+  shares: number;
+  likes: mongoose.Schema.Types.ObjectId[];
+  isPublished: boolean;
+  publishDateTime: Date | null;       // allow null for drafts
 }
 
-const ContentSchema = new Schema<Content>({
+const ContentSchema: Schema<Content> = new Schema(
+  {
     title: {
-        type: String,
-        required: [true, "Title iis required"],
-        trim: true
+      type: String,
+      required: [true, "Title is required"],
+      trim: true,
     },
-    contentBody:{
-        type: String,
-        required: false
+    content: {
+      type: String,
+      required: [true, "Content is required"],
     },
     author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      // no longer required for drafts
+    },
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    featureImage: {
+      type: String,
+      required: [true, "Feature image URL is required"],
+      trim: true,
+    },
+    metaDescription: {
+      type: String,
+      required: [true, "Meta description is required"],
+      maxlength: [160, "Meta description cannot exceed 160 characters"],
+      trim: true,
+    },
+    shares: {
+      type: Number,
+      default: 0,
+    },
+    likes: [
+      {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+      },
+    ],
+    isPublished: {
+      type: Boolean,
+      default: false,
     },
-    category:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Category"
+    publishDateTime: {
+      type: Date,
+      default: null,
     },
-    shares:{
-        type: Number,
-        default:0
-    },
-    likes: [{
-        type:Schema.Types.ObjectId,
-        ref: "User"
-    }],
-    tags: [
-        {
-          type: String,
-        },
-      ],
-    isPublished:{
-        type: Boolean,
-        default: false
-    },
-    publishDateTime:{
-        type: Date,
-        default: Date.now
-    }
+  },
+  { timestamps: true }
+);
 
-},{timestamps:true})
+const ContentModel = models.Content || model<Content>("Content", ContentSchema);
 
-const ContentModel=mongoose.models.Content as mongoose.Model<Content> || mongoose.model<Content>("Content",ContentSchema);
 export default ContentModel;

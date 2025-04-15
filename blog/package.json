@@ -48,6 +48,7 @@
     "@tiptap/extension-youtube": "^2.11.7",
     "@tiptap/react": "^2.11.7",
     "@tiptap/starter-kit": "^2.11.7",
+    "axios": "^1.8.4",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
