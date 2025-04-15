@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ImageUp, Trash } from "lucide-react";
-
+import Image from "next/image";
 interface ImageUploadProps {
   onFileAccepted?: (file: File) => void;
 }
@@ -64,7 +64,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
     >
       {preview ? (
         <div className="relative flex justify-center items-center">
-          <img
+          <Image
             src={preview}
             alt="Preview"
             style={{ height: "300px", width: "auto" }}

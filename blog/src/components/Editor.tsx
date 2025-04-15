@@ -62,10 +62,11 @@ import {
   Quote,
   
 } from 'lucide-react';
-
-import { Node, CommandProps } from '@tiptap/core';
 import ImageUpload from './ImageUpload';
+import { Node, CommandProps } from '@tiptap/core';
 import { CustomCodeBlock } from '@/lib/CustomCodeBlock';
+import type { JSONContent } from '@tiptap/core';
+import { convertToMarkdown } from '@/lib/mdConverter';
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     definitionList: {
@@ -108,13 +109,13 @@ const DefinitionDescription = Node.create({
 const lowlight = createLowlight(all);
 
 export default function Editor() {
+
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
   const [imageFloatingToolVisible] = useState(false);
   // setImageFloatingToolVisible
   const [tablePosition, setTablePosition] = useState({ top: 0, left: 0 });
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [, setShowSource] = useState(false);
   // showSource
   const [selectedLanguage] = useState('javascript');
   // setSelectedLanguage
@@ -145,11 +146,19 @@ export default function Editor() {
     }
   };
 
-  // When a file is dragged and dropped, call conversion immediately
   const handleImageDragAndDrop = (file: File) => {
     setDragAndDropImage(file);
     handleImageConvertToBase64(file);
   };
+
+  const handleConvertToMarkdown = () => {
+    if (!editor) return;
+    const json: JSONContent = editor.getJSON();
+    const markdown = convertToMarkdown(json);
+    console.log("Markdown Output:", markdown);
+    alert("Markdown output logged to console!");
+  };
+  
 
   // const resetImageStates = () => {
   //   setDragAndDropImage(null);
@@ -407,7 +416,9 @@ const editor = useEditor({
       id: "view-source",
       label: "View Source",
       icon: <CodeIcon size={16} />,
-      onClick: () => setShowSource(true),
+      onClick: () => {
+        handleConvertToMarkdown();
+      },
     },
   ];
 
