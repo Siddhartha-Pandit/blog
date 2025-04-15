@@ -2,39 +2,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Plus,
-  Pen,
+
   PanelRightOpen,
   MessageCircle,
   PanelRightClose,
 } from "lucide-react";
-import {
-  Bold,
-  Italic,
-  Underline,
-  Heading,
-  Heading1,
-  Heading2,
-  Heading3,
-  Heading4,
-  Heading5,
-  Heading6,
-  List,
-  ListOrdered,
-  ListTree,
-  ListChecks,
-  Highlighter,
-  Strikethrough,
-  Superscript,
-  Subscript,
-  Quote,
-  Image as ImageIcon,
-  Video as VideoIcon,
-  Code,
-  Grid3x3,
-  Link,
-  Regex,
-} from "lucide-react";
+
 import {
   Select,
   SelectContent,
@@ -46,8 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Toggle } from "@/components/ui/toggle";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ImageUpload from "@/components/ImageUpload";
 // import Editor from "@/components/Editor";
 import FooterCreate from "@/components/FooterCreate";
@@ -106,7 +77,7 @@ const CreatePage = () => {
   // Redirect if not authenticated.
   useEffect(() => {
     if (session === null) {
-      // router.push("/");
+      router.push("/");
     }
   }, [session, router]);
 
@@ -121,8 +92,6 @@ const CreatePage = () => {
   const [inputValue, setInputValue] = useState("");
   const [, setUploadedFile] = useState<File | null>(null);
   const tagContainerRef = useRef<HTMLDivElement>(null);
-
-  const [activeTab, setActiveTab] = useState(0);
   
   const handleFileAccepted = (file: File) => {
     setUploadedFile(file);

@@ -21,7 +21,6 @@ export interface AddToolProps {
 const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
   const [open, setOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  // Refs to each dropdown wrapper so we can detect outside clicks
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Close any open dropdown when clicking outside
@@ -73,10 +72,14 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
         {open && (
           <div className="flex items-center gap-1">
             {tools.map((tool, idx) => {
-              const hasDropdown = tool.dropdownItems?.length! > 0;
+              // Safely check for dropdown length
+              const hasDropdown = (tool.dropdownItems?.length ?? 0) > 0;
               const keyBase = `tool-${tool.id}-${idx}`;
 
               if (hasDropdown) {
+                // pull out items into a local non-null array
+                const items = tool.dropdownItems!;
+
                 return (
                   <div
                     key={keyBase}
@@ -117,7 +120,7 @@ const AddTool: React.FC<AddToolProps> = ({ tools = [] }) => {
                           rounded-md shadow-lg p-0.5
                         `}
                       >
-                        {tool.dropdownItems!.map((sub, subIdx) => (
+                        {items.map((sub, subIdx) => (
                           <button
                             key={`sub-${tool.id}-${sub.id}-${subIdx}`}
                             onClick={() => {

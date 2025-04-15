@@ -90,7 +90,7 @@ const FloatingTool: React.FC<FloatingToolProps> = ({
     const { width, height } = el.getBoundingClientRect();
     const padding = 8;
     const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
+    // const windowHeight = window.innerHeight;
 
     let newLeft = left;
     let newTop = top;

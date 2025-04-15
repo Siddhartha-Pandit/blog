@@ -60,7 +60,7 @@ import {
   Braces,
   CheckSquare,
   Quote,
-  X
+  
 } from 'lucide-react';
 
 import { Node, CommandProps } from '@tiptap/core';
@@ -110,16 +110,20 @@ const lowlight = createLowlight(all);
 export default function Editor() {
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
-  const [imageFloatingToolVisible, setImageFloatingToolVisible] = useState(false);
+  const [imageFloatingToolVisible] = useState(false);
+  // setImageFloatingToolVisible
   const [tablePosition, setTablePosition] = useState({ top: 0, left: 0 });
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [showSource, setShowSource] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [, setShowSource] = useState(false);
+  // showSource
+  const [selectedLanguage] = useState('javascript');
+  // setSelectedLanguage
   const isMouseDownRef = useRef(false);
 
   const [isModalImageOpen, setModalImageOpen] = useState<boolean>(false);
   const [isModalUrlOpen, setModalUrlOpen] = useState<boolean>(false);
-  const [dragAndDropImage, setDragAndDropImage] = useState<File | null>(null);
+  const [, setDragAndDropImage] = useState<File | null>(null);
+  // dragAndDropImage
   const [base64Image, setBase64Image] = useState<string | null>(null);
 
   // Convert a file into a base64 string
@@ -147,12 +151,12 @@ export default function Editor() {
     handleImageConvertToBase64(file);
   };
 
-  const resetImageStates = () => {
-    setDragAndDropImage(null);
-    setBase64Image(null);
-    const fileInput = document.querySelector('.file-input') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
-  };
+  // const resetImageStates = () => {
+  //   setDragAndDropImage(null);
+  //   setBase64Image(null);
+  //   const fileInput = document.querySelector('.file-input') as HTMLInputElement;
+  //   if (fileInput) fileInput.value = '';
+  // };
 
   const [isModalVideoUrlOpen, setModalVideoUrlOpen] = useState<boolean>(false);
 
@@ -422,7 +426,7 @@ const editor = useEditor({
     },
   ];
 
-  const handleImageModalOk = (values: string[], activeTabIndex: number) => {
+  const handleImageModalOk = (values: string[]) => {
     const url = values[0];
     const imageSrc = base64Image ? base64Image : url;
 
@@ -441,7 +445,7 @@ const editor = useEditor({
     setModalImageOpen(false);
   };
 
-  const handleUrlModalOk = (values: string[], activeTabIndex: number) => {
+  const handleUrlModalOk = (values: string[]) => {
     const url = values[0];
     if (url) {
       editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
@@ -453,7 +457,7 @@ const editor = useEditor({
     setModalUrlOpen(false);
   };
 
-  const handleVideoUrlModalOk = (values: string[], activeTabIndex: number) => {
+  const handleVideoUrlModalOk = (values: string[]) => {
     const url = values[0];
     if (url) {
       editor?.commands.setYoutubeVideo({

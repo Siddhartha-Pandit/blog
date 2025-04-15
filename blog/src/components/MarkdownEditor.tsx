@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Save, Bold, Italic, Underline, Strikethrough, ListOrdered, List, Link2, Unlink } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Save, Bold, Italic, Underline, Strikethrough, ListOrdered, List, Link2 } from "lucide-react";
 
 const MarkdownEditor: React.FC = () => {
   const [markdown, setMarkdown] = useState<string>("");

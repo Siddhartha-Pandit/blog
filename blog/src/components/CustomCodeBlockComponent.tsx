@@ -1,8 +1,8 @@
-// CustomCodeBlockComponent.tsx
 import React from 'react'
-import { NodeViewWrapper, NodeViewContent } from '@tiptap/react'
+import { NodeViewWrapper, NodeViewContent, type NodeViewProps } from '@tiptap/react'
 
-const LANGUAGE_OPTIONS = [
+// Define your language options with explicit types
+const LANGUAGE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'javascript', label: 'JavaScript' },
   { value: 'typescript', label: 'TypeScript' },
   { value: 'html', label: 'HTML' },
@@ -23,16 +23,16 @@ const LANGUAGE_OPTIONS = [
   { value: 'json', label: 'JSON' },
 ]
 
-interface CustomCodeBlockComponentProps {
-  node: any
-  updateAttributes: (attrs: Record<string, any>) => void
-}
-
-const CustomCodeBlockComponent: React.FC<CustomCodeBlockComponentProps> = ({
+/**
+ * We leverage TipTap’s built-in NodeViewProps instead of rolling our own `any` types,
+ * so that `node` and `updateAttributes` are correctly typed. :contentReference[oaicite:0]{index=0}
+ */
+const CustomCodeBlockComponent: React.FC<NodeViewProps> = ({
   node,
   updateAttributes,
 }) => {
-  const { language } = node.attrs
+  // `node.attrs.language` is guaranteed to be a string here
+  const language = node.attrs.language as string
 
   const handleLanguageChange = (
     e: React.ChangeEvent<HTMLSelectElement>
@@ -43,11 +43,11 @@ const CustomCodeBlockComponent: React.FC<CustomCodeBlockComponentProps> = ({
   return (
     <NodeViewWrapper className="relative rounded-md my-4 bg-white dark:bg-gray-800">
       <select
-        className="absolute top-0 right-0 bg-[#131313]  px-1 py-0.5 text-xs rounded-bl-md shadow-sm focus:outline-none"
+        className="absolute top-0 right-0 bg-[#131313] px-1 py-0.5 text-xs rounded-bl-md shadow-sm focus:outline-none"
         value={language || 'javascript'}
         onChange={handleLanguageChange}
       >
-        {LANGUAGE_OPTIONS.map(option => (
+        {LANGUAGE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
