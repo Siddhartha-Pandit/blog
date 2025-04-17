@@ -10,7 +10,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession } from "next-auth/react";
 
-// Define props for dynamic word count and last saved time.
 interface FooterCreateProps {
   wordCount: number;
   lastSaved: string;
@@ -23,7 +22,7 @@ function FooterCreate({ wordCount, lastSaved }: FooterCreateProps) {
     <div className="fixed bottom-0 left-0 right-0 h-7 bg-gray-800 text-white flex items-center justify-between px-4 text-xs z-50">
       <span>Saved: {lastSaved}</span>
       <div className="flex flex-row items-center space-x-1">
-        <span className="text-xs text-gray-200">Authors:</span>
+        <span className="text-xs text-gray-200">Author:</span>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>

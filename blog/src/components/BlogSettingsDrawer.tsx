@@ -1,36 +1,37 @@
+// blog/src/app/components/BlogSettingsDrawer.tsx
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { PanelRightClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageUpload from "@/components/ImageUpload";
 import AutoSizeInput from "@/components/AutoSizeInput";
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 interface BlogSettingsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   selectedCategory: string;
   setSelectedCategory: (value: string) => void;
-  tags: string[];
-  isAddingTag: boolean;
-  inputValue: string;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onTagKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onTagBlur: () => void;
-  onAddTag: () => void;
-  removeTag: (index: number) => void;
+  initialTags?: string[];
   onFileAccepted: (file: File) => void;
   metaDescription: string;
   setMetaDescription: (value: string) => void;
-  onSave: () => void;
+  onSave: (tags: string[]) => void;
 }
 
-// Simple Portal implementation using ReactDOM.createPortal.
-// Ensure that your public/index.html or _document.tsx (in Next.js) contains:
-// <div id="portal-root"></div>
+// Portal component to avoid hydration issues.
 const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  if (typeof window === "undefined") return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  if (!mounted) return null;
   const portalRoot = document.getElementById("portal-root");
   return portalRoot ? createPortal(children, portalRoot) : <>{children}</>;
 };
@@ -40,25 +41,71 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
   onClose,
   selectedCategory,
   setSelectedCategory,
-  tags,
-  isAddingTag,
-  inputValue,
-  onInputChange,
-  onTagKeyDown,
-  onTagBlur,
-  onAddTag,
-  removeTag,
+  initialTags = [],
   onFileAccepted,
   metaDescription,
   setMetaDescription,
   onSave,
 }) => {
-  return (
+  // Local state for tag management.
+  const [tags, setTags] = useState<string[]>(initialTags);
+  const [isAddingTag, setIsAddingTag] = useState<boolean>(false);
+  const [tagInput, setTagInput] = useState<string>("");
+
+  // New state to store the fetched categories.
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Fetch categories from your API endpoint on component mount.
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/category/read");
+        const result = await res.json();
+        if (res.ok && result.data) {
+          setCategories(result.data);
+        } else {
+          console.error("Failed to fetch categories", result);
+        }
+      } catch (error) {
+        console.error("Error fetching categories", error);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  // Handlers for tags.
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags([...tags, trimmed]);
+    }
+    setTagInput("");
+    setIsAddingTag(false);
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  const handleRemoveTag = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index));
+  };
+
+  // Save current tags list.
+  const handleSave = () => {
+    onSave(tags);
+  };
+
+  // Drawer content.
+  const drawerContent = (
     <div
       id="drawer"
-      className={`fixed top-0 right-0 w-[300px] h-[calc(100vh-76px)] shadow-2xl transition-all duration-300 ease-in-out z-[100] mt-12 ${
-        isOpen ? "right-0" : "right-[-300px]"
-      } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-visible`}
+      className={`fixed top-[76px] bottom-0 right-0 w-[300px] shadow-2xl transition-transform duration-300 ease-in-out z-[100] ${
+        isOpen ? "translate-x-0" : "translate-x-full"
+      } bg-[#FAF9F6] text-[#1E1E1E] dark:bg-[#1e1e1e] dark:text-[#faf9f6] overflow-y-auto`}
     >
       <div className="flex items-center mt-3 relative">
         <span className="ml-3 text-2xl font-bold">Blog Setting</span>
@@ -82,13 +129,11 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
             className="w-full sm:w-auto h-8 pl-3 pr-2 text-xs font-medium bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-800 dark:text-gray-100 border border-[#d1d1d1] dark:border-[#525252] rounded-full appearance-none"
           >
             <option value="">Select category</option>
-            {["Programming", "Design", "Marketing", "Lifestyle", "Tech"].map(
-              (cat) => (
-                <option key={cat} value={cat} className="text-gray-800 dark:text-gray-100">
-                  {cat}
-                </option>
-              )
-            )}
+            {categories.map((cat) => (
+              <option key={cat._id} value={cat._id}>
+                {cat.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -103,8 +148,8 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
               >
                 {tag}
                 <button
-                  onClick={() => removeTag(index)}
-                  className="ml-1 inline-flex items-center h-8 px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                  onClick={() => handleRemoveTag(index)}
+                  className="ml-1 inline-flex items-center px-1 py-1 text-xs font-medium cursor-pointer focus:outline-none hover:text-gray-500 dark:hover:text-gray-300 transition-colors"
                 >
                   &times;
                 </button>
@@ -112,15 +157,15 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
             ))}
             {isAddingTag ? (
               <AutoSizeInput
-                value={inputValue}
-                onChange={onInputChange}
-                onKeyDown={onTagKeyDown}
-                onBlur={onTagBlur}
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                onBlur={handleAddTag}
                 initialWidth={80}
               />
             ) : (
               <span
-                onClick={onAddTag}
+                onClick={() => setIsAddingTag(true)}
                 className="inline-flex items-center h-8 cursor-pointer border-dashed border border-[#d1d1d1] dark:border-[#525252] bg-transparent text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full text-xs font-medium hover:bg-[#f0efec] dark:hover:bg-[#2a2a2a] transition-colors"
               >
                 + Add tag
@@ -149,9 +194,9 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
           />
         </div>
 
-        {/* Save button */}
+        {/* Save Button */}
         <Button
-          onClick={onSave}
+          onClick={handleSave}
           className="cursor-pointer mt-2 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]"
         >
           Save
@@ -159,6 +204,8 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
       </div>
     </div>
   );
+
+  return <Portal>{drawerContent}</Portal>;
 };
 
 export default BlogSettingsDrawer;

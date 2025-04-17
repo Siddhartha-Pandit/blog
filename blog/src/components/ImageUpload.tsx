@@ -1,6 +1,9 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { ImageUp, Trash } from "lucide-react";
 import Image from "next/image";
+
 interface ImageUploadProps {
   onFileAccepted?: (file: File) => void;
 }
@@ -10,7 +13,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Update preview URL when image changes.
   useEffect(() => {
     if (!image) {
       setPreview(null);
@@ -21,12 +23,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
     return () => URL.revokeObjectURL(objectUrl);
   }, [image]);
 
-  // Validate that the file is an image.
   const isImageFile = (file: File) => file.type.startsWith("image/");
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
     if (file && isImageFile(file)) {
       setImage(file);
       onFileAccepted?.(file);
@@ -35,8 +36,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file && isImageFile(file)) {
       setImage(file);
       onFileAccepted?.(file);
@@ -45,15 +46,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
     }
   };
 
-  // Trigger the hidden file input on click.
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Remove image function
-  const removeImage = () => {
-    setImage(null);
-  };
+  const handleClick = () => fileInputRef.current?.click();
+  const removeImage = () => setImage(null);
 
   return (
     <div
@@ -63,11 +57,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
       className="w-full max-w-md p-4 border-2 border-dashed rounded-xl cursor-pointer flex flex-col items-center justify-center dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-400 border-gray-300 bg-gray-100 hover:border-gray-500 transition-all"
     >
       {preview ? (
-        <div className="relative flex justify-center items-center">
+        <div className="relative w-full h-[300px]">
           <Image
             src={preview}
             alt="Preview"
-            style={{ height: "300px", width: "auto" }}
+            fill
+            style={{ objectFit: "cover" }}
             className="rounded-md"
           />
           <button
@@ -89,6 +84,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
           </p>
         </>
       )}
+
       <input
         ref={fileInputRef}
         type="file"

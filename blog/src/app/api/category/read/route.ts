@@ -12,7 +12,7 @@ export async function GET(
   try {
     await dbConnect();
     console.debug("Database connected.");
-    const category = await CategoryModel.findById({});
+    const category = await CategoryModel.find();
     console.debug("Categories retrieved:", category);
     return NextResponse.json(
       new ApiResponse(200, category, "Category found successfully"),

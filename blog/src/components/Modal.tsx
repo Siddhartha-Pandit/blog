@@ -1,3 +1,6 @@
+// components/Modal.tsx
+"use client";
+
 import React, {
   useState,
   ReactNode,
@@ -25,6 +28,8 @@ export interface ModalProps {
   tabs?: ModalTab[];
   onOk?: (values: string[], activeTabIndex: number) => void;
   onClose: () => void;
+  okLabel?: string;         // <-- new
+  cancelLabel?: string;     // <-- new
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -36,6 +41,8 @@ const Modal: React.FC<ModalProps> = ({
   tabs = [],
   onOk,
   onClose,
+  okLabel = "Ok",           // <-- default
+  cancelLabel = "Cancel",   // <-- default
 }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -59,9 +66,8 @@ const Modal: React.FC<ModalProps> = ({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
+    return () =>
       document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [onClose]);
 
   const handleChange = (idx: number) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -76,7 +82,6 @@ const Modal: React.FC<ModalProps> = ({
     onOk?.(values, activeTab);
   };
 
-  // This handler listens for keydown events on the inputs.
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -88,18 +93,18 @@ const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div ref={backdropRef} className="absolute inset-0 bg-black opacity-50" />
-
-      {/* Modal Panel */}
       <div
-        className="relative w-full max-w-md p-4 bg-[#faf9f6] text-[#1e1e1e]
-                   border border-gray-300 rounded shadow-md dark:bg-[#1e1e1e]
-                   dark:text-[#faf9f6] dark:border-gray-600"
-      >
-        {/* Header */}
+        ref={backdropRef}
+        className="absolute inset-0 bg-black opacity-50"
+      />
+
+      <div className="relative w-full max-w-md p-4 bg-[#faf9f6] text-[#1e1e1e]
+                      border border-gray-300 rounded shadow-md dark:bg-[#1e1e1e]
+                      dark:text-[#faf9f6] dark:border-gray-600">
         <div className="flex items-center justify-between border-b border-gray-300 pb-2 mb-4">
-          {modalTitle && <h3 className="text-2xl font-semibold">{modalTitle}</h3>}
+          {modalTitle && (
+            <h3 className="text-2xl font-semibold">{modalTitle}</h3>
+          )}
           <button
             onClick={onClose}
             className="text-[#1e1e1e] dark:text-[#faf9f6] hover:opacity-75"
@@ -108,7 +113,6 @@ const Modal: React.FC<ModalProps> = ({
           </button>
         </div>
 
-        {/* Tabs */}
         {tabs.length > 0 && (
           <div className="mb-4">
             <ul className="flex border-b">
@@ -129,17 +133,16 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        {/* Subtitle / Tab Title */}
         {(currentTab?.title || (tabs.length === 0 && modalTextTitle)) && (
           <h2 className="text-lg font-medium mb-2">
             {currentTab?.title || modalTextTitle}
           </h2>
         )}
 
-        {/* Custom Content */}
-        <div className="mb-4">{currentTab?.content || customContent}</div>
+        <div className="mb-4">
+          {currentTab?.content || customContent}
+        </div>
 
-        {/* Inputs or Custom Component */}
         {inputComponent ? (
           inputComponent
         ) : (
@@ -161,7 +164,6 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex justify-end space-x-2">
           <button
             onClick={onClose}
@@ -169,13 +171,13 @@ const Modal: React.FC<ModalProps> = ({
                        text-[#1e1e1e] dark:text-[#faf9f6] dark:border-gray-600
                        hover:bg-gray-100 dark:hover:bg-gray-600"
           >
-            Cancel
+            {cancelLabel}
           </button>
           <button
             onClick={handleOk}
             className="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
           >
-            Ok
+            {okLabel}
           </button>
         </div>
       </div>

@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, model, models } from "mongoose";
 
 export interface Content extends Document {
   title: string;
-  content: string;                    // renamed from contentBody
+  content: any;                    // renamed from contentBody
   author: mongoose.Schema.Types.ObjectId;
   category?: mongoose.Schema.Types.ObjectId; // now optional
   tags: string[];
@@ -22,7 +22,7 @@ const ContentSchema: Schema<Content> = new Schema(
       trim: true,
     },
     content: {
-      type: String,
+      type: Schema.Types.Mixed,
       required: [true, "Content is required"],
     },
     author: {
