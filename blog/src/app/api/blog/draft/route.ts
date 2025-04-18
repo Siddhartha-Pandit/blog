@@ -8,7 +8,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { uploadOnCloudinary } from "@/lib/cloudinary";
 import fs from "fs";
 import path from "path";
-import mongoose from "mongoose";
 import UserModel from "@/models/User";
 
 export async function POST(request: Request) {

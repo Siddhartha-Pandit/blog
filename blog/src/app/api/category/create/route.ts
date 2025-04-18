@@ -5,25 +5,24 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/authOptions";
-
 export async function POST(request:Request){
-//     console.debug("Received POST request to create a new blog post.");
-//     const session = await getServerSession(authOptions);
-//     console.log("sessions in routes.ts at blog->create",session)
-//     if (!session) {
-//       console.error("Unauthorized request: No session found.");
-//       return NextResponse.json(new ApiError(401, "User is unauthorized"), { status: 401 });
-//     } 
-//     console.debug("Authenticated user:", session.user.id);
-//     const allowedUserId = process.env.ALLOWED_USER;
-//     if(session.user.id !== allowedUserId){
-//         console.error("Forbidden request: User is not allowed.");
-//         return NextResponse.json(
-//             new ApiError(403, "Forbidden: You are not allowed to create a blog post."),
-//             { status: 403 }
-//           );
-//    }
-//    console.debug("Autheticated user: ",session.user.id);
+    console.debug("Received POST request to create a new blog post.");
+    const session = await getServerSession(authOptions);
+    console.log("sessions in routes.ts at blog->create",session)
+    if (!session) {
+      console.error("Unauthorized request: No session found.");
+      return NextResponse.json(new ApiError(401, "User is unauthorized"), { status: 401 });
+    } 
+    console.debug("Authenticated user:", session.user.id);
+    const allowedUserId = process.env.ALLOWED_USER;
+    if(session.user.id !== allowedUserId){
+        console.error("Forbidden request: User is not allowed.");
+        return NextResponse.json(
+            new ApiError(403, "Forbidden: You are not allowed to create a blog post."),
+            { status: 403 }
+          );
+   }
+   console.debug("Autheticated user: ",session.user.id);
 
    try{
     const {name} =await request.json()

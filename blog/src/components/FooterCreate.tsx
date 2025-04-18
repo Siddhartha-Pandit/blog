@@ -1,28 +1,22 @@
 "use client";
 
 import React from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSession } from "next-auth/react";
 
 interface FooterCreateProps {
   wordCount: number;
-  lastSaved: string;
 }
 
-function FooterCreate({ wordCount, lastSaved }: FooterCreateProps) {
+export default function FooterCreate({ wordCount }: FooterCreateProps) {
   const { data: session } = useSession();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-7 bg-gray-800 text-white flex items-center justify-between px-4 text-xs z-50">
-      <span>Saved: {lastSaved}</span>
-      <div className="flex flex-row items-center space-x-1">
-        <span className="text-xs text-gray-200">Author:</span>
+    <div className="fixed bottom-0 left-0 right-0 h-8 bg-gray-800 text-white flex items-center justify-between px-4 text-xs z-50">
+      {/* Author avatar & tooltip */}
+      <div className="flex items-center space-x-1">
+        <span className="text-gray-200">Author:</span>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
@@ -36,9 +30,7 @@ function FooterCreate({ wordCount, lastSaved }: FooterCreateProps) {
                   />
                 ) : (
                   <AvatarFallback className="bg-gray-500 dark:bg-gray-700 text-white dark:text-gray-200">
-                    {session?.user?.name
-                      ? session.user.name.charAt(0).toUpperCase()
-                      : "U"}
+                    {session?.user?.name?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -51,9 +43,9 @@ function FooterCreate({ wordCount, lastSaved }: FooterCreateProps) {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      {/* Word count */}
       <span>{wordCount} words</span>
     </div>
   );
 }
-
-export default FooterCreate;

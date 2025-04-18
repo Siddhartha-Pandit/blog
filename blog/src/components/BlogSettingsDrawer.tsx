@@ -1,4 +1,3 @@
-// blog/src/app/components/BlogSettingsDrawer.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -22,10 +21,10 @@ interface BlogSettingsDrawerProps {
   onFileAccepted: (file: File) => void;
   metaDescription: string;
   setMetaDescription: (value: string) => void;
-  onSave: (tags: string[]) => void;
+  onSaveTags: (tags: string[]) => void;
+  saveDraft: () => void;
 }
 
-// Portal component to avoid hydration issues.
 const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -45,17 +44,14 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
   onFileAccepted,
   metaDescription,
   setMetaDescription,
-  onSave,
+  onSaveTags,
+  saveDraft,
 }) => {
-  // Local state for tag management.
   const [tags, setTags] = useState<string[]>(initialTags);
   const [isAddingTag, setIsAddingTag] = useState<boolean>(false);
   const [tagInput, setTagInput] = useState<string>("");
-
-  // New state to store the fetched categories.
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // Fetch categories from your API endpoint on component mount.
   useEffect(() => {
     async function fetchCategories() {
       try {
@@ -73,7 +69,6 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
     fetchCategories();
   }, []);
 
-  // Handlers for tags.
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
     if (trimmed && !tags.includes(trimmed)) {
@@ -94,12 +89,12 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
     setTags(tags.filter((_, i) => i !== index));
   };
 
-  // Save current tags list.
-  const handleSave = () => {
-    onSave(tags);
+  const handleSettingsSave = () => {
+    onSaveTags(tags);
+    saveDraft();
+    onClose();
   };
 
-  // Drawer content.
   const drawerContent = (
     <div
       id="drawer"
@@ -196,10 +191,10 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
 
         {/* Save Button */}
         <Button
-          onClick={handleSave}
+          onClick={handleSettingsSave}
           className="cursor-pointer mt-2 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]"
         >
-          Save
+          Save Draft
         </Button>
       </div>
     </div>
