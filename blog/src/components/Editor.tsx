@@ -75,6 +75,10 @@ declare module '@tiptap/core' {
   }
 }
 
+
+interface EditorProps {
+  onChange?: (content: JSONContent) => void;               // ← CHANGED: accept onChange prop
+}
 const DefinitionList = Node.create({
   name: 'definitionList',
   group: 'block',
@@ -108,8 +112,12 @@ const DefinitionDescription = Node.create({
 
 const lowlight = createLowlight(all);
 
-const Editor = forwardRef((props, ref) => {
+const Editor = forwardRef<{
+  getJSON: () => JSONContent;
+  getMarkdown: () => string;
 
+},EditorProps>((props, ref) => {
+  const { onChange } = props;   
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
   const [imageFloatingToolVisible] = useState(false);
@@ -278,6 +286,9 @@ const editor = useEditor({
     }),
   ],
   content: '',
+  onUpdate:({editor})=>{
+    onChange?.(editor.getJSON());
+  },
   editorProps: {
     attributes: {
       class: `prose ${textColor}`,

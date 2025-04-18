@@ -14,14 +14,37 @@ import {
 interface Blog {
   _id: string;
   title: string;
-  metaDescription: string;
+  content: string;
   featureImage: string;
   tags: string[];
   author: { fullName: string; image?: string };
   shares: number;
   likes: string[];
-  publishDateTime: string;
+  publishDateTime: string | null;
 }
+
+// ✅ Only extract text from paragraph nodes
+const parseContentText = (content: string | null): string => {
+  if (!content) return "";
+  try {
+    const parsed = JSON.parse(content);
+    const extract = (node: any): string => {
+      if (node.type === "paragraph" && Array.isArray(node.content)) {
+        return node.content
+          .filter((child: any) => child.type === "text" && child.text)
+          .map((child: any) => child.text)
+          .join(" ");
+      }
+      if (Array.isArray(node.content)) {
+        return node.content.map(extract).join(" ");
+      }
+      return "";
+    };
+    return extract(parsed).trim();
+  } catch {
+    return "";
+  }
+};
 
 const BlogListPage: React.FC = () => {
   const [items, setItems] = useState<Blog[]>([]);
@@ -33,14 +56,8 @@ const BlogListPage: React.FC = () => {
   const fetchBlogs = async (pageNum: number) => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `/api/blog/read?page=${pageNum}&limit=6`
-      );
-      const {
-        items: fetched,
-        page: current,
-        totalPages: totalP,
-      } = res.data.data;
+      const res = await axios.get(`/api/blog/read?page=${pageNum}&limit=6`);
+      const { items: fetched, page: current, totalPages: totalP } = res.data.data;
       setItems(fetched);
       setPage(current);
       setTotalPages(totalP);
@@ -80,7 +97,10 @@ const BlogListPage: React.FC = () => {
   }
 
   const [featured, ...rest] = items;
-  const featuredDate = new Date(featured.publishDateTime).toLocaleDateString();
+  const featuredDate = featured.publishDateTime
+    ? new Date(featured.publishDateTime).toLocaleDateString()
+    : "";
+  const featuredText = parseContentText(featured.content);
 
   return (
     <div className="min-h-screen bg-[#faf9f6] mt-[120px] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 px-4 py-8 md:px-8">
@@ -103,11 +123,9 @@ const BlogListPage: React.FC = () => {
                 </span>
               ))}
             </div>
-            <h2 className="text-3xl font-bold mb-3 text-gray-900 dark:text-gray-100">
-              {featured.title}
-            </h2>
-            <p className="mb-4 text-gray-700 dark:text-gray-300">
-              {featured.metaDescription}
+            <h2 className="text-3xl font-bold mb-3">{featured.title}</h2>
+            <p className="mb-4 text-gray-700 dark:text-gray-300 whitespace-pre-line">
+              {featuredText}
             </p>
           </div>
 
@@ -146,10 +164,13 @@ const BlogListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Blog Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {rest.map((blog) => {
-          const date = new Date(blog.publishDateTime).toLocaleDateString();
+          const date = blog.publishDateTime
+            ? new Date(blog.publishDateTime).toLocaleDateString()
+            : "";
+          const text = parseContentText(blog.content);
           return (
             <div
               key={blog._id}
@@ -174,8 +195,8 @@ const BlogListPage: React.FC = () => {
                 <h3 className="font-semibold text-xl mb-2 flex-grow">
                   {blog.title}
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm">
-                  {blog.metaDescription}
+                <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm whitespace-pre-line">
+                  {text}
                 </p>
 
                 {/* Author & Stats */}

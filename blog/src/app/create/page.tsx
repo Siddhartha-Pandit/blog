@@ -1,17 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent,useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { MessageCircle } from "lucide-react";
 import Editor from "@/components/Editor";
 import BlogSettingsDrawer from "@/components/BlogSettingsDrawer";
+import type { JSONContent } from '@tiptap/core';
+import dynamic from 'next/dynamic';
 
-// Ensure the editor component accepts an onChange prop and a forwarded ref.
-const EditorWithOnChange = Editor as React.ComponentType<
-  { onChange: (content: any) => void } & React.RefAttributes<any>
->;
+const EditorWithOnChange = dynamic(
+  () => import('@/components/Editor'),
+  { ssr: false }
+) as React.ComponentType<{
+  onChange: (content: JSONContent) => void;
+} & React.RefAttributes<any>>;
 
 const CreatePage: React.FC = () => {
   const { data: session, status } = useSession();
@@ -29,13 +33,13 @@ const CreatePage: React.FC = () => {
 
   // Editor content state
   const [editorContent, setEditorContent] = useState<any>(null);
-
+  const editorRef = useRef<any>(null);  
   // Redirect if not authenticated
   useEffect(() => {
-    if (!session && status !== "loading") {
+    if (status === "unauthenticated") {
       router.push("/");
     }
-  }, [session, status, router]);
+  }, [status, router]);
 
   // Save draft handler
   const handleSave = async () => {
@@ -43,7 +47,11 @@ const CreatePage: React.FC = () => {
 
     const formData = new FormData();
     formData.append("title", title || "Untitled Draft");
-    formData.append("content", JSON.stringify(editorContent));
+    const content = editorContent
+    ? JSON.stringify(editorContent)
+    : JSON.stringify(editorRef.current?.getJSON() ?? {});
+
+     formData.append("content", content);
     if (selectedCategory) {
       formData.append("category", selectedCategory);
     }
@@ -95,7 +103,13 @@ const CreatePage: React.FC = () => {
       .split(/\s+/)
       .filter((w) => w.length > 0).length;
   };
-
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
   return (
     <div className="h-screen flex flex-col bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6]">
       {/* Top Nav */}
@@ -136,7 +150,8 @@ const CreatePage: React.FC = () => {
           onChange={handleTitleChange}
         />
         <div className="w-full overflow-y-auto rounded-md bg-white dark:bg-[#2e2e2e]">
-          <EditorWithOnChange ref={null} onChange={handleEditorChange} />
+          <EditorWithOnChange  ref={editorRef}
+            onChange={handleEditorChange} />
         </div>
       </div>
     </div>
