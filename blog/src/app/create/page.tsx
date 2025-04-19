@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, ChangeEvent,useRef } from "react";
+import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { MessageCircle } from "lucide-react";
-import Editor from "@/components/Editor";
+import dynamic from "next/dynamic";
 import BlogSettingsDrawer from "@/components/BlogSettingsDrawer";
 import type { JSONContent } from '@tiptap/core';
-import dynamic from 'next/dynamic';
 
 const EditorWithOnChange = dynamic(
   () => import('@/components/Editor'),
@@ -28,12 +27,17 @@ const CreatePage: React.FC = () => {
   const [metaDescription, setMetaDescription] = useState("");
   const [featureImage, setFeatureImage] = useState<File | null>(null);
 
+  // Publish settings state
+  const [publishNow, setPublishNow] = useState<boolean>(false);
+  const [publishDateTime, setPublishDateTime] = useState<string>("");
+
   // Drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Editor content state
   const [editorContent, setEditorContent] = useState<any>(null);
-  const editorRef = useRef<any>(null);  
+  const editorRef = useRef<any>(null);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -48,10 +52,9 @@ const CreatePage: React.FC = () => {
     const formData = new FormData();
     formData.append("title", title || "Untitled Draft");
     const content = editorContent
-    ? JSON.stringify(editorContent)
-    : JSON.stringify(editorRef.current?.getJSON() ?? {});
-
-     formData.append("content", content);
+      ? JSON.stringify(editorContent)
+      : JSON.stringify(editorRef.current?.getJSON() ?? {});
+    formData.append("content", content);
     if (selectedCategory) {
       formData.append("category", selectedCategory);
     }
@@ -60,6 +63,14 @@ const CreatePage: React.FC = () => {
     if (featureImage) {
       formData.append("featureImage", featureImage);
     }
+
+    // Append publish datetime
+    const publishTime = publishNow
+      ? new Date().toISOString()
+      : publishDateTime
+        ? new Date(publishDateTime).toISOString()
+        : new Date().toISOString();
+    formData.append("publishDateTime", publishTime);
 
     try {
       await axios.post(
@@ -103,6 +114,7 @@ const CreatePage: React.FC = () => {
       .split(/\s+/)
       .filter((w) => w.length > 0).length;
   };
+
   if (status === "loading") {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -110,6 +122,7 @@ const CreatePage: React.FC = () => {
       </div>
     );
   }
+
   return (
     <div className="h-screen flex flex-col bg-[#faf9f6] dark:bg-[#1e1e1e] text-[#1e1e1e] dark:text-[#faf9f6]">
       {/* Top Nav */}
@@ -138,6 +151,10 @@ const CreatePage: React.FC = () => {
         setMetaDescription={setMetaDescription}
         onSaveTags={(newTags: string[]) => setTags(newTags)}
         saveDraft={handleSave}
+        publishNow={publishNow}
+        setPublishNow={setPublishNow}
+        publishDateTime={publishDateTime}
+        setPublishDateTime={setPublishDateTime}
       />
 
       {/* Editor Section */}
@@ -150,8 +167,10 @@ const CreatePage: React.FC = () => {
           onChange={handleTitleChange}
         />
         <div className="w-full overflow-y-auto rounded-md bg-white dark:bg-[#2e2e2e]">
-          <EditorWithOnChange  ref={editorRef}
-            onChange={handleEditorChange} />
+          <EditorWithOnChange
+            ref={editorRef}
+            onChange={handleEditorChange}
+          />
         </div>
       </div>
     </div>

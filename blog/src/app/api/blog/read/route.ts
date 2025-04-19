@@ -17,13 +17,20 @@ export async function GET(req: Request) {
     const limit = Math.max(1, parseInt(searchParams.get("limit") || "10", 10));
     const skip = (page - 1) * limit;
 
-    // 3. Get total document count for pagination metadata
-    const total = await ContentModel.countDocuments();
+    // 3. Build filter for published blogs whose publishDateTime is in the past
+    const now = new Date();
+    const filter = {
+      isPublished: true,
+      publishDateTime: { $lte: now }
+    };
 
-    // 4. Query one page of blogs, newest first,
-    //    and populate only author.userName + author.image
-    const blogs = await ContentModel.find()
-      .sort({ createdAt: -1 })
+    // 4. Get total document count for pagination metadata
+    const total = await ContentModel.countDocuments(filter);
+
+    // 5. Query one page of blogs, newest first by publishDateTime,
+    //    and populate only author.fullName + author.image
+    const blogs = await ContentModel.find(filter)
+      .sort({ publishDateTime: -1 })
       .skip(skip)
       .limit(limit)
       .populate({
@@ -32,15 +39,15 @@ export async function GET(req: Request) {
       })
       .lean();
 
-    // 5. Compute total pages
+    // 6. Compute total pages
     const totalPages = Math.ceil(total / limit);
 
-    // 6. Return structured JSON response
+    // 7. Return structured JSON response
     return NextResponse.json(
       new ApiResponse(
         200,
         { items: blogs, page, totalPages, total },
-        "Blogs retrieved successfully"
+        "Published blogs retrieved successfully"
       ),
       { status: 200 }
     );

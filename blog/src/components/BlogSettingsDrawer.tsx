@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { PanelRightClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,10 @@ interface BlogSettingsDrawerProps {
   setMetaDescription: (value: string) => void;
   onSaveTags: (tags: string[]) => void;
   saveDraft: () => void;
+  publishNow: boolean;
+  setPublishNow: (value: boolean) => void;
+  publishDateTime: string;
+  setPublishDateTime: (value: string) => void;
 }
 
 const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -46,11 +50,16 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
   setMetaDescription,
   onSaveTags,
   saveDraft,
+  publishNow,
+  setPublishNow,
+  publishDateTime,
+  setPublishDateTime,
 }) => {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [isAddingTag, setIsAddingTag] = useState<boolean>(false);
   const [tagInput, setTagInput] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const tagWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -72,7 +81,9 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
     if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
+      const newTags = [...tags, trimmed];
+      setTags(newTags);
+      onSaveTags(newTags);
     }
     setTagInput("");
     setIsAddingTag(false);
@@ -86,11 +97,28 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
   };
 
   const handleRemoveTag = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index));
+    const newTags = tags.filter((_, i) => i !== index);
+    setTags(newTags);
+    onSaveTags(newTags);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isAddingTag &&
+        tagWrapperRef.current &&
+        !tagWrapperRef.current.contains(event.target as Node)
+      ) {
+        handleAddTag();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAddingTag, tagInput, tags]);
+
   const handleSettingsSave = () => {
-    onSaveTags(tags);
     saveDraft();
     onClose();
   };
@@ -135,7 +163,7 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
         {/* Tags Section */}
         <div className="mt-5">
           <span className="mb-2 text-base font-medium">Tags</span>
-          <div className="flex flex-wrap gap-2 mt-1">
+          <div className="flex flex-wrap gap-2 mt-1" ref={tagWrapperRef}>
             {tags.map((tag, index) => (
               <span
                 key={index}
@@ -189,10 +217,30 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
           />
         </div>
 
+        {/* Publish Settings */}
+        <div className="flex flex-col mt-5 gap-2">
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={publishNow}
+              onChange={(e) => setPublishNow(e.target.checked)}
+              className="mr-2 rounded border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-base font-medium">Publish Now</span>
+          </label>
+          <input
+            type="datetime-local"
+            value={publishDateTime}
+            onChange={(e) => setPublishDateTime(e.target.value)}
+            disabled={publishNow}
+            className="w-full border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
         {/* Save Button */}
         <Button
           onClick={handleSettingsSave}
-          className="cursor-pointer mt-2 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]"
+          className="cursor-pointer mt-4 bg-[#004EBA] text-[#faf9f6] hover:bg-[#005CEB] dark:bg-[#79ACF2] dark:text-[#1e1e1e] dark:hover:bg-[#88B9F7]"
         >
           Save Draft
         </Button>

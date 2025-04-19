@@ -23,7 +23,6 @@ interface Blog {
   publishDateTime: string | null;
 }
 
-// ✅ Only extract text from paragraph nodes
 const parseContentText = (content: string | null): string => {
   if (!content) return "";
   try {
@@ -91,7 +90,7 @@ const BlogListPage: React.FC = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#faf9f6] dark:bg-[#1e1e1e]">
-        <p className="text-gray-700 dark:text-gray-200">No blogs found.</p>
+        <p className="text-gray-700 dark:text-gray-300">No blogs found.</p>
       </div>
     );
   }
@@ -103,33 +102,33 @@ const BlogListPage: React.FC = () => {
   const featuredText = parseContentText(featured.content);
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] mt-[120px] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 px-4 py-8 md:px-8">
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 mt-[120px] px-4 py-8 md:px-8">
       {/* Featured */}
-      <div className="flex flex-row max-w-5xl mx-auto rounded-2xl overflow-hidden shadow-lg mb-12 bg-white dark:bg-gray-800">
+      <div className="flex flex-row max-w-6xl mx-auto rounded-2xl overflow-hidden shadow-lg mb-7 bg-white dark:bg-gray-800">
         <img
           src={featured.featureImage}
           alt={featured.title}
-          className="w-64 h-64 object-cover"
+          className="w-64 h-65 object-cover"
         />
-        <div className="p-6 flex flex-col justify-between">
+        <div className="p-6 w-full flex flex-col justify-between">
           <div>
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-2">
               {featured.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1 bg-indigo-100 dark:bg-indigo-600 text-indigo-800 dark:text-indigo-100 rounded-full text-sm"
+                  className="px-3 py-1 bg-indigo-100 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-100 rounded-full text-sm"
                 >
                   {tag}
                 </span>
               ))}
             </div>
-            <h2 className="text-3xl font-bold mb-3">{featured.title}</h2>
-            <p className="mb-4 text-gray-700 dark:text-gray-300 whitespace-pre-line">
+            <h3 className="text-2xl font-bold mb-1">{featured.title}</h3>
+            <p className="mb-2 text-sm whitespace-pre-line text-gray-700 dark:text-gray-300">
               {featuredText}
             </p>
           </div>
 
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex flex-col justify-between text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
               {featured.author.image ? (
                 <img
@@ -138,26 +137,41 @@ const BlogListPage: React.FC = () => {
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
-                <span className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-sm">
+                <span className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm">
                   {featured.author.fullName.charAt(0).toUpperCase()}
                 </span>
               )}
-              <span>{featured.author.fullName}</span>
-              <span>•</span>
-              <span>{featuredDate}</span>
+              <div className="flex flex-col">
+                <span className="font-medium">{featured.author.fullName}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{featuredDate}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-1">
-                <Eye className="w-5 h-5" />
-                <span>{featured.shares}</span>
+            <hr className="w-full border-gray-200 dark:border-gray-700 my-2" />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-row gap-4">
+                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                  <Eye className="w-4 h-4" />
+                  <span>{featured.shares}</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                  <Star className="w-4 h-4" />
+                  <span>{featured.likes.length}</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>0</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Star className="w-5 h-5" />
-                <span>{featured.likes.length}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle className="w-5 h-5" />
-                <span>0</span>
+              <div className="inline-flex items-center space-x-2">
+                <button className="flex items-center bg-gray-200 dark:bg-gray-700 hover:bg-indigo-500 dark:hover:bg-indigo-400 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs transition">
+                  <ThumbsUp className="w-4 h-4 mr-1" /> Like (0)
+                </button>
+                <button className="flex items-center bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-400 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs transition">
+                  <ThumbsDown className="w-4 h-4 mr-1" /> Dislike
+                </button>
+                <button className="flex items-center bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-400 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs transition">
+                  <MessageCircle className="w-4 h-4 mr-1" /> Comments (10)
+                </button>
               </div>
             </div>
           </div>
@@ -186,21 +200,18 @@ const BlogListPage: React.FC = () => {
                   {blog.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-1 bg-blue-100 dark:bg-blue-600 text-blue-800 dark:text-blue-100 rounded-full text-xs"
+                      className="px-2 py-1 bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-100 rounded-full text-xs"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-                <h3 className="font-semibold text-xl mb-2 flex-grow">
-                  {blog.title}
-                </h3>
+                <h3 className="font-semibold text-xl mb-2 flex-grow">{blog.title}</h3>
                 <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm whitespace-pre-line">
                   {text}
                 </p>
 
-                {/* Author & Stats */}
-                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
                   <div className="flex items-center gap-2">
                     {blog.author.image ? (
                       <img
@@ -209,42 +220,44 @@ const BlogListPage: React.FC = () => {
                         className="w-6 h-6 rounded-full object-cover"
                       />
                     ) : (
-                      <span className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                      <span className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
                         {blog.author.fullName.charAt(0).toUpperCase()}
                       </span>
                     )}
-                    <span>{blog.author.fullName}</span>
-                    <span>•</span>
-                    <span>{date}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{blog.author.fullName}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{date}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
+                </div>
+                <hr className="border-gray-200 dark:border-gray-700 mb-3" />
+
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-row gap-4">
+                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <Eye className="w-4 h-4" />
                       <span>{blog.shares}</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <Star className="w-4 h-4" />
                       <span>{blog.likes.length}</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <MessageCircle className="w-4 h-4" />
                       <span>0</span>
                     </div>
                   </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-4">
-                  <button className="flex items-center gap-1 hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>{blog.likes.length}</span>
-                  </button>
-                  <button className="flex items-center gap-1 hover:text-red-600 dark:hover:text-red-400 transition-colors">
-                    <ThumbsDown className="w-4 h-4" />
-                  </button>
-                  <button className="flex items-center gap-1 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-                    <MessageCircle className="w-4 h-4" />
-                  </button>
+                  <div className="inline-flex items-center space-x-2">
+                    <button className="flex items-center bg-gray-200 dark:bg-gray-700 hover:bg-indigo-500 dark:hover:bg-indigo-400 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs transition">
+                      <ThumbsUp className="w-4 h-4 mr-1" /> Like (0)
+                    </button>
+                    <button className="flex items-center bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-400 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs transition">
+                      <ThumbsDown className="w-4 h-4 mr-1" /> Dislike
+                    </button>
+                    <button className="flex items-center bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-400 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs transition">
+                      <MessageCircle className="w-4 h-4 mr-1" /> Comments (10)
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -257,9 +270,9 @@ const BlogListPage: React.FC = () => {
         <button
           onClick={() => page > 1 && setPage(page - 1)}
           disabled={page <= 1}
-          className="p-2 rounded-full bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+          className="p-2 rounded-full bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 text-gray-900 dark:text-gray-100" />
         </button>
         {[...Array(totalPages)].map((_, idx) => {
           const num = idx + 1;
@@ -267,10 +280,10 @@ const BlogListPage: React.FC = () => {
             <button
               key={num}
               onClick={() => setPage(num)}
-              className={`px-3 py-1 rounded-lg transition-colors ${
+              className={`px-3 py-1 rounded-lg transition-colors text-sm ${
                 page === num
                   ? 'bg-indigo-600 text-white'
-                  : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  : 'bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               {num}
@@ -280,9 +293,9 @@ const BlogListPage: React.FC = () => {
         <button
           onClick={() => page < totalPages && setPage(page + 1)}
           disabled={page >= totalPages}
-          className="p-2 rounded-full bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+          className="p-2 rounded-full bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-5 h-5 text-gray-900 dark:text-gray-100" />
         </button>
       </div>
     </div>
