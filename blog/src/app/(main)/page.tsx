@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Bookmark
 } from "lucide-react";
+import Link from "next/link";
 
 interface Blog {
   _id: string;
@@ -129,6 +130,7 @@ const BlogListPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 mt-[30px] px-4 py-8 md:px-8">
       {/* Featured */}
+      <Link href={`/blog/${featured._id}`}>
       <div className="flex flex-col sm:flex-row max-w-6xl mx-auto rounded-md overflow-hidden mb-7 bg-[#f0efeb] dark:bg-[#2a2a2a] shadow-sm">
         <img
           src={featured.featureImage}
@@ -159,6 +161,7 @@ const BlogListPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+
             <div className="flex items-center gap-2">
               {featured.author.image ? (
                 <img
@@ -210,7 +213,7 @@ const BlogListPage: React.FC = () => {
           </div>
         </div>
       </div>
-
+      </Link>
       {/* Blog Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {rest.map((blog) => {
@@ -223,6 +226,8 @@ const BlogListPage: React.FC = () => {
               key={blog._id}
               className="bg-[#f0efeb] dark:bg-[#2a2a2a] rounded-md overflow-hidden flex flex-col shadow-sm"
             >
+            <Link href={`/blog/${blog._id}`}>
+
               <img
                 src={blog.featureImage}
                 alt={blog.title}
@@ -299,7 +304,9 @@ const BlogListPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+              </Link>
             </div>
+            
           );
         })}
       </div>
