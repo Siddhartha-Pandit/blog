@@ -70,9 +70,6 @@ const BlogListPage: React.FC = () => {
         axios.get("/api/category/read"),
         axios.get(`/api/blog/read?page=${pageNum}&limit=10`)
       ]);
-
-      // Set categories
-      // Set blogs
       const { items: fetched, page: current, totalPages: totalP } = blogsRes.data.data;
       setItems(fetched);
       setPage(current);
@@ -94,6 +91,9 @@ const BlogListPage: React.FC = () => {
   useEffect(() => {
     fetchData(page);
   }, [page]);
+  useEffect(()=>{
+    console.log(categories)
+  },[categories])
 
   if (loading) {
     return (
@@ -332,7 +332,8 @@ const BlogListPage: React.FC = () => {
         <button
           onClick={() => page < totalPages && setPage(page + 1)}
           disabled={page >= totalPages}
-          className="p-2 rounded-md bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50"
+          className="p-2 rounded-md bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#1e1e1e] dark:hover:text-white transition disabled:opacity-50"
+
         >
           <ChevronRight className="w-5 h-5" />
         </button>

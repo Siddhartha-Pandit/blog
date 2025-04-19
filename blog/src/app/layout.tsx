@@ -4,7 +4,6 @@ import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ThemeProvider } from "@/components/theme-provider";
-import Navbar from "../components/Navbar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -43,7 +42,6 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Navbar />
             {children}
           </ThemeProvider>
         </Providers>
