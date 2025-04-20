@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
   Eye,
@@ -7,8 +7,6 @@ import {
   MessageSquareText,
   ThumbsUp,
   ThumbsDown,
-  ChevronLeft,
-  ChevronRight,
   Bookmark
 } from "lucide-react";
 import Link from "next/link";
@@ -37,64 +35,95 @@ const parseContentText = (content: string | null): string => {
   if (!content) return "";
   try {
     const parsed = JSON.parse(content);
-    const extract = (node: any): string => {
-      if (node.type === "paragraph" && Array.isArray(node.content)) {
-        return node.content
-          .filter((child: any) => child.type === "text" && child.text)
-          .map((child: any) => child.text)
-          .join("");
+
+    const extractText = (node: any): string => {
+      if (node.type === "text" && node.text) {
+        return node.text;
       }
       if (Array.isArray(node.content)) {
-        return node.content.map(extract).join(" ");
+        return node.content.map(extractText).join(" ");
       }
       return "";
     };
-    return extract(parsed).trim();
+
+    const fullText = extractText(parsed).trim();
+    const words = fullText.split(/\s+/);
+    const truncated = words.slice(0, 21).join(" ");
+    return words.length > 21 ? `${truncated}...` : truncated;
   } catch {
     return "";
   }
 };
 
+
 const BlogListPage: React.FC = () => {
   const [items, setItems] = useState<Blog[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const fetchData = async (pageNum: number) => {
-    setLoading(true);
+  const fetchData = async (pageNum: number, initial = false) => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    
     try {
-      // Fetch categories and blogs simultaneously
+      initial ? setLoading(true) : setLoadingMore(true);
+      
       const [categoriesRes, blogsRes] = await Promise.all([
-        axios.get("/api/category/read"),
-        axios.get(`/api/blog/read?page=${pageNum}&limit=10`)
+        axios.get("/api/category/read", { signal }),
+        axios.get(`/api/blog/read?page=${pageNum}&limit=10`, { signal })
       ]);
-      const { items: fetched, page: current, totalPages: totalP } = blogsRes.data.data;
-      setItems(fetched);
-      setPage(current);
-      setTotalPages(totalP);
-      setCategories(categoriesRes.data.data);
 
+      const { items: fetched, totalPages } = blogsRes.data.data;
+      
+      setCategories(categoriesRes.data.data);
+      setHasMore(pageNum < totalPages);
+      
+      if (pageNum === 1) {
+        setItems(fetched);
+      } else {
+        setItems(prev => [...prev, ...fetched]);
+      }
+      
+      setError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load data");
+      if (!axios.isCancel(err)) {
+        setError(err.response?.data?.message || "Failed to load data");
+      }
     } finally {
-      setLoading(false);
+      initial ? setLoading(false) : setLoadingMore(false);
     }
   };
 
-  function getCategoryNameById(id: string, cats: Category[]): string {
-    const found = cats.find((c) => c._id === id);
+  const getCategoryNameById = (id: string): string => {
+    const found = categories.find(c => c._id === id);
     return found ? found.name : "";
-  }
+  };
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
+    if (scrollTop + clientHeight >= scrollHeight - 500 && !loadingMore && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  }, [loadingMore, hasMore]);
 
   useEffect(() => {
+    fetchData(1, true);
+  }, []);
+
+  useEffect(() => {
+    if (page === 1) return;
     fetchData(page);
   }, [page]);
-  useEffect(()=>{
-    console.log(categories)
-  },[categories])
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   if (loading) {
     return (
@@ -121,232 +150,177 @@ const BlogListPage: React.FC = () => {
   }
 
   const [featured, ...rest] = items;
-  const featuredDate = featured.publishDateTime
-    ? new Date(featured.publishDateTime).toLocaleDateString()
-    : "";
-  const featuredText = parseContentText(featured.content);
-  const categoryName = getCategoryNameById(featured.categoryId, categories);
 
   return (
     <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 mt-[30px] px-4 py-8 md:px-8">
       {/* Featured */}
-      <Link href={`/blog/${featured._id}`}>
-      <div className="flex flex-col sm:flex-row max-w-6xl mx-auto rounded-md overflow-hidden mb-7 bg-[#f0efeb] dark:bg-[#2a2a2a] shadow-sm">
-        <img
-          src={featured.featureImage}
-          alt={featured.title}
-          className="w-full sm:w-64 h-48 sm:h-66 object-cover"
-        />
-        <div className="p-4 sm:p-6 w-full flex flex-col justify-between">
-          <div>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {categoryName && (
-                <span className="px-2 sm:px-3 py-1 bg-indigo-100 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-100 rounded text-xs sm:text-sm">
-                  {categoryName}
-                </span>
-              )}
-              {featured.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 sm:px-3 py-1 bg-indigo-100 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-100 rounded text-xs sm:text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <h3 className="text-xl sm:text-2xl font-bold mb-1">{featured.title}</h3>
-            <p className="mb-2 text-sm sm:text-base whitespace-pre-line text-gray-700 dark:text-gray-300">
-              {featuredText}
-            </p>
-          </div>
+      {featured && (
+        <Link href={`/blog/${featured._id}`}>
+          <FeaturedBlog blog={featured} categories={categories} />
+        </Link>
+      )}
 
-          <div className="flex flex-col justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-
-            <div className="flex items-center gap-2">
-              {featured.author.image ? (
-                <img
-                  src={featured.author.image}
-                  alt={featured.author.fullName}
-                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
-                />
-              ) : (
-                <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs sm:text-sm">
-                  {featured.author.fullName.charAt(0).toUpperCase()}
-                </span>
-              )}
-              <div className="flex flex-col">
-                <span className="font-medium">{featured.author.fullName}</span>
-                <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
-                  {featuredDate}
-                </span>
-              </div>
-            </div>
-            <hr className="border-[d1d1d1] dark:border-[#3a3a3a] mb-3 mt-2" />
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-row gap-4 text-xs sm:text-sm">
-                <div className="flex items-center gap-1">
-                  <Eye className="w-4 h-4" />
-                  <span>{featured.shares}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4" />
-                  <span>{featured.likes.length}</span>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <Bookmark className="w-4 h-4" fill="currentColor" />
-                  <span>{featured.commentsCount}</span>
-                </div>
-              </div>
-              <div className="inline-flex items-center space-x-2 text-xs sm:text-sm">
-                <button className="flex items-center bg-[#e6e6e6] hover:text-[#faf9f6] dark:bg-[#333333] hover:bg-indigo-500 dark:hover:bg-indigo-400 text-gray-800 dark:text-gray-200 rounded-md px-3 py-1 transition">
-                  <ThumbsUp className="w-4 h-4 mr-1" /> {featured.likes.length}
-                </button>
-                <button className="flex items-center bg-[#e6e6e6] hover:text-[#faf9f6] dark:bg-[#333333] hover:bg-red-500 dark:hover:bg-red-400 text-gray-800 dark:text-gray-200 rounded-md px-3 py-1 transition">
-                  <ThumbsDown className="w-4 h-4 mr-1" /> {featured.dislikesCount}
-                </button>
-                <button className="flex items-center bg-[#e6e6e6] hover:text-[#faf9f6] dark:bg-[#333333] hover:bg-blue-500 dark:hover:bg-blue-400 text-gray-800 dark:text-gray-200 rounded-md px-3 py-1 transition">
-                  <MessageSquareText className="w-4 h-4 mr-1" /> {featured.commentsCount}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      </Link>
       {/* Blog Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {rest.map((blog) => {
-          const date = blog.publishDateTime
-            ? new Date(blog.publishDateTime).toLocaleDateString()
-            : "";
-          const text = parseContentText(blog.content);
-          return (
-            <div
-              key={blog._id}
-              className="bg-[#f0efeb] dark:bg-[#2a2a2a] rounded-md overflow-hidden flex flex-col shadow-sm"
-            >
-            <Link href={`/blog/${blog._id}`}>
-
-              <img
-                src={blog.featureImage}
-                alt={blog.title}
-                className="w-full h-32 sm:h-40 object-cover"
-              />
-              <div className="p-3 sm:p-4 flex flex-col flex-grow">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <span className="px-2 py-1 bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-100 rounded text-xs">
-                    category
-                  </span>
-                  {blog.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-1 bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-100 rounded text-xs"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <h3 className="font-semibold text-lg sm:text-xl mb-2 flex-grow">{blog.title}</h3>
-                <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm sm:text-base whitespace-pre-line">
-                  {text}
-                </p>
-
-                <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  <div className="flex items-center gap-2">
-                    {blog.author.image ? (
-                      <img
-                        src={blog.author.image}
-                        alt={blog.author.fullName}
-                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs">
-                        {blog.author.fullName.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                    <div className="flex flex-col">
-                      <span className="font-medium text-xs sm:text-sm">{blog.author.fullName}</span>
-                      <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
-                        {date}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <hr className="border-[d1d1d1] dark:border-[#3a3a3a] mb-3" />
-
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-row gap-4 text-xs sm:text-sm">
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{blog.shares}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4" />
-                      <span>{blog.likes.length}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Bookmark className="w-4 h-4" />
-                      <span>{blog.commentsCount}</span>
-                    </div>
-                  </div>
-                  <div className="inline-flex items-center space-x-2 text-xs sm:text-sm">
-                    <button className="flex items-center bg-[#e6e6e6] dark:bg-[#333333] hover:text-[#faf9f6] hover:bg-indigo-500 dark:hover:bg-indigo-400 text-gray-800 dark:text-gray-200 rounded-md px-2 py-1 transition">
-                      <ThumbsUp className="w-4 h-4 mr-1" /> {blog.likes.length}
-                    </button>
-                    <button className="flex items-center bg-[#e6e6e6] dark:bg-[#333333] hover:bg-red-500 hover:text-[#faf9f6] dark:hover:bg-red-400 text-gray-800 dark:text-gray-200 rounded-md px-2 py-1 transition">
-                      <ThumbsDown className="w-4 h-4 mr-1" /> {blog.dislikesCount}
-                    </button>
-                    <button className="flex items-center bg-[#e6e6e6] dark:bg-[#333333] hover:bg-blue-500 hover:text-[#faf9f6] dark:hover:bg-blue-400 text-gray-800 dark:text-gray-200 rounded-md px-2 py-1 transition">
-                      <MessageSquareText className="w-4 h-4 mr-1" /> {blog.commentsCount}
-                    </button>
-                  </div>
-                </div>
-              </div>
-              </Link>
-            </div>
-            
-          );
-        })}
+        {rest.map((blog) => (
+          <BlogCard 
+            key={blog._id} 
+            blog={blog} 
+            getCategoryName={getCategoryNameById} 
+          />
+        ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-center space-x-2 mt-8 text-gray-900 dark:text-gray-100">
-        <button
-          onClick={() => page > 1 && setPage(page - 1)}
-          disabled={page <= 1}
-          className="p-2 rounded-md bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        {[...Array(totalPages)].map((_, idx) => {
-          const num = idx + 1;
-          return (
-            <button
-              key={num}
-              onClick={() => setPage(num)}
-              className={`px-3 py-1 rounded-md transition-colors text-xs sm:text-sm ${
-                page === num
-                  ? "bg-indigo-600 text-white"
-                  : "bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
-            >
-              {num}
-            </button>
-          );
-        })}
-        <button
-          onClick={() => page < totalPages && setPage(page + 1)}
-          disabled={page >= totalPages}
-          className="p-2 rounded-md bg-[#faf9f6] dark:bg-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-[#1e1e1e] dark:hover:text-white transition disabled:opacity-50"
+      {loadingMore && (
+        <div className="flex justify-center mt-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
+        </div>
+      )}
 
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
+      {!hasMore && (
+        <p className="text-center mt-8 text-gray-600 dark:text-gray-400">
+          No more blogs to load
+        </p>
+      )}
+    </div>
+  );
+};
+
+const FeaturedBlog = ({ blog, categories }: { blog: Blog, categories: Category[] }) => {
+  const featuredDate = blog.publishDateTime
+    ? new Date(blog.publishDateTime).toLocaleDateString()
+    : "";
+  const featuredText = parseContentText(blog.content);
+  const categoryName = categories.find(c => c._id === blog.categoryId)?.name || "";
+
+  return (
+    <div className="flex flex-col sm:flex-row max-w-6xl mx-auto rounded-md overflow-hidden mb-7 bg-[#f0efeb] dark:bg-[#2a2a2a] shadow-sm">
+      <img
+        src={blog.featureImage}
+        alt={blog.title}
+        className="w-full sm:w-64 h-48 sm:h-66 object-cover"
+      />
+      <div className="p-4 sm:p-6 w-full flex flex-col justify-between">
+        <div>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {categoryName && (
+              <span className="px-2 sm:px-3 py-1 bg-indigo-100 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-100 rounded text-xs sm:text-sm">
+                {categoryName}
+              </span>
+            )}
+            {blog.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 sm:px-3 py-1 bg-indigo-100 dark:bg-indigo-700 text-indigo-800 dark:text-indigo-100 rounded text-xs sm:text-sm"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <h3 className="text-xl sm:text-2xl font-bold mb-1">{blog.title}</h3>
+          <p className="mb-2 text-sm sm:text-base whitespace-pre-line text-gray-700 dark:text-gray-300">
+            {featuredText}
+          </p>
+        </div>
+
+        <BlogFooter blog={blog} date={featuredDate} />
       </div>
     </div>
   );
 };
+
+const BlogCard = ({ blog, getCategoryName }: { blog: Blog, getCategoryName: (id: string) => string }) => {
+  const date = blog.publishDateTime
+    ? new Date(blog.publishDateTime).toLocaleDateString()
+    : "";
+  const text = parseContentText(blog.content);
+  const categoryName = getCategoryName(blog.categoryId);
+
+  return (
+    <div className="bg-[#f0efeb] dark:bg-[#2a2a2a] rounded-md overflow-hidden flex flex-col shadow-sm">
+      <Link href={`/blog/${blog._id}`}>
+        <img
+          src={blog.featureImage}
+          alt={blog.title}
+          className="w-full h-32 sm:h-40 object-cover"
+        />
+        <div className="p-3 sm:p-4 flex flex-col flex-grow">
+          <div className="flex flex-wrap gap-2 mb-2">
+            {categoryName && (
+              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-100 rounded text-xs">
+                {categoryName}
+              </span>
+            )}
+            {blog.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-100 rounded text-xs"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <h3 className="font-semibold text-lg sm:text-xl mb-2 flex-grow">{blog.title}</h3>
+          <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm sm:text-base whitespace-pre-line">
+            {text}
+          </p>
+          
+          <BlogFooter blog={blog} date={date} compact />
+        </div>
+      </Link>
+    </div>
+  );
+};
+
+const BlogFooter = ({ blog, date, compact }: { blog: Blog, date: string, compact?: boolean }) => (
+  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+    <div className="flex items-center gap-2">
+      {blog.author.image ? (
+        <img
+          src={blog.author.image}
+          alt={blog.author.fullName}
+          className={`${compact ? 'w-5 h-5' : 'w-6 h-6 sm:w-8 sm:h-8'} rounded-full object-cover`}
+        />
+      ) : (
+        <span className={`${compact ? 'w-5 h-5' : 'w-6 h-6 sm:w-8 sm:h-8'} rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs`}>
+          {blog.author.fullName.charAt(0).toUpperCase()}
+        </span>
+      )}
+      <div className="flex flex-col">
+        <span className={`font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{blog.author.fullName}</span>
+        <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+          {date}
+        </span>
+      </div>
+    </div>
+    <hr className="border-[d1d1d1] dark:border-[#3a3a3a] my-3" />
+    
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-row gap-4 text-xs sm:text-sm">
+        <StatItem icon={Eye} value={blog.shares} />
+        <StatItem icon={Star} value={blog.likes.length} />
+        <StatItem icon={Bookmark} value={blog.commentsCount} />
+      </div>
+      <div className="inline-flex items-center space-x-2 text-xs sm:text-sm">
+        <ActionButton icon={ThumbsUp} value={blog.likes.length} />
+        <ActionButton icon={ThumbsDown} value={blog.dislikesCount} />
+        <ActionButton icon={MessageSquareText} value={blog.commentsCount} />
+      </div>
+    </div>
+  </div>
+);
+
+const StatItem = ({ icon: Icon, value }: { icon: any, value: number }) => (
+  <div className="flex items-center gap-1">
+    <Icon className="w-4 h-4" />
+    <span>{value}</span>
+  </div>
+);
+
+const ActionButton = ({ icon: Icon, value }: { icon: any, value: number }) => (
+  <button className="flex items-center bg-[#e6e6e6] hover:text-[#faf9f6] dark:bg-[#333333] hover:bg-indigo-500 dark:hover:bg-indigo-400 text-gray-800 dark:text-gray-200 rounded-md px-2 py-1 transition">
+    <Icon className="w-4 h-4 mr-1" /> {value}
+  </button>
+);
 
 export default BlogListPage;
