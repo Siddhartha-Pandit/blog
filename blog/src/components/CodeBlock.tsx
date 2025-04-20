@@ -1,7 +1,8 @@
-// blog\src\components\CodeBlock.tsx
+// blog/src/components/CodeBlock.tsx
 import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import type { ContentNode } from '@/types';
+import '../../style.css';
 
 export function CodeBlock({ node }: { node: ContentNode }) {
   const [copied, setCopied] = useState(false);
@@ -9,9 +10,13 @@ export function CodeBlock({ node }: { node: ContentNode }) {
   const code = node.content?.[0]?.text || '';
 
   const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy code:', err);
+    }
   };
 
   return (
