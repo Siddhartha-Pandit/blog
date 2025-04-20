@@ -21,11 +21,12 @@ export async function GET(req: Request, { params }: { params: { blogId: string }
         await dbConnect();
         console.debug("Database connection established.");
 
-        const blog = await ContentModel.findOne({ _id: params.blogId }).lean();
-        if (!blog) {
-            console.error("Blog not found:", params.blogId);
-            return NextResponse.json(new ApiError(404, "Blog not found"), { status: 404 });
-        }
+        const blog = await ContentModel.findOne({ _id: params.blogId });
+        console.log(blog)
+        // if (!blog._id) {
+        //     console.error("Blog not found:", params.blogId);
+        //     return NextResponse.json(new ApiError(404, "Blog not found"), { status: 404 });
+        // }
 
         return NextResponse.json(new ApiResponse(200, blog, "Blog read successfully"), { status: 200 });
     } catch (error) {

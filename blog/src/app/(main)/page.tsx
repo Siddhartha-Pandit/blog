@@ -42,7 +42,7 @@ const parseContentText = (content: string | null): string => {
         return node.content
           .filter((child: any) => child.type === "text" && child.text)
           .map((child: any) => child.text)
-          .join(" ");
+          .join("");
       }
       if (Array.isArray(node.content)) {
         return node.content.map(extract).join(" ");

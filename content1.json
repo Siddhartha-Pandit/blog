@@ -1,0 +1,49 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Hi i am " },
+        {
+          "type": "text",
+          "marks": [{ "type": "bold" }, { "type": "italic" }],
+          "text": "sidd"
+        },
+        { "type": "text", "text": "hartha " },
+        {
+          "type": "text",
+          "marks": [{ "type": "underline" }],
+          "text": "pandit"
+        },
+        { "type": "text", "text": ". I am of 22 " },
+        { "type": "text", "marks": [{ "type": "bold" }], "text": "years" },
+        { "type": "text", "text": " old " },
+        { "type": "text", "marks": [{ "type": "underline" }], "text": "how" },
+        { "type": "text", "text": " can i help you." }
+      ]
+    },
+    { "type": "paragraph" },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "this is my " },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://www.youtube.com/watch?v=MHkD69Wb-fU",
+                "target": "_blank",
+                "rel": "noopener noreferrer nofollow",
+                "class": "underline underline-offset-2 decoration-current text-[#333333] dark:text-[#dddddd]"
+              }
+            }
+          ],
+          "text": "video link"
+        }
+      ]
+    }
+  ]
+}
