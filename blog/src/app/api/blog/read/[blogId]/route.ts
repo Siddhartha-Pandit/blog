@@ -26,18 +26,14 @@ export async function GET(
         { status: 400 }
       );
     }
-
-    // 2) Connect
     await dbConnect();
     console.debug("Database connection established.");
-
-    // 3) Query & populate author.fullName and author.image
     const blog = await ContentModel.findById(params.blogId)
       .populate({
-        path: "author",              // name of the field in Content schema
-        select: "fullName image -_id" // pick only fullName & image, omit author’s _id if you like
+        path: "author",             
+        select: "fullName image -_id"
       })
-      .lean();                       // optional, returns a plain JS object
+      .lean();                       
 
     if (!blog) {
       console.error("Blog not found:", params.blogId);
@@ -46,8 +42,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    // 4) Send back
     return NextResponse.json(
       new ApiResponse(200, blog, "Blog read successfully"),
       { status: 200 }

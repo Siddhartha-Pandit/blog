@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
-  Eye,
+  Share,
   Star,
   MessageSquareText,
   ThumbsUp,
@@ -320,7 +320,7 @@ const BlogFooter = ({ blog, date, compact }: { blog: Blog, date: string, compact
     
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-4 text-xs sm:text-sm">
-        <StatItem icon={Eye} value={blog.shares} />
+        <StatItem icon={Share} value={blog.shares} />
         <StatItem icon={Star} value={blog.likes.length} />
         <StatItem icon={Bookmark} value={blog.commentsCount} />
       </div>

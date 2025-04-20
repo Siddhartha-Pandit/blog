@@ -4,10 +4,12 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import {
-  Eye,
+  Share,
   MessageSquareText,
   ThumbsUp,
   ThumbsDown,
+  Bookmark,
+  Star
 } from "lucide-react";
 
 import { parseDoc } from "@/lib/parseDocs";
@@ -15,7 +17,7 @@ import { parseDoc } from "@/lib/parseDocs";
 interface Blog {
   _id: string;
   title: string;
-  content: any[];      
+  content: any[];
   featureImage: string;
   tags: string[];
   author?: { fullName?: string; image?: string };
@@ -97,7 +99,7 @@ const BlogDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] py-12 px-4 sm:px-6 lg:px-8 mt-[30px]">
       <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-4">
           {blog.title}
         </h1>
 
@@ -114,7 +116,6 @@ const BlogDetailPage: React.FC = () => {
                 {(blog.author.fullName?.charAt(0) || "A").toUpperCase()}
               </div>
             )}
-
             <div>
               <p className="font-medium">
                 {blog.author.fullName || "Anonymous Author"}
@@ -125,31 +126,54 @@ const BlogDetailPage: React.FC = () => {
             </div>
           </div>
         )}
+        <div className="flex flex-row sm:flex-row flex-wrap justify-between items-center border-t border-b pt-4 gap-4 sm:gap-6 md:gap-8">
+          <div className="flex flex-row">
+            {/* Likes */}
+            <div className="flex items-center space-x-2">
+              <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <span>{blog.likes.length}</span>
+            </div>
 
+            {/* Dislikes */}
+            <div className="flex items-center space-x-2">
+              <ThumbsDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <span>{blog.dislikesCount}</span>
+            </div>
+
+            {/* Comments */}
+            <div className="flex items-center space-x-2">
+              <MessageSquareText className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <span>{blog.commentsCount}</span>
+            </div>
+          </div>
+          <div className="flex flex-row">
+           
+            <div className="flex items-center space-x-2">
+              <Share className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <span>0</span>
+            </div>
+
+            {/* Comments */}
+            <div className="flex items-center space-x-2">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <span>2.3</span>
+            </div>
+
+            {/* Shares */}
+            
+            <div className="flex items-center space-x-2">
+              <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+            </div>
+          </div>
+
+        </div>
         <article className="prose dark:prose-invert max-w-none mb-8">
           {blog.content.length > 0
             ? parseDoc(blog.content)
             : <p>No content to display.</p>}
         </article>
 
-        <div className="flex gap-6 items-center border-t pt-4">
-          <div className="flex items-center gap-2">
-            <ThumbsUp className="w-5 h-5" />
-            <span>{blog.likes.length}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThumbsDown className="w-5 h-5" />
-            <span>{blog.dislikesCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MessageSquareText className="w-5 h-5" />
-            <span>{blog.commentsCount}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Eye className="w-5 h-5" />
-            <span>{blog.shares}</span>
-          </div>
-        </div>
+
       </div>
     </div>
   );
