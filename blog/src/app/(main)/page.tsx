@@ -124,13 +124,36 @@ const BlogListPage: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf9f6] dark:bg-[#1e1e1e]">
-        Loading...
+  const renderSkeleton = () => (
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] px-4 py-8 md:px-8 mt-[30px]">
+      {/* Featured Skeleton */}
+      <div className="flex flex-col sm:flex-row max-w-6xl mx-auto rounded-md overflow-hidden mb-7 bg-[#f0efeb] dark:bg-[#2a2a2a] shadow-sm animate-pulse">
+        <div className="w-full sm:w-64 h-48 sm:h-66 bg-[#e0dfdb] dark:bg-[#3a3a3a]" />
+        <div className="p-4 sm:p-6 w-full">
+          <div className="h-5 bg-[#e0dfdb] dark:bg-[#3a3a3a] mb-4 w-1/4" />
+          <div className="h-8 bg-[#e0dfdb] dark:bg-[#3a3a3a] mb-2 w-3/4" />
+          <div className="h-4 bg-[#e0dfdb] dark:bg-[#3a3a3a] mb-2 w-full" />
+          <div className="h-4 bg-[#e0dfdb] dark:bg-[#3a3a3a] w-5/6" />
+        </div>
       </div>
-    );
+
+      {/* Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="bg-[#f0efeb] dark:bg-[#2a2a2a] rounded-md overflow-hidden flex flex-col shadow-sm animate-pulse">
+            <div className="w-full h-32 sm:h-40 bg-[#e0dfdb] dark:bg-[#3a3a3a]" />
+            <div className="p-4 sm:p-5 flex flex-col flex-grow">
+              <div className="h-4 bg-[#e0dfdb] dark:bg-[#3a3a3a] mb-2 w-1/2" />
+              <div className="h-4 bg-[#e0dfdb] dark:bg-[#3a3a3a] mb-2 w-3/4" />
+              <div className="mt-auto h-4 bg-[#e0dfdb] dark:bg-[#3a3a3a] w-1/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  if (loading) {
+    return renderSkeleton();
   }
 
   if (error) {
@@ -217,7 +240,7 @@ const FeaturedBlog = ({ blog, categories }: { blog: Blog, categories: Category[]
               </span>
             ))}
           </div>
-          <h3 className="text-xl sm:text-2xl font-bold mb-1">{blog.title}</h3>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1">{blog.title}</h2>
           <p className="mb-2 text-sm sm:text-base whitespace-pre-line text-gray-700 dark:text-gray-300">
             {featuredText}
           </p>

@@ -15,7 +15,7 @@ import { parseDoc } from "@/lib/parseDocs";
 interface Blog {
   _id: string;
   title: string;
-  content: any[];            // array of ProseMirror JSON nodes
+  content: any[];      
   featureImage: string;
   tags: string[];
   author?: { fullName?: string; image?: string };
@@ -38,7 +38,7 @@ const BlogDetailPage: React.FC = () => {
       try {
         const res = await axios.get(`/api/blog/read/${blogId}`);
         const raw = res.data.data;
-
+        console.log(raw)
         // Parse out the ProseMirror "doc" JSON string:
         let nodes: any[] = [];
         if (typeof raw.content === "string") {
@@ -95,15 +95,9 @@ const BlogDetailPage: React.FC = () => {
     : "";
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#1e1e1e] py-12 px-4 sm:px-6 lg:px-8 mt-[30px]">
       <div className="max-w-4xl mx-auto">
-        <img
-          src={blog.featureImage}
-          alt={blog.title}
-          className="w-full h-64 object-cover rounded-lg mb-8"
-        />
-
-        <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
           {blog.title}
         </h1>
 
