@@ -18,7 +18,7 @@ interface BlogSettingsDrawerProps {
   selectedCategory: string;
   setSelectedCategory: (value: string) => void;
   initialTags?: string[];
-  onFileAccepted: (file: File) => void;
+  onFileAccepted: (file: File | null) => void;
   metaDescription: string;
   setMetaDescription: (value: string) => void;
   onSaveTags: (tags: string[]) => void;
@@ -27,6 +27,7 @@ interface BlogSettingsDrawerProps {
   setPublishNow: (value: boolean) => void;
   publishDateTime: string;
   setPublishDateTime: (value: string) => void;
+  featureImageUrl?: string; 
 }
 
 const Portal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -54,6 +55,8 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
   setPublishNow,
   publishDateTime,
   setPublishDateTime,
+  featureImageUrl
+  
 }) => {
   const [tags, setTags] = useState<string[]>(initialTags);
   const [isAddingTag, setIsAddingTag] = useState<boolean>(false);
@@ -201,7 +204,7 @@ const BlogSettingsDrawer: React.FC<BlogSettingsDrawerProps> = ({
         <div className="flex flex-col justify-center mt-5 gap-4">
           <span className="mb-2 text-base font-medium">Feature Image</span>
           <div className="flex flex-col ml-3">
-            <ImageUpload onFileAccepted={onFileAccepted} />
+            <ImageUpload src={featureImageUrl} onFileAccepted={onFileAccepted} />
           </div>
         </div>
 

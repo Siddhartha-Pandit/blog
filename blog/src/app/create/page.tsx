@@ -146,7 +146,7 @@ const CreatePage: React.FC = () => {
         selectedCategory={selectedCategory || ""}
         setSelectedCategory={setSelectedCategory}
         initialTags={tags}
-        onFileAccepted={(file: File) => setFeatureImage(file)}
+        onFileAccepted={(file: File| null) => setFeatureImage(file)}
         metaDescription={metaDescription}
         setMetaDescription={setMetaDescription}
         onSaveTags={(newTags: string[]) => setTags(newTags)}

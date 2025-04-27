@@ -30,7 +30,9 @@ interface Blog {
 }
 
 const BlogDetailPage: React.FC = () => {
-  const { blogId } = useParams();
+  const params = useParams<{ blogId: string }>();  // 👈 Better typing
+  const blogId = params?.blogId;
+
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,15 +40,16 @@ const BlogDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
+        if (!blogId) return;
+
         const res = await axios.get(`/api/blog/read/${blogId}`);
         const raw = res.data.data;
-        console.log(raw)
-        // Parse out the ProseMirror "doc" JSON string:
+        console.log(raw);
+
         let nodes: any[] = [];
         if (typeof raw.content === "string") {
           try {
             const parsed = JSON.parse(raw.content);
-            // If your JSON is { type: "doc", content: [...] }
             nodes = Array.isArray(parsed.content) ? parsed.content : [];
           } catch {
             console.warn("Failed to JSON.parse blog.content");
@@ -65,6 +68,7 @@ const BlogDetailPage: React.FC = () => {
         setLoading(false);
       }
     };
+
     fetchBlog();
   }, [blogId]);
 
@@ -126,54 +130,43 @@ const BlogDetailPage: React.FC = () => {
             </div>
           </div>
         )}
-        <div className="flex flex-row sm:flex-row flex-wrap justify-between items-center border-t border-b pt-4 gap-4 sm:gap-6 md:gap-8">
-          <div className="flex flex-row">
-            {/* Likes */}
+
+        <div className="flex flex-row flex-wrap justify-between items-center border-t border-b pt-4 gap-4">
+          <div className="flex flex-row space-x-6">
             <div className="flex items-center space-x-2">
-              <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <ThumbsUp className="w-5 h-5" />
               <span>{blog.likes.length}</span>
             </div>
-
-            {/* Dislikes */}
             <div className="flex items-center space-x-2">
-              <ThumbsDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <ThumbsDown className="w-5 h-5" />
               <span>{blog.dislikesCount}</span>
             </div>
-
-            {/* Comments */}
             <div className="flex items-center space-x-2">
-              <MessageSquareText className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <MessageSquareText className="w-5 h-5" />
               <span>{blog.commentsCount}</span>
             </div>
           </div>
-          <div className="flex flex-row">
-           
+
+          <div className="flex flex-row space-x-6">
             <div className="flex items-center space-x-2">
-              <Share className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <Share className="w-5 h-5" />
               <span>0</span>
             </div>
-
-            {/* Comments */}
             <div className="flex items-center space-x-2">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <Star className="w-5 h-5" />
               <span>2.3</span>
             </div>
-
-            {/* Shares */}
-            
             <div className="flex items-center space-x-2">
-              <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              <Bookmark className="w-5 h-5" />
             </div>
           </div>
-
         </div>
-        <article className="prose dark:prose-invert max-w-none mb-8">
+
+        <article className="prose dark:prose-invert max-w-none mb-8 mt-6">
           {blog.content.length > 0
             ? parseDoc(blog.content)
             : <p>No content to display.</p>}
         </article>
-
-
       </div>
     </div>
   );

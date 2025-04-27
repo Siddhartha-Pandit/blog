@@ -13,7 +13,7 @@ export async function GET(
     await dbConnect();
     console.debug("Database connected.");
     const category = await CategoryModel.find();
-    console.debug("Categories retrieved:", category);
+    console.debug("Categories retrieved from database");
     return NextResponse.json(
       new ApiResponse(200, category, "Category found successfully"),
       { status: 200 }

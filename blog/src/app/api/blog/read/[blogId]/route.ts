@@ -2,46 +2,52 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { ApiError } from "@/lib/ApiError";
 import ContentModel from "@/models/Content";
 import dbConnect from "@/lib/dbConnect";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { blogId: string } }
 ) {
   console.debug("Received GET request to read blog:", params.blogId);
+
   try {
-    // 1) Validate blogId presence & format
-    if (!params.blogId) {
+    const { blogId } = params;
+
+    if (!blogId) {
       console.error("Blog id missing in URL parameters.");
       return NextResponse.json(
         new ApiError(400, "Blog id is required for read"),
         { status: 400 }
       );
     }
-    if (!mongoose.Types.ObjectId.isValid(params.blogId)) {
-      console.error("Invalid blog ID format:", params.blogId);
+
+    if (!mongoose.Types.ObjectId.isValid(blogId)) {
+      console.error("Invalid blog ID format:", blogId);
       return NextResponse.json(
         new ApiError(400, "Invalid blog ID format"),
         { status: 400 }
       );
     }
+
     await dbConnect();
     console.debug("Database connection established.");
-    const blog = await ContentModel.findById(params.blogId)
+
+    const blog = await ContentModel.findById(blogId)
       .populate({
-        path: "author",             
-        select: "fullName image -_id"
+        path: "author",
+        select: "fullName image -_id",
       })
-      .lean();                       
+      .lean();
 
     if (!blog) {
-      console.error("Blog not found:", params.blogId);
+      console.error("Blog not found:", blogId);
       return NextResponse.json(
         new ApiError(404, "Blog not found"),
         { status: 404 }
       );
     }
+
     return NextResponse.json(
       new ApiResponse(200, blog, "Blog read successfully"),
       { status: 200 }

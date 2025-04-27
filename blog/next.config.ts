@@ -2,7 +2,7 @@
 
  const nextConfig: NextConfig = {
   images:{
-    domains:["plus.unsplash.com"],
+    domains:[ 'res.cloudinary.com', "plus.unsplash.com"],
     unoptimized: false,
 
   }

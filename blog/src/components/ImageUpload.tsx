@@ -5,23 +5,34 @@ import { ImageUp, Trash } from "lucide-react";
 import Image from "next/image";
 
 interface ImageUploadProps {
-  onFileAccepted?: (file: File) => void;
+  /**
+   * Called when a new image File is selected or removed.
+   * If the user clears the image, `null` is passed.
+   */
+  onFileAccepted?: (file: File | null) => void;
+  /**
+   * Optional initial image URL to display as preview.
+   */
+  src?: string;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted, src }) => {
+  // Holds the newly selected File (if any)
   const [image, setImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  // Preview URL: either object URL of `image` or the provided `src`
+  const [preview, setPreview] = useState<string | null>(src || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!image) {
-      setPreview(null);
-      return;
+    if (image) {
+      // Generate object URL for preview
+      const objectUrl = URL.createObjectURL(image);
+      setPreview(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
     }
-    const objectUrl = URL.createObjectURL(image);
-    setPreview(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [image]);
+    // Fallback to initial src when no file is selected
+    setPreview(src || null);
+  }, [image, src]);
 
   const isImageFile = (file: File) => file.type.startsWith("image/");
 
@@ -47,7 +58,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
   };
 
   const handleClick = () => fileInputRef.current?.click();
-  const removeImage = () => setImage(null);
+
+  const removeImage = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setImage(null);
+    onFileAccepted?.(null);
+  };
 
   return (
     <div
@@ -66,10 +82,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onFileAccepted }) => {
             className="rounded-md"
           />
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              removeImage();
-            }}
+            onClick={removeImage}
             className="absolute top-2 right-2 bg-red-500 p-1 rounded-full text-white"
             aria-label="Remove image"
           >

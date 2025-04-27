@@ -78,6 +78,7 @@ declare module '@tiptap/core' {
 
 interface EditorProps {
   onChange?: (content: JSONContent) => void;               // ← CHANGED: accept onChange prop
+  content?: JSONContent;
 }
 const DefinitionList = Node.create({
   name: 'definitionList',
@@ -117,7 +118,7 @@ const Editor = forwardRef<{
   getMarkdown: () => string;
 
 },EditorProps>((props, ref) => {
-  const { onChange } = props;   
+  const { onChange, content } = props;   
   const [floatingVisible, setFloatingVisible] = useState(false);
   const [tableFloatingToolVisible, setTableFloatingToolVisible] = useState(false);
   const [imageFloatingToolVisible] = useState(false);
@@ -134,6 +135,7 @@ const Editor = forwardRef<{
   const [, setDragAndDropImage] = useState<File | null>(null);
   // dragAndDropImage
   const [base64Image, setBase64Image] = useState<string | null>(null);
+  const hasLoaded = useRef(false);
 
   // Convert a file into a base64 string
   const convertBase64 = (file: File): Promise<string> => {
@@ -285,7 +287,8 @@ const editor = useEditor({
       HTMLAttributes: { class: `${textColor} border px-2 py-1` },
     }),
   ],
-  content: '',
+  content: content || { type: 'doc', content: [] },  // ← use incoming `content` or fall back
+
   onUpdate:({editor})=>{
     onChange?.(editor.getJSON());
   },
@@ -447,7 +450,7 @@ useImperativeHandle(ref, () => ({
       id: "dragAndDrop",
       name: "Upload",
       title: "Drag & Drop",
-      content: <ImageUpload onFileAccepted={handleImageDragAndDrop} />,
+      content: <ImageUpload onFileAccepted={(file: File| null)=>handleImageDragAndDrop} />,
     },
     {
       id: "url",
@@ -532,7 +535,14 @@ useImperativeHandle(ref, () => ({
       window.removeEventListener('mousedown', handleMouseDown);
     };
   }, [editor]);
-
+  useEffect(() => {
+    if (editor && content && !hasLoaded.current) {
+      editor.commands.setContent(content);
+      console.log('Initial content loaded:', editor.getJSON());
+      hasLoaded.current = true;  // prevent future resets
+    }
+  }, [editor, content]);
+  
   useEffect(() => {
     if (!editor) return;
     const updateTableFloating = () => {

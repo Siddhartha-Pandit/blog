@@ -1,65 +1,134 @@
-import { NextResponse } from "next/server";
+// File: blog/src/app/api/blog/content/[blogId]/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
 import ContentModel from "@/models/Content";
 import CategoryModel from "@/models/Category";
-import UserModel from "@/models/User";              // you'll need a User model
+import UserModel from "@/models/User";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
-
-export async function POST(request: Request) {
+import { ApiResponse } from "@/lib/ApiResponse";
+import { ApiError } from "@/lib/ApiError";
+// PATCH: Update an existing blog content (draft or published)
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { blogId: string } }
+) {
+  // 1. Authenticate user
   const session = await getServerSession(authOptions);
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      new ApiError(401, "Unauthorized"),
+      { status: 401 }
+    );
+  }
+
+  // 2. Authorize only specific user
+  const allowedUserId = process.env.ALLOWED_USER;
+  if (session.user.id !== allowedUserId) {
+    return NextResponse.json(
+      new ApiError(403, "Forbidden: You are not allowed to update content."),
+      { status: 403 }
+    );
   }
 
   try {
-    const { title, content, category, tags, featureImage, metaDescription } =
-      await request.json();
+    // 3. Validate blogId
+    const { blogId } = params;
+    if (!mongoose.isValidObjectId(blogId)) {
+      return NextResponse.json(
+        new ApiError(400, "Invalid blog ID format"),
+        { status: 400 }
+      );
+    }
 
+    // 4. Parse request body
+    const payload = await req.json();
+    const {
+      title,
+      content,
+      category,
+      tags,
+      featureImage,
+      metaDescription,
+      isPublished,
+      publishDateTime,
+    } = payload;
+
+    // Mandatory fields
     if (!title || !content) {
       return NextResponse.json(
-        { error: "Title and content are required" },
+        new ApiError(400, "Title and content are required"),
         { status: 400 }
       );
     }
 
     await dbConnect();
 
-    // 1) Look up the actual Mongo user document so you have a valid ObjectId
-    const user = await UserModel.findOne({ email: session.user.email });
+    // 5. Verify user exists in DB
+    const user = await UserModel.findOne({ providerId: session.user.id });
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        new ApiError(404, "User not found"),
+        { status: 404 }
+      );
     }
 
-    // 2) If a category was provided, ensure it exists
-    let categoryId = null;
+    // 6. Verify category if provided
+    let categoryId = undefined;
     if (category) {
-      const found = await CategoryModel.findById(category);
-      if (!found) {
-        return NextResponse.json({ error: "Category not found" }, { status: 404 });
+      if (!mongoose.isValidObjectId(category)) {
+        return NextResponse.json(
+          new ApiError(400, "Invalid category ID format"),
+          { status: 400 }
+        );
       }
-      categoryId = found._id;
+      const foundCat = await CategoryModel.findById(category);
+      if (!foundCat) {
+        return NextResponse.json(
+          new ApiError(404, "Category not found"),
+          { status: 404 }
+        );
+      }
+      categoryId = foundCat._id;
     }
 
-    const draft = new ContentModel({
-      title,
-      content,
-      author: user._id,                      // valid ObjectId
-      category: categoryId,
-      tags: Array.isArray(tags) ? tags : [],
-      featureImage: featureImage || "",
-      metaDescription: metaDescription || "",
-      shares: 0,
-      likes: [],
-      isPublished: false,
-      publishDateTime: null,                 // keep null for drafts
-    });
+    // 7. Find and update the content
+    const updated = await ContentModel.findByIdAndUpdate(
+      blogId,
+      {
+        title,
+        content,
+        author: user._id,
+        category: categoryId,
+        tags: Array.isArray(tags) ? tags : [],
+        featureImage: featureImage || "",
+        metaDescription: metaDescription || "",
+        shares: 0, // reset or preserve as needed
+        isPublished: Boolean(isPublished),
+        publishDateTime: isPublished ? (publishDateTime ? new Date(publishDateTime) : new Date()) : null,
+      },
+      { new: true, runValidators: true }
+    )
+      .populate({ path: "author", select: "fullName image -_id" })
+      .lean();
 
-    const saved = await draft.save();
-    return NextResponse.json({ message: "Draft saved", data: saved }, { status: 201 });
+    if (!updated) {
+      return NextResponse.json(
+        new ApiError(404, "Content not found"),
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      new ApiResponse(200, updated, "Content updated successfully"),
+      { status: 200 }
+    );
   } catch (err: any) {
-    console.error("❌ Draft save error:", err);
-    return NextResponse.json({ error: "Error saving draft" }, { status: 500 });
+    console.error("Error updating content:", err);
+    return NextResponse.json(
+      new ApiError(500, "Error updating content"),
+      { status: 500 }
+    );
   }
 }
