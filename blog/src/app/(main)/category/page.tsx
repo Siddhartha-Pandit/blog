@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { NextPage } from 'next';
 import axios from 'axios';
 import { useSession } from 'next-auth/react';
@@ -15,7 +15,6 @@ const CategoryPage: NextPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Redirect unauthorized users back
   useEffect(() => {
     if (status !== 'loading' && !session) {
       router.back();
@@ -28,21 +27,26 @@ const CategoryPage: NextPage = () => {
   const [editingName, setEditingName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all categories
-  const fetchCategories = async () => {
+  const getErrorMessage = (err: unknown): string => {
+    if (axios.isAxiosError(err)) {
+      return err.response?.data?.message || 'An error occurred';
+    }
+    return 'An unexpected error occurred';
+  };
+
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get('/api/category/read');
       setCategories(res.data.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch categories');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (session) fetchCategories();
-  }, [session]);
+  }, [session, fetchCategories]);
 
-  // Create category
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) {
@@ -53,26 +57,23 @@ const CategoryPage: NextPage = () => {
       await axios.post('/api/category/create', { name: newName });
       setNewName('');
       fetchCategories();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Add failed');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
   };
 
-  // Start inline editing
   const startEdit = (cat: Category) => {
     setEditingId(cat._id);
     setEditingName(cat.name);
     setError(null);
   };
 
-  // Cancel inline editing
   const cancelEdit = () => {
     setEditingId(null);
     setEditingName('');
     setError(null);
   };
 
-  // Save inline edit
   const handleSave = async (id: string) => {
     if (!editingName.trim()) {
       setError('Name is required');
@@ -83,19 +84,18 @@ const CategoryPage: NextPage = () => {
       setEditingId(null);
       setEditingName('');
       fetchCategories();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Update failed');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
   };
 
-  // Delete category
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     try {
       await axios.delete(`/api/category/delete/${id}`);
       fetchCategories();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Delete failed');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     }
   };
 
@@ -110,7 +110,6 @@ const CategoryPage: NextPage = () => {
           Manage Categories
         </h1>
         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-        {/* Add form */}
         <form onSubmit={handleAdd} className="flex items-center gap-2 mb-6">
           <input
             type="text"

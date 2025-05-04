@@ -11,16 +11,22 @@ import {
   Bookmark,
   Star
 } from "lucide-react";
+import Image from "next/image"; // ✅ Using Next.js optimized image
 
 import { parseDoc } from "@/lib/parseDocs";
+
+interface Author {
+  fullName?: string;
+  image?: string;
+}
 
 interface Blog {
   _id: string;
   title: string;
-  content: any[];
+  content: BlockNode[];
   featureImage: string;
   tags: string[];
-  author?: { fullName?: string; image?: string };
+  author?: Author;
   shares: number;
   likes: string[];
   dislikesCount: number;
@@ -29,8 +35,13 @@ interface Blog {
   categoryId: string;
 }
 
+interface BlockNode {
+  type: string;
+  [key: string]: unknown; // Define more specific keys if possible
+}
+
 const BlogDetailPage: React.FC = () => {
-  const params = useParams<{ blogId: string }>();  // 👈 Better typing
+  const params = useParams<{ blogId: string }>();
   const blogId = params?.blogId;
 
   const [blog, setBlog] = useState<Blog | null>(null);
@@ -44,9 +55,8 @@ const BlogDetailPage: React.FC = () => {
 
         const res = await axios.get(`/api/blog/read/${blogId}`);
         const raw = res.data.data;
-        console.log(raw);
 
-        let nodes: any[] = [];
+        let nodes: BlockNode[] = [];
         if (typeof raw.content === "string") {
           try {
             const parsed = JSON.parse(raw.content);
@@ -62,8 +72,9 @@ const BlogDetailPage: React.FC = () => {
           ...raw,
           content: nodes,
         });
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load blog");
+      } catch (err) {
+        const axiosError = err as { response?: { data?: { message?: string } } };
+        setError(axiosError.response?.data?.message || "Failed to load blog");
       } finally {
         setLoading(false);
       }
@@ -110,10 +121,12 @@ const BlogDetailPage: React.FC = () => {
         {blog.author && (
           <div className="flex items-center gap-4 mb-8">
             {blog.author.image ? (
-              <img
+              <Image
                 src={blog.author.image}
                 alt={blog.author.fullName || "Author"}
-                className="w-12 h-12 rounded-full"
+                width={48}
+                height={48}
+                className="rounded-full"
               />
             ) : (
               <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white">
@@ -150,7 +163,7 @@ const BlogDetailPage: React.FC = () => {
           <div className="flex flex-row space-x-6">
             <div className="flex items-center space-x-2">
               <Share className="w-5 h-5" />
-              <span>0</span>
+              <span>{blog.shares}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Star className="w-5 h-5" />
