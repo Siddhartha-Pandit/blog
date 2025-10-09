@@ -1,11 +1,11 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import dbConnect from "@/lib/dbconnect";
+import dbConnect from "@/lib/db";
 import { User } from "@/models/user.model";
 import { Tenant } from "@/models/tenant.model";
 import mongoose from "mongoose";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -24,14 +24,12 @@ const handler = NextAuth({
 
       if (!user) {
         let tenant = await Tenant.findOne({ name: "Default Tenant" });
-        if (!tenant) {
-          tenant = await Tenant.create({ name: "Default Tenant" });
-        }
+        if (!tenant) tenant = await Tenant.create({ name: "Default Tenant" });
 
         user = await User.create({
           name: profile.name,
           email: profile.email,
-          image: googleProfile.picture, // ✅ safe
+          image: googleProfile.picture,
           tenantId: tenant._id,
           role: "member",
         });
@@ -55,9 +53,9 @@ const handler = NextAuth({
     },
   },
 
-  session: {
-    strategy: "jwt",
-  },
-});
+  session: { strategy: "jwt" },
+};
 
+// ✅ export the NextAuth handler
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
