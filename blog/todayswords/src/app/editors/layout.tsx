@@ -1,60 +1,62 @@
-"use client";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "sonner";
+import { ModalProvider } from "@/components/providers/modal-provider";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Navigation from "./_components/navigation";
-import { SearchCommand } from "@/components/search-command";
-import { Spinner } from "@/components/spinner";
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
-/**
- * Example session check function using your backend API
- * Replace `/api/auth/session` with your actual session endpoint
- */
-async function fetchSession() {
-  try {
-    const res = await fetch("/api/auth/session", { cache: "no-store" });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.user || null;
-  } catch (err) {
-    console.error("Failed to fetch session", err);
-    return null;
-  }
-}
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
-const MainLayout = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    fetchSession().then((user) => {
-      if (!user) {
-        router.replace("/"); // redirect if not authenticated
-      } else {
-        setUser(user);
-        setLoading(false);
-      }
-    });
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full flex dark:bg-[#1f1f1f]">
-      <Navigation />
-      <main className="flex-1 h-full overflow-y-auto">
-        <SearchCommand />
-        {children}
-      </main>
-    </div>
-  );
+export const metadata: Metadata = {
+  title: "Today's Words'",
+  description: "The blogging application.",
+  icons: {
+    icon: [
+      {
+        media: "(prefers-color-scheme:light)",
+        url: "/logo.webp",
+        href: "/logo.webp",
+      },
+      {
+        media: "(prefers-color-scheme:dark)",
+        url: "/logo.webp",
+        href: "/logo.webp",
+      },
+    ],
+  },
 };
 
-export default MainLayout;
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {/* Theme, modal, and toaster providers */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+          storageKey="jotion-theme"
+        >
+          <Toaster position="bottom-right" />
+          <ModalProvider />
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
