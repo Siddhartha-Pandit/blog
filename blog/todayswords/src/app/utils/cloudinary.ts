@@ -8,12 +8,15 @@ cloudinary.config({
   secure: true,
 });
 
-export const uploadImage = async (file: string | Buffer, folder = "jotion") => {
+
+export const uploadImage = async (
+  file: string | Buffer,
+  folder = "jotion"
+): Promise<{ url: string; publicId: string }> => {
   try {
     let fileData: string;
 
     if (Buffer.isBuffer(file)) {
-      // Convert Buffer to Base64 data URL
       fileData = `data:image/jpeg;base64,${file.toString("base64")}`;
     } else {
       fileData = file; // Already a base64 string or URL
@@ -34,11 +37,42 @@ export const uploadImage = async (file: string | Buffer, folder = "jotion") => {
   }
 };
 
-export const deleteImage = async (publicId: string) => {
+/**
+ * Delete an image from Cloudinary by public ID.
+ * @param publicId - Public ID of the image to delete
+ */
+export const deleteImage = async (publicId: string): Promise<void> => {
   try {
     await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
   } catch (err) {
     console.error("Cloudinary Delete Error:", err);
+    throw err;
+  }
+};
+
+/**
+ * Update an existing image:
+ * Deletes the old image and uploads the new one.
+ * @param newFile - Base64 string or Buffer for the new image
+ * @param oldPublicId - Public ID of the old image to replace
+ * @param folder - Folder name in Cloudinary
+ */
+export const updateImage = async (
+  newFile: string | Buffer,
+  oldPublicId: string,
+  folder = "jotion"
+): Promise<{ url: string; publicId: string }> => {
+  try {
+    // Delete old image first
+    if (oldPublicId) {
+      await deleteImage(oldPublicId);
+    }
+
+    // Upload new one
+    const result = await uploadImage(newFile, folder);
+    return result;
+  } catch (err) {
+    console.error("Cloudinary Update Error:", err);
     throw err;
   }
 };
