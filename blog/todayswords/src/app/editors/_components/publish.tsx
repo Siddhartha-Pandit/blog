@@ -1,6 +1,5 @@
 "use client";
 
-import { Doc } from "@/convex/_generated/dataModel";
 import {
   PopoverTrigger,
   Popover,
@@ -8,63 +7,60 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useOrigin } from "@/hooks/use-origin";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Globe, Check, Copy } from "lucide-react";
+
 interface PublishProps {
-  initialData: Doc<"documents">;
+  initialData: {
+    _id: string;
+    isPublished: boolean;
+  };
 }
-export const Pusblish = ({ initialData }: PublishProps) => {
+
+export const Publish = ({ initialData }: PublishProps) => {
   const origin = useOrigin();
-  const update = useMutation(api.document.update);
-  const [copied, setCopied] = useState(false);
+  const [isPublished, setIsPublished] = useState(initialData.isPublished);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const url = `${origin}/preview/${initialData._id}`;
-  const onPublish = () => {
+
+  const togglePublish = async () => {
     setIsSubmitting(true);
-    const promise = update({
-      id: initialData._id,
-      isPublished: true,
-    }).finally(() => setIsSubmitting(false));
-    toast.promise(promise, {
-      loading: "Publishing...",
-      success: "Published",
-      error: "Failed to publish note.",
-    });
+    try {
+      const res = await fetch("/api/blog/publish", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: initialData._id, publish: !isPublished }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update publish status");
+
+      setIsPublished(!isPublished);
+      toast.success(isPublished ? "Unpublished" : "Published");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update publish status");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  const onUnPublish = () => {
-    setIsSubmitting(true);
-    const promise = update({
-      id: initialData._id,
-      isPublished: false,
-    }).finally(() => setIsSubmitting(false));
-    toast.promise(promise, {
-      loading: "Unpublishing...",
-      success: "Unpublished",
-      error: "Failed to unpublish note.",
-    });
-  };
-  const inCopy = () => {
+
+  const copyLink = () => {
     navigator.clipboard.writeText(url);
     setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-    }, 1000);
+    setTimeout(() => setCopied(false), 1000);
   };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button size="sm" variant="ghost">
-          Publish{" "}
-          {initialData.isPublished && (
-            <Globe className="text-sky-500 w-4 h-4 ml-2" />
-          )}
+          Publish {isPublished && <Globe className="text-sky-500 w-4 h-4 ml-2" />}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="end" alignOffset={8} forceMount>
-        {initialData.isPublished ? (
+        {isPublished ? (
           <div className="space-y-4">
             <div className="flex items-center gap-x-2">
               <Globe className="text-sky-500 animate-pulse h-4 w-4" />
@@ -79,19 +75,20 @@ export const Pusblish = ({ initialData }: PublishProps) => {
                 disabled
               />
               <Button
-                onClick={inCopy}
+                onClick={copyLink}
                 disabled={copied}
                 className="h-8 rounded-l-none"
               >
-                {copied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <Button size="sm" className="w-full text-xs" disabled={isSubmitting} onClick={onPublish}>
-                Unpublish
+            <Button
+              size="sm"
+              className="w-full text-xs"
+              disabled={isSubmitting}
+              onClick={togglePublish}
+            >
+              Unpublish
             </Button>
           </div>
         ) : (
@@ -103,7 +100,7 @@ export const Pusblish = ({ initialData }: PublishProps) => {
             </span>
             <Button
               disabled={isSubmitting}
-              onClick={onPublish}
+              onClick={togglePublish}
               className="w-full text-xs"
               size="sm"
             >

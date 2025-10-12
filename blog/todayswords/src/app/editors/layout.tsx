@@ -1,22 +1,51 @@
 "use client";
 
-import { useConvexAuth } from "convex/react";
-import { Spinner } from "@/components/spinner";
-import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Navigation from "./_components/navigation";
 import { SearchCommand } from "@/components/search-command";
+import { Spinner } from "@/components/spinner";
+
+/**
+ * Example session check function using your backend API
+ * Replace `/api/auth/session` with your actual session endpoint
+ */
+async function fetchSession() {
+  try {
+    const res = await fetch("/api/auth/session", { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user || null;
+  } catch (err) {
+    console.error("Failed to fetch session", err);
+    return null;
+  }
+}
+
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useConvexAuth();
-  if (isLoading) {
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchSession().then((user) => {
+      if (!user) {
+        router.replace("/"); // redirect if not authenticated
+      } else {
+        setUser(user);
+        setLoading(false);
+      }
+    });
+  }, [router]);
+
+  if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
   }
-  if (!isAuthenticated) {
-    return redirect("/");
-  }
+
   return (
     <div className="h-full flex dark:bg-[#1f1f1f]">
       <Navigation />
@@ -27,4 +56,5 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
     </div>
   );
 };
+
 export default MainLayout;

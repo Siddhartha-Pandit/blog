@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { ChevronsLeftRight } from "lucide-react";
 import {
@@ -10,16 +10,56 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SignOutButton, useUser } from "@clerk/clerk-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+interface User {
+  fullName?: string;
+  email?: string;
+  imageUrl?: string;
+}
 
 const UserItem: React.FC = () => {
-  const { user } = useUser();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+
+  // Fetch current user from your backend
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) throw new Error("Failed to fetch user");
+      const data = await res.json();
+      setUser(data);
+    } catch (err) {
+      console.error(err);
+      setUser(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   const toggleDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setShowDetails((prev) => !prev);
+  };
+
+  // Logout via backend API
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Logout failed");
+      toast.success("Logged out successfully!");
+      router.push("/login"); // redirect to login page
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to logout");
+    }
   };
 
   return (
@@ -70,16 +110,13 @@ const UserItem: React.FC = () => {
         >
           <div className="flex flex-col space-y-4 p-2 transition-all duration-300 animate-in fade-in slide-in-from-top-1">
             <p className="text-xs font-medium leading-none text-muted-foreground truncate">
-              {user?.emailAddresses?.[0]?.emailAddress ?? ""}
+              {user?.email ?? ""}
             </p>
 
             <div className="flex items-center gap-x-2">
               <div className="rounded-md bg-secondary p-1">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage
-                   
-                    src={user?.imageUrl ?? undefined}
-                  />
+                  <AvatarImage src={user?.imageUrl ?? undefined} />
                 </Avatar>
               </div>
 
@@ -94,10 +131,10 @@ const UserItem: React.FC = () => {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          asChild
           className="w-full cursor-pointer text-muted-foreground"
+          onClick={handleLogout}
         >
-          <SignOutButton>Logout</SignOutButton>
+          Logout
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

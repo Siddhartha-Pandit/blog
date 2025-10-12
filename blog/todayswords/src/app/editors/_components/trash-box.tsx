@@ -1,57 +1,85 @@
 "use client";
 
-import { api } from "@/convex/_generated/api";
-import { useQuery, useMutation } from "convex/react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Id } from "@/convex/_generated/dataModel";
-import { Spinner } from "@/app/(marketing)/_components/spinner";
+import { Spinner } from "@/components/spinner";
 import { Search, Undo, Trash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ConfirmModal } from "./modals/confirm-modal";
+import { toast } from "sonner";
+
+interface Document {
+  _id: string;
+  title?: string;
+}
 
 export const TrashBox = () => {
   const router = useRouter();
   const params = useParams();
-
-  const documents = useQuery(api.document.getTrash);
-  const restore = useMutation(api.document.restoreMutation);
-  const remove = useMutation(api.document.remove);
-
+  const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
   const [search, setSearch] = useState("");
 
+  // Fetch trashed documents from backend
+  const fetchTrash = async () => {
+    try {
+      const res = await fetch("/api/documents/trash");
+      if (!res.ok) throw new Error("Failed to fetch trash");
+      const data = await res.json();
+      setDocuments(data);
+    } catch (err) {
+      console.error(err);
+      setDocuments([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrash();
+  }, []);
+
   const filteredDocuments = documents?.filter((document) =>
-    document.title.toLowerCase().includes(search.toLowerCase())
+    document.title?.toLowerCase().includes(search.toLowerCase())
   );
 
   const onClick = (documentId: string) => {
     router.push(`/documents/${documentId}`);
   };
 
-  const onRestore = (
+  const onRestore = async (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    documentId: Id<"documents">
+    documentId: string
   ) => {
     event.stopPropagation();
-    const promise = restore({ id: documentId });
-    toast.promise(promise, {
-      loading: "Restoring note...",
-      success: "Note restored!",
-      error: "Failed to restore note.",
-    });
+    try {
+      const res = await fetch(`/api/documents/restore`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: documentId }),
+      });
+      if (!res.ok) throw new Error("Failed to restore document");
+      toast.success("Note restored!");
+      fetchTrash();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to restore note.");
+    }
   };
 
-  const onRemove = (documentId: Id<"documents">) => {
-    const promise = remove({ id: documentId });
-    toast.promise(promise, {
-      loading: "Deleting note...",
-      success: "Note deleted!",
-      error: "Failed to delete note.",
-    });
-
-    if (params.documentId === documentId) {
-      router.push("/documents");
+  const onRemove = async (documentId: string) => {
+    try {
+      const res = await fetch(`/api/documents/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: documentId }),
+      });
+      if (!res.ok) throw new Error("Failed to delete document");
+      toast.success("Note deleted!");
+      fetchTrash();
+      if (params.documentId === documentId) {
+        router.push("/documents");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete note.");
     }
   };
 

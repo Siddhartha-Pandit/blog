@@ -1,36 +1,73 @@
 "use client";
-import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { useParams } from "next/navigation";
-import { Id } from "@/convex/_generated/dataModel";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { MenuIcon } from "lucide-react";
 import { Title } from "./title";
 import { Banner } from "./banner";
 import { Menu } from "./menu";
-import { Pusblish } from "./publish";
+import { Publish } from "./publish";
+import { Skeleton } from "@/components/ui/skeleton";
+
 interface NavbarProps {
   isCollapsed: boolean;
   onResetWidth: () => void;
 }
+
+// Updated Document type to include isPublished
+interface Document {
+  _id: string;
+  title: string;
+  icon?: string | null;
+  isArchived?: boolean;
+  isPublished: boolean; // <-- added this
+  content?: string;
+  // add other fields as needed
+}
+
 export const Navbar = ({ isCollapsed, onResetWidth }: NavbarProps) => {
   const params = useParams();
-  const removeIcon=useMutation(api.document.removeIcon)
-  const document = useQuery(api.document.getById, {
-    documentId: params.documentId as Id<"documents">,
-  });
-  if (document === undefined) {
-   return(
-    <nav className="bg-background dark:bg-[#1f1f1f] px-3 py-2 w-full flex items-center justify-between">
-        <Title.Skeleton/>
+  const router = useRouter();
+  const [document, setDocument] = useState<Document | null | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDocument = async () => {
+    if (!params.documentId) {
+      setDocument(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/documents/${params.documentId}`);
+      if (!res.ok) throw new Error("Failed to fetch document");
+      const data: Document = await res.json(); // ensure backend returns isPublished
+      setDocument(data);
+    } catch (err) {
+      console.error(err);
+      setDocument(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocument();
+  }, [params.documentId]);
+
+  if (loading || document === undefined) {
+    return (
+      <nav className="bg-background dark:bg-[#1f1f1f] px-3 py-2 w-full flex items-center justify-between">
+        <Title.Skeleton />
         <div className="flex items-center gap-x-2">
-            <Menu.SKeleton/>
+          <Menu.Skeleton />
         </div>
-    </nav>
-   )
+      </nav>
+    );
   }
-  if (document === null) {
-   return null
-  }
+
+  if (!document) return null;
+
   return (
     <>
       <nav className="bg-background dark:bg-[#1f1f1f] px-3 py-2 w-full flex items-center gap-x-4">
@@ -42,17 +79,15 @@ export const Navbar = ({ isCollapsed, onResetWidth }: NavbarProps) => {
           />
         )}
         <div className="flex items-center justify-between w-full">
-
-        <Title initialData={document}/>
-        <div className="flex items-center gap-x-2">
-          <Pusblish initialData={document}/>
-            <Menu documentId={document._id}>
-
-            </Menu>
-        </div>
+          <Title initialData={document} />
+          <div className="flex items-center gap-x-2">
+            <Publish initialData={document} />
+            <Menu documentId={document._id} />
+          </div>
         </div>
       </nav>
-      {document.isArchived && (<Banner documentId={document._id}/>)}
+
+      {document.isArchived && <Banner documentId={document._id} />}
     </>
   );
 };

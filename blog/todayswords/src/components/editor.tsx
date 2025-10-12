@@ -1,4 +1,3 @@
-// app/(main)/_components/editor.tsx
 "use client";
 
 import React, { useCallback, useMemo } from "react";
@@ -10,7 +9,8 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/blocknoteStyles.css";
 
 import { useTheme } from "next-themes";
-import { useEdgeStore } from "@/lib/edgestore";
+import { toast } from "sonner";
+import { uploadImage } from "@/utils/cloudinary";
 
 interface EditorProps {
   onChange: (content: string) => void;
@@ -19,29 +19,36 @@ interface EditorProps {
   editable?: boolean;
 }
 
-function Editor({ 
-  onChange, 
-  initialContent, 
-  className, 
-  editable = true 
+function Editor({
+  onChange,
+  initialContent,
+  className,
+  editable = true,
 }: EditorProps) {
   const { resolvedTheme } = useTheme();
-  const { edgestore } = useEdgeStore();
 
-  // Handle image upload via EdgeStore
+  // Handle image upload via Cloudinary
   const handleUpload = useCallback(
     async (file: File) => {
       try {
-        const response = await edgestore.publicFiles.upload({
-          file,
+        // Convert file to base64
+        const reader = new FileReader();
+        const fileData: string = await new Promise((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (err) => reject(err);
+          reader.readAsDataURL(file);
         });
-        return response.url;
+
+        // Upload to Cloudinary
+        const { url } = await uploadImage(fileData);
+        return url; // BlockNote expects the uploaded image URL
       } catch (error) {
         console.error("Image upload failed:", error);
+        toast.error("Failed to upload image.");
         throw error;
       }
     },
-    [edgestore]
+    []
   );
 
   const parsedInitial = useMemo(() => {
@@ -55,12 +62,11 @@ function Editor({
 
   const editor = useCreateBlockNote({
     initialContent: parsedInitial,
-    uploadFile: handleUpload, // Connect EdgeStore upload to BlockNote
+    uploadFile: handleUpload, // Connect Cloudinary upload to BlockNote
   });
 
   const handleChange = useCallback(() => {
-    if (!editable) return; // Don't trigger onChange if not editable
-    
+    if (!editable) return;
     try {
       const blocks = editor.document;
       onChange(JSON.stringify(blocks ?? [], null, 2));
@@ -81,7 +87,6 @@ function Editor({
           box-sizing: border-box;
         }
 
-        /* Fix toolbar flickering - critical fixes */
         [data-floating-ui-portal] {
           pointer-events: none !important;
           z-index: 9999 !important;
@@ -99,25 +104,21 @@ function Editor({
           -webkit-user-select: none;
         }
 
-        /* Prevent toolbar from closing on hover */
         .bn-formatting-toolbar * {
           pointer-events: auto !important;
         }
 
-        /* Fix button interactions */
         .bn-formatting-toolbar button,
         .bn-formatting-toolbar [role="button"] {
           pointer-events: auto !important;
           cursor: pointer !important;
         }
 
-        /* Smooth appearance */
         .bn-formatting-toolbar {
           transition: none !important;
           animation: none !important;
         }
 
-        /* Fix Tailwind's button reset conflicts */
         .bn-container button {
           background-color: transparent;
           background-image: none;
@@ -126,7 +127,6 @@ function Editor({
           color: inherit;
         }
 
-        /* Ensure proper stacking */
         .bn-container {
           position: relative;
           z-index: 1;
@@ -137,7 +137,6 @@ function Editor({
           z-index: 1;
         }
 
-        /* Fix all BlockNote menus */
         .bn-side-menu,
         .bn-drag-handle-menu,
         .bn-slash-menu,
@@ -146,7 +145,6 @@ function Editor({
           pointer-events: auto !important;
         }
 
-        /* Prevent Tailwind from breaking BlockNote styles */
         .bn-container img {
           max-width: 100%;
           height: auto;
@@ -157,12 +155,10 @@ function Editor({
           vertical-align: middle;
         }
 
-        /* Fix image upload progress indicators */
         .bn-container .bn-image-loading {
           opacity: 0.6;
         }
 
-        /* Styling for read-only mode */
         .bn-container[data-readonly="true"] {
           cursor: default;
         }
@@ -172,8 +168,9 @@ function Editor({
           display: none !important;
         }
       `}</style>
-      <div 
-        className={className ?? "w-full"} 
+
+      <div
+        className={className ?? "w-full"}
         style={{ position: "relative" }}
         data-readonly={!editable}
       >

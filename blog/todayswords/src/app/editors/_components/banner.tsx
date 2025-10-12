@@ -1,53 +1,72 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { ConfirmModal } from "./modals/confirm-modal";
 
 interface BannerProps {
-  documentId: Id<"documents">;
+  documentId: string;
 }
 
 export const Banner = ({ documentId }: BannerProps) => {
   const router = useRouter();
-  const remove = useMutation(api.document.remove);
-  const restore = useMutation(api.document.restoreMutation);
 
+  // 🧹 Permanently delete a document
   const onRemove = async () => {
-    const promise = remove({ id: documentId });
+    const promise = fetch("/api/blog/delete", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: documentId }),
+    });
+
     toast.promise(promise, {
-      loading: "Deleting note...",
-      success: "Note deleted!",
-      error: "Failed to delete note.",
+      loading: "Deleting document...",
+      success: "Document deleted successfully!",
+      error: "Failed to delete document.",
     });
 
     try {
-      await promise;
-      // navigate after successful deletion
+      const res = await promise;
+      if (!res.ok) throw new Error("Failed to delete document");
       router.push("/documents");
     } catch (err) {
-      // nothing else to do — toast already shows error
+      console.error(err);
     }
   };
 
-  const onRestore = () => {
-    const promise = restore({ id: documentId }).then(() => {
-      router.push("/documents");
+  // 🔁 Restore an archived document
+  const onRestore = async () => {
+    const promise = fetch("/api/blog/restore", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: documentId }),
     });
+
     toast.promise(promise, {
-      loading: "Restoring note...",
-      success: "Note restored!",
-      error: "Failed to restore note.",
+      loading: "Restoring document...",
+      success: "Document restored successfully!",
+      error: "Failed to restore document.",
     });
+
+    try {
+      const res = await promise;
+      if (!res.ok) throw new Error("Failed to restore document");
+      router.push("/documents");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <div className="w-full bg-rose-500 text-center text-sm p-2 text-white flex items-center gap-x-2 justify-center">
       <p>This page is in the Trash.</p>
+
+      {/* Restore Button */}
       <Button
         size="sm"
         onClick={onRestore}
@@ -57,6 +76,7 @@ export const Banner = ({ documentId }: BannerProps) => {
         Restore page
       </Button>
 
+      {/* Delete Forever Button */}
       <ConfirmModal onConfirm={onRemove}>
         <Button
           size="sm"

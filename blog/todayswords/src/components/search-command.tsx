@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { File } from "lucide-react";
-import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/clerk-react";
+import { useSession } from "next-auth/react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,11 +12,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-
 import { useSearch } from "@/hooks/use-search";
-import { api } from "@/convex/_generated/api";
 
-// ✅ Define document type (you can refine this later based on your schema)
 interface DocumentType {
   _id: string;
   title?: string;
@@ -25,15 +21,33 @@ interface DocumentType {
 }
 
 export const SearchCommand = () => {
-  const { user } = useUser();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
-
-  const documents = useQuery(api.document.getSearch) as DocumentType[] | undefined;
+  const [documents, setDocuments] = useState<DocumentType[]>([]);
 
   const toggle = useSearch((store) => store.toggle);
   const isOpen = useSearch((store) => store.isOpen);
   const onClose = useSearch((store) => store.onClose);
+
+  // Fetch documents from your backend API
+  useEffect(() => {
+    if (!session?.user?.email) return;
+
+    const fetchDocuments = async () => {
+      try {
+        const res = await fetch(`/api/documents?userEmail=${session.user.email}`);
+        if (!res.ok) throw new Error("Failed to fetch documents");
+
+        const data: DocumentType[] = await res.json();
+        setDocuments(data);
+      } catch (err) {
+        console.error("Error fetching documents:", err);
+      }
+    };
+
+    fetchDocuments();
+  }, [session?.user?.email]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -55,15 +69,15 @@ export const SearchCommand = () => {
     onClose();
   };
 
-  if (!isMounted) return null;
+  if (!isMounted || status === "loading") return null;
 
   return (
     <CommandDialog open={isOpen} onOpenChange={onClose}>
-      <CommandInput placeholder={`Search ${user?.fullName || ""}'s Jotion...`} />
+      <CommandInput placeholder={`Search ${session?.user?.name || ""}'s Jotion...`} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Documents">
-          {documents?.map((document: DocumentType) => (
+          {documents.map((document) => (
             <CommandItem
               key={document._id}
               value={`${document._id}-${document.title}`}

@@ -1,38 +1,46 @@
 "use client";
 
-import { Id } from "@/convex/_generated/dataModel";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/clerk-react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Trash } from "lucide-react";
-import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface MenuProps {
-  documentId: Id<"documents">;
+  documentId: string;
 }
 
 export const Menu = ({ documentId }: MenuProps) => {
   const router = useRouter();
-  const { user } = useUser();
-  const archive = useMutation(api.document.archive);
+  const [loading, setLoading] = useState(false);
 
-  const onArchive = () => {
-    const promise = archive({ id: documentId });
-    toast.promise(promise, {
-      loading: "Moving to trash...",
-      success: "Note moved to trash!",
-      error: "Failed to archive note.",
-    });
+  const onArchive = async () => {
+    if (!documentId) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/blog/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: documentId }),
+      });
+      if (!res.ok) throw new Error("Failed to delete document");
+
+      toast.success("Note moved to trash!");
+      router.refresh(); // refresh list after deletion
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete note.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,10 +52,9 @@ export const Menu = ({ documentId }: MenuProps) => {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent className="w-60" align="end" alignOffset={8} forceMount>
-        {/* single-line item: icon + text */}
         <DropdownMenuItem
           onSelect={(e) => {
-            e.preventDefault(); // prevent form submits if any
+            e.preventDefault();
             onArchive();
           }}
           className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none"
@@ -59,16 +66,15 @@ export const Menu = ({ documentId }: MenuProps) => {
         <DropdownMenuSeparator />
 
         <div className="text-xs text-muted-foreground p-2">
-          Last edited by: {user?.fullName ?? "—"}
+          {/* You can replace with real user info from your backend */}
+          Last edited by: You
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
-Menu.SKeleton=function MenuSkeleton(){
-    return(
-        <Skeleton className="h-10 w-10"/>
 
-  
-    )
-}
+// Skeleton loader
+Menu.Skeleton = function MenuSkeleton() {
+  return <Skeleton className="h-10 w-10" />;
+};

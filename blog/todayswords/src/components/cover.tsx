@@ -5,12 +5,12 @@ import Image from "next/image";
 import { Button } from "./ui/button";
 import { ImageIcon, X } from "lucide-react";
 import { useCoverImage } from "@/hooks/use-cover-image";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
-import { Id } from "@/convex/_generated/dataModel";
-import { useEdgeStore } from "@/lib/edgestore";
+import { toast } from "sonner";
+import { uploadImage, deleteImage } from "@/utils/cloudinary";
+import { useState } from "react";
 import { Skeleton } from "./ui/skeleton";
+
 interface CoverImageProps {
   url?: string | null;
   preview?: boolean;
@@ -19,62 +19,120 @@ interface CoverImageProps {
 }
 
 export const Cover = ({ url, preview, fullBleed = false }: CoverImageProps) => {
-  const { edgestore } = useEdgeStore();
   const coverImage = useCoverImage();
-  const params = useParams();
-  const removeCoverImage = useMutation(api.document.removeCoverImage);
+  const params = useParams() as { documentId?: string };
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState<string | null>(url ?? null);
 
+  // Remove cover image
   const onRemove = async () => {
-    try {
-      if (url) {
-        await edgestore.publicFiles.delete({ url });
-      }
+    if (!params.documentId || !currentUrl) return;
+    setIsProcessing(true);
 
-      await removeCoverImage({
-        id: params.documentId as Id<"documents">,
+    try {
+      // Delete from Cloudinary
+      const publicId = currentUrl.split("/").pop()?.split(".")[0];
+      if (publicId) await deleteImage(publicId);
+
+      // Update backend
+      const res = await fetch(`/api/blog/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: params.documentId, coverImage: null }),
       });
-    } catch (error) {
-      console.error("Error removing cover image:", error);
+
+      if (!res.ok) throw new Error("Failed to remove cover image");
+
+      setCurrentUrl(null);
+      toast.success("Cover image removed!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove cover image.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  /**
-   * Wrapper classes:
-   * - base: relative + h for the height, w-full so it fills its direct container
-   * - fullBleed: use a trick to make an element span the full viewport width while staying centered
-   *             (relative left-1/2 w-screen -translate-x-1/2)
-   */
+  // Replace cover image
+  const onReplace = async (file: File) => {
+    if (!params.documentId) return;
+    setIsProcessing(true);
+
+    try {
+      // Delete old cover if exists
+      if (currentUrl) {
+        const publicId = currentUrl.split("/").pop()?.split(".")[0];
+        if (publicId) await deleteImage(publicId);
+      }
+
+      // Convert file to base64
+      const reader = new FileReader();
+      const fileData: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
+
+      // Upload new image to Cloudinary
+      const { url: newUrl } = await uploadImage(fileData);
+
+      // Update backend
+      const res = await fetch(`/api/blog/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: params.documentId, coverImage: newUrl }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update cover image");
+
+      setCurrentUrl(newUrl);
+      toast.success("Cover image updated!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to replace cover image.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const wrapperClass = cn(
     "group overflow-hidden",
     fullBleed
-      ? "relative left-1/2 right-1/2 w-screen -translate-x-1/2 h-[35vh]" // full viewport width
-      : "relative w-full h-[35vh]", // constrained to parent width
-    !url && "h-[12vh]",
-    url && "bg-muted"
+      ? "relative left-1/2 right-1/2 w-screen -translate-x-1/2 h-[35vh]"
+      : "relative w-full h-[35vh]",
+    !currentUrl && "h-[12vh]",
+    currentUrl && "bg-muted"
   );
 
   return (
     <div className={wrapperClass}>
-      {!!url && (
+      {currentUrl && (
         <Image
-          src={url}
+          src={currentUrl}
           fill
           alt="cover"
           className="object-cover object-center"
-          // sizes + priority help the browser choose the correct resource,
-          // especially for full-width images. Adjust sizes if you want a different breakpoint behavior.
           sizes="100vw"
           priority
         />
       )}
 
-      {url && !preview && (
+      {currentUrl && !preview && (
         <div className="opacity-0 group-hover:opacity-100 absolute bottom-5 right-5 flex items-center gap-x-2 transition-opacity">
           <Button
-            onClick={() => coverImage.onReplace && coverImage.onReplace(url)}
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "image/*";
+              input.onchange = (e: any) => {
+                if (e.target.files && e.target.files[0]) onReplace(e.target.files[0]);
+              };
+              input.click();
+            }}
             className="text-muted-foreground text-xs"
             variant="outline"
             size="sm"
+            disabled={isProcessing}
           >
             <ImageIcon className="h-4 w-4 mr-2" />
             Change cover
@@ -85,6 +143,7 @@ export const Cover = ({ url, preview, fullBleed = false }: CoverImageProps) => {
             className="text-muted-foreground text-xs"
             variant="outline"
             size="sm"
+            disabled={isProcessing}
           >
             <X className="h-4 w-4 mr-2" />
             Remove
@@ -94,8 +153,8 @@ export const Cover = ({ url, preview, fullBleed = false }: CoverImageProps) => {
     </div>
   );
 };
-Cover.Skeleton =function CoverSkeleton(){
-    return(
-        <Skeleton className="w-full h-[12vh]"/>
-    )
-}
+
+// Skeleton fallback
+Cover.Skeleton = function CoverSkeleton() {
+  return <Skeleton className="w-full h-[12vh]" />;
+};

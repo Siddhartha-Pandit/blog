@@ -1,105 +1,132 @@
 "use client";
 
+import React, { useCallback, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCallback, useState } from "react";
 import { useCoverImage } from "@/hooks/use-cover-image";
-import { useEdgeStore } from "@/lib/edgestore";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
-import { Id } from "@/convex/_generated/dataModel";
-import { SingleImageDropzone } from "@/components/upload/single-image";
-import { UploaderProvider, type UploadFn } from "@/components/upload/uploader-provider";
 import { toast } from "sonner";
+import { uploadImage } from "@/utils/cloudinary";
+
+// Single drag-and-drop dropzone
+const Dropzone: React.FC<{ onUpload: (file: File) => void; disabled?: boolean }> = ({
+  onUpload,
+  disabled,
+}) => {
+  const [dragging, setDragging] = useState(false);
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+    if (disabled) return;
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onUpload(e.dataTransfer.files[0]);
+      e.dataTransfer.clearData();
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (disabled) return;
+    setDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    if (e.target.files && e.target.files[0]) {
+      onUpload(e.target.files[0]);
+    }
+  };
+
+  return (
+    <div
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      className={`w-full h-48 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer transition-colors ${
+        dragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"
+      }`}
+    >
+      <p className="text-sm text-muted-foreground">
+        Drag & drop your cover image here, or click to select
+      </p>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="absolute w-full h-full opacity-0 cursor-pointer"
+        disabled={disabled}
+      />
+    </div>
+  );
+};
 
 export const CoverImageModal = () => {
   const coverImage = useCoverImage();
-  const { edgestore } = useEdgeStore();
-  const update = useMutation(api.document.update);
-
-  // next/navigation's useParams returns a record; cast to a helpful shape
-  const params = useParams() as { documentId?: string | undefined };
-
+  const params = useParams() as { documentId?: string };
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onClose = useCallback(() => {
-    // ensure submit state is reset and modal closed
     setIsSubmitting(false);
     coverImage.onClose();
   }, [coverImage]);
 
-  // uploadFn used by the UploaderProvider. The provider will call this when a file is provided.
-  const uploadFn: UploadFn = useCallback(
-    async ({ file, onProgressChange, signal }) => {
-      if (!file) throw new Error("No file provided to upload.");
+  const handleUpload = async (file: File) => {
+    if (!params.documentId) return toast.error("Missing document ID");
 
-      setIsSubmitting(true);
+    setIsSubmitting(true);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      const fileData: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
 
-      try {
-        // Safely read the existing cover URL (may be undefined or null)
-        const existingUrl = (coverImage as { url?: string | null }).url ?? undefined;
+      // Upload to Cloudinary
+      const url = await uploadImage(fileData);
 
-        // Convert explicit null -> undefined because EdgeStore likely expects undefined when absent
-        const replaceTargetUrl = existingUrl === null ? undefined : existingUrl;
+      // Update the blog document
+      const res = await fetch(`/api/blog/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: params.documentId, coverImage: url }),
+      });
 
-        // Call edgestore.publicFiles.upload with replaceTargetUrl so the backend replaces the file
-        const res = await edgestore.publicFiles.upload({
-          file,
-          signal,
-          onProgressChange,
-          options: {
-            // Only pass replaceTargetUrl if we have one; otherwise undefined is fine
-            replaceTargetUrl,
-          },
-        });
+      if (!res.ok) throw new Error("Failed to update cover image");
 
-        // Update the Convex document with new coverImage URL
-        if (!params.documentId) {
-          // defensive - ensure we have a documentId
-          throw new Error("Missing documentId param.");
-        }
-
-        await update({
-          id: params.documentId as Id<"documents">,
-          coverImage: res.url,
-        });
-
-        toast.success("Cover image updated successfully!");
-        // close modal and reset state
-        onClose();
-        return res; // UploaderProvider may want the result
-      } catch (err) {
-        console.error("[COVER_IMAGE_UPLOAD_ERROR]", err);
-        toast.error("Failed to upload cover image.");
-        setIsSubmitting(false);
-        // rethrow so the provider can reflect error UI if it has one
-        throw err;
-      }
-    },
-    [edgestore, update, params.documentId, coverImage, onClose]
-  );
+      toast.success("Cover image updated successfully!");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload cover image.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog
       open={coverImage.isOpen}
-      // Keep a small handler so closing via backdrop/esc triggers our cleanup
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <DialogContent>
+      <DialogContent className="w-96">
         <DialogHeader>
-          <DialogTitle className="text-center">Upload a cover image</DialogTitle>
+          <DialogTitle className="text-center">Upload a Cover Image</DialogTitle>
         </DialogHeader>
-
-        <UploaderProvider uploadFn={uploadFn} autoUpload>
-          <SingleImageDropzone className="w-full outline-none" disabled={isSubmitting} />
-        </UploaderProvider>
+        <Dropzone onUpload={handleUpload} disabled={isSubmitting} />
       </DialogContent>
     </Dialog>
   );

@@ -1,19 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Doc } from "@/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Props
+interface Document {
+  _id: string;
+  title?: string;
+  icon?: string | null;
+}
+
 interface TitleProps {
-  initialData: Doc<"documents">;
+  initialData: Document;
 }
 
 export const Title = ({ initialData }: TitleProps) => {
-  const update = useMutation(api.document.update);
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(initialData.title ?? "");
 
@@ -21,16 +23,23 @@ export const Title = ({ initialData }: TitleProps) => {
   useEffect(() => {
     if (!isEditing) return;
 
-    const handler = setTimeout(() => {
+    const handler = setTimeout(async () => {
       if (title !== initialData.title) {
-        update({ id: initialData._id, title: title || "Untitled" }).catch((err) =>
-          console.error("Failed to update title:", err)
-        );
+        try {
+          const res = await fetch("/api/documents/update", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: initialData._id, title: title || "Untitled" }),
+          });
+          if (!res.ok) throw new Error("Failed to update title");
+        } catch (err) {
+          console.error("Failed to update title:", err);
+        }
       }
     }, 500); // 0.5s debounce delay
 
     return () => clearTimeout(handler);
-  }, [title, isEditing, initialData._id, initialData.title, update]);
+  }, [title, isEditing, initialData._id, initialData.title]);
 
   // Keep local title in sync if it changes externally (like another tab)
   useEffect(() => {

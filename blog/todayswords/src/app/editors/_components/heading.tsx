@@ -1,13 +1,32 @@
 "use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useConvexAuth } from "convex/react";
-import { ArrowRight } from "lucide-react";
-import { Spinner } from "../../../components/spinner";
 import Link from "next/link";
-import { SignInButton } from "@clerk/clerk-react";
-import { Arrow } from "@radix-ui/react-dropdown-menu";
+import { ArrowRight } from "lucide-react";
+import { Spinner } from "@/components/spinner";
+
 const Heading = () => {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        setIsAuthenticated(!!data?.user);
+      } catch (err) {
+        console.error("Failed to fetch session", err);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkSession();
+  }, []);
+
   return (
     <div className="max-w-3xl space-y-4">
       <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold">
@@ -19,26 +38,30 @@ const Heading = () => {
         <br />
         better, faster work happens.
       </h3>
+
       {isLoading && (
         <div className="w-full flex items-center justify-center">
           <Spinner size="lg" />
         </div>
       )}
-      {isAuthenticated && !isLoading && (
+
+      {!isLoading && isAuthenticated && (
         <Button asChild>
           <Link href="/documents">
             Enter Jotion <ArrowRight className="h-4 w-4 ml-2" />
           </Link>
         </Button>
       )}
-      {!isAuthenticated && !isLoading && (
-        <SignInButton mode="modal">
-          <Button>
-            Get jotion free <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-        </SignInButton>
+
+      {!isLoading && !isAuthenticated && (
+        <Button
+          onClick={() => {
+            window.location.href = "/api/auth/signin"; // NextAuth sign-in page
+          }}
+        >
+          Get Jotion free <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
       )}
-      
     </div>
   );
 };

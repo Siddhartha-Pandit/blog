@@ -1,4 +1,3 @@
-// blog/app/(main)/_components/navigation.tsx
 "use client";
 
 import {
@@ -11,12 +10,9 @@ import {
   Trash,
 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import { cn } from "@/lib/utils";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import UserItem from "./useritem";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import Item from "./item";
 import { toast } from "sonner";
 import DocumentList from "./document-list";
@@ -25,6 +21,21 @@ import { TrashBox } from "./trash-box";
 import { useSearch } from "@/hooks/use-search";
 import { useSettings } from "@/hooks/use-settings";
 import { Navbar } from "./navbar";
+
+// Custom media query hook (replaces usehooks-ts)
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) setMatches(media.matches);
+    const listener = () => setMatches(media.matches);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, [matches, query]);
+
+  return matches;
+};
 
 const Navigation = () => {
   const pathname = usePathname();
@@ -35,18 +46,17 @@ const Navigation = () => {
   const navbarRef = useRef<HTMLDivElement>(null);
   const isResizingRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
-  const create = useMutation(api.document.create);
   const params = useParams();
+  const router = useRouter();
 
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-const router=useRouter()
+
   // Responsive behavior
   useEffect(() => {
-    if (isMobile) {
-      setIsCollapsed(true);
-    } else {
+    if (isMobile) setIsCollapsed(true);
+    else {
       setIsCollapsed(false);
       resetWidth();
     }
@@ -132,14 +142,22 @@ const router=useRouter()
     setTimeout(() => setIsResetting(false), 300);
   };
 
-  const handleCreate = () => {
-    const promise = create({ title: "Untitled" })
-    .then((documentId=>router.push(`/documents/${documentId}`)))
-    toast.promise(promise, {
-      loading: "Creating a new note...",
-      success: "New note created!",
-      error: "Failed to create a new note.",
-    });
+  // Create a new page via backend API
+  const handleCreate = async () => {
+    try {
+      const res = await fetch("/api/blog/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Untitled", content: "" }),
+      });
+      if (!res.ok) throw new Error("Failed to create document");
+      const data = await res.json();
+      toast.success("New note created!");
+      router.push(`/documents/${data._id}`);
+    } catch (err) {
+      toast.error("Failed to create a new note.");
+      console.error(err);
+    }
   };
 
   return (
@@ -225,8 +243,6 @@ const router=useRouter()
         }}
         className="absolute top-0 z-[99999]"
       >
-        {/* Render Navbar if there's a documentId in the route.
-            Navbar is responsible for fetching it and showing appropriate fallbacks. */}
         {params?.documentId ? (
           <Navbar isCollapsed={isCollapsed} onResetWidth={resetWidth} key={params.documentId as string}/>
         ) : (

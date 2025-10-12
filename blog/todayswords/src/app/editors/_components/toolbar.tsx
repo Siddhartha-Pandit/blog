@@ -1,54 +1,51 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { Doc } from "@/convex/_generated/dataModel";
 import { IconPicker } from "./icon-picker";
 import { Button } from "@/components/ui/button";
 import { X, Smile, ImageIcon } from "lucide-react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import TextAreaAutosize from "react-textarea-autosize";
 import { useCoverImage } from "@/hooks/use-cover-image";
 
+interface Document {
+  _id: string;
+  title?: string;
+  icon?: string | null;
+  coverImage?: string | null;
+}
+
 interface ToolbarProps {
-  initialData: Doc<"documents">;
+  initialData: Document;
   preview?: boolean;
 }
 
 export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
-  // use an explicit HTMLTextAreaElement ref so we can move the caret
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialData.title ?? "");
+  const coverImage = useCoverImage();
 
-  const update = useMutation(api.document.update);
-  const removeIcon = useMutation(api.document.removeIcon);
-    const coverImage =useCoverImage()
-  // sync value when prop changes (but NOT when editing)
+  // Sync value when prop changes (but NOT when editing)
   useEffect(() => {
     if (!isEditing) {
       setValue(initialData.title ?? "");
     }
   }, [initialData.title, isEditing]);
 
-  // Enable editing and focus textarea, then move caret to the end.
+  // Enable editing and focus textarea
   const enableInput = () => {
     if (preview) return;
     setIsEditing(true);
 
-    // Wait for textarea to mount & autosize to finish layout,
-    // then focus & set caret to end. Two RAFs are reliable across browsers.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const el = inputRef.current;
         if (el) {
           const len = el.value.length;
           el.focus();
-          // put caret at the end
           try {
             el.setSelectionRange(len, len);
           } catch {
-            // fallback: set selectionStart/End
             el.selectionStart = el.selectionEnd = len;
           }
         }
@@ -56,14 +53,15 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
     });
   };
 
-  // When editing finishes, persist only if changed.
+  // Persist title change to backend
   const disableInput = async () => {
     setIsEditing(false);
     if (value !== initialData.title) {
       try {
-        await update({
-          id: initialData._id,
-          title: value || "Untitled",
+        await fetch("/api/documents/update", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: initialData._id, title: value || "Untitled" }),
         });
       } catch (err) {
         console.error("Failed to update title:", err);
@@ -71,10 +69,7 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
     }
   };
 
-  // local change only; don't call server on each keystroke
-  const onInput = (val: string) => {
-    setValue(val);
-  };
+  const onInput = (val: string) => setValue(val);
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter") {
@@ -83,11 +78,13 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
     }
   };
 
+  // Update icon via backend
   const onIconSelect = async (icon: string) => {
     try {
-      await update({
-        id: initialData._id,
-        icon,
+      await fetch("/api/documents/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: initialData._id, icon }),
       });
     } catch (error) {
       console.error("Failed to update icon:", error);
@@ -96,8 +93,10 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
 
   const onRemoveIcon = async () => {
     try {
-      await removeIcon({
-        id: initialData._id,
+      await fetch("/api/documents/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: initialData._id, icon: null }),
       });
     } catch (err) {
       console.error("Failed to remove icon:", err);
