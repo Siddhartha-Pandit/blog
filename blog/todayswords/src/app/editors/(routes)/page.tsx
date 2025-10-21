@@ -16,16 +16,19 @@ const DocumentPage = () => {
       setIsCreating(true);
       toast.loading("Creating a new note...");
 
-      // 🧩 Replace this with your actual API route if needed
-      const res = await fetch("/api/documents", {
+      const res = await fetch("/api/blog/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "Untitled" }),
+        body: JSON.stringify({ title: "Untitled", content: "" }),
       });
 
       if (!res.ok) throw new Error("Failed to create note");
 
-      const { id } = await res.json();
+      const data = await res.json();
+
+      // Use _id from backend
+      const id = data._id as string;
+
       toast.success("New note created!");
       router.push(`/documents/${id}`);
     } catch (err) {
@@ -38,7 +41,7 @@ const DocumentPage = () => {
 
   return (
     <div className="h-full flex flex-col items-center justify-center space-y-4">
-      {/* ✅ Light Mode Image */}
+      {/* Light Mode Image */}
       <Image
         src="/reading.jpeg"
         height={300}
@@ -46,7 +49,7 @@ const DocumentPage = () => {
         alt="Empty"
         className="dark:hidden"
       />
-      {/* ✅ Dark Mode Image */}
+      {/* Dark Mode Image */}
       <Image
         src="/reading.jpeg"
         height={300}

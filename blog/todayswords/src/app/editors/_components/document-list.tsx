@@ -5,12 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { FileIcon } from "lucide-react";
 import Item from "./item";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Document {
   _id: string;
   title: string;
   icon?: string | null;
-  parentId?: string | null;
+  parentDocument?: string | null;
 }
 
 interface DocumentListProps {
@@ -30,14 +31,25 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
     try {
       const res = await fetch(
         parentDocumentId
-          ? `/api/documents?parentId=${parentDocumentId}`
-          : `/api/documents`
+          ? `/api/blog/get?parentId=${parentDocumentId}` // ✅ correct API path
+          : `/api/blog/get`, // ✅ correct API path
+        {
+          credentials: "include", // send cookies for session auth
+        }
       );
       if (!res.ok) throw new Error("Failed to fetch documents");
       const data = await res.json();
-      setDocuments(data);
+
+      // Ensure _id is string
+      const normalizedData = data.map((doc: any) => ({
+        ...doc,
+        _id: String(doc._id),
+      }));
+
+      setDocuments(normalizedData);
     } catch (err) {
       console.error("Error loading documents:", err);
+      toast.error("Failed to fetch documents");
       setDocuments([]); // fail gracefully
     }
   };
@@ -57,7 +69,6 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
     router.push(`/documents/${documentId}`);
   };
 
-  // ✅ Loading skeleton
   if (documents === undefined) {
     return (
       <>
@@ -72,7 +83,6 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
     );
   }
 
-  // ✅ No documents case
   if (documents.length === 0 && level > 0) {
     return (
       <p
@@ -84,7 +94,6 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
     );
   }
 
-  // ✅ Render document tree
   return (
     <>
       {documents.map((document) => (
@@ -94,7 +103,7 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
             onClick={() => onRedirect(document._id)}
             label={document.title || "Untitled"}
             icon={FileIcon}
-            documentIcon={document.icon ?? undefined} // ✅ Fix: normalize null → undefined
+            documentIcon={document.icon ?? undefined}
             active={params.documentId === document._id}
             level={level}
             onExpand={() => onExpand(document._id)}
@@ -102,7 +111,10 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
           />
 
           {expanded[document._id] && (
-            <DocumentList parentDocumentId={document._id} level={level + 1} />
+            <DocumentList
+              parentDocumentId={document._id}
+              level={level + 1}
+            />
           )}
         </div>
       ))}

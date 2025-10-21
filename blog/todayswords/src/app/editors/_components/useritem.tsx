@@ -24,11 +24,11 @@ const UserItem: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Fetch current user from your backend
+  // ✅ Fetch current user from your backend
   const fetchUser = async () => {
     try {
       const res = await fetch("/api/auth/me");
-      if (!res.ok) throw new Error("Failed to fetch user");
+      if (!res.ok) throw new Error("Failed to fetch user"); // ✅ fix here
       const data = await res.json();
       setUser(data);
     } catch (err) {
@@ -47,7 +47,7 @@ const UserItem: React.FC = () => {
     setShowDetails((prev) => !prev);
   };
 
-  // Logout via backend API
+  // ✅ Logout via backend API
   const handleLogout = async () => {
     try {
       const res = await fetch("/api/auth/logout", {
@@ -55,7 +55,7 @@ const UserItem: React.FC = () => {
       });
       if (!res.ok) throw new Error("Logout failed");
       toast.success("Logged out successfully!");
-      router.push("/login"); // redirect to login page
+      router.push("/login");
     } catch (err) {
       console.error(err);
       toast.error("Failed to logout");
@@ -128,6 +128,7 @@ const UserItem: React.FC = () => {
             </div>
           </div>
         </DropdownMenuItem>
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem

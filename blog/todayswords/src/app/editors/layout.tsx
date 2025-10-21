@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import Navigation from "./_components/navigation";
 import { SearchCommand } from "@/components/search-command";
 import { Spinner } from "@/components/spinner";
+import { SessionProvider } from "next-auth/react";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Toaster } from "sonner";
+import { ModalProvider } from "@/components/providers/modal-provider";
 
+// --- Helper to fetch session info from API ---
 async function fetchSession() {
   try {
     const res = await fetch("/api/auth/session", { cache: "no-store" });
@@ -24,7 +29,6 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Optional: comment this out if you don't want session check
     fetchSession().then((user) => {
       if (!user) {
         router.replace("/"); // redirect unauthenticated users
@@ -44,13 +48,19 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="h-full flex dark:bg-[#1f1f1f]">
-      <Navigation />
-      <main className="flex-1 h-full overflow-y-auto">
-        <SearchCommand />
-        {children}
-      </main>
-    </div>
+    <SessionProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <Toaster position="bottom-right" />
+        <ModalProvider />
+        <div className="h-full flex dark:bg-[#1f1f1f]">
+          <Navigation />
+          <main className="flex-1 h-full overflow-y-auto">
+            <SearchCommand />
+            {children}
+          </main>
+        </div>
+      </ThemeProvider>
+    </SessionProvider>
   );
 };
 
