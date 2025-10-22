@@ -1,33 +1,61 @@
-// src/app/api/blog/get/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import { DocumentModel } from "@/models/document.model";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
+import dbConnect from "@/lib/db";
+import { DocumentModel, IDocument } from "@/models/document.model";
+import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 
-export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+// --- Define the tree interface ---
+interface DocumentTree extends Omit<IDocument, keyof mongoose.Document> {
+  _id: string;
+  children: DocumentTree[];
+}
 
-  if (!session)
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+// --- Recursive tree builder ---
+async function buildDocumentTree(
+  userId: string,
+  parentId: string | null
+): Promise<DocumentTree[]> {
+  const documents = await DocumentModel.find({
+    userId,
+    parentDocument: parentId,
+    isArchived: false,
+  })
+    .sort({ createdAt: -1 })
+    .lean(); // ensures plain JS objects, not mongoose Documents
 
-  await dbConnect();
+  const results: DocumentTree[] = [];
 
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-
-  if (!id) {
-    return NextResponse.json({ error: "Document ID is required" }, { status: 400 });
+  for (const doc of documents) {
+    const children = await buildDocumentTree(userId, doc._id.toString());
+    results.push({
+      ...doc,
+      _id: doc._id.toString(), // convert ObjectId to string
+      children,
+    });
   }
 
-  const document = await DocumentModel.findOne({
-    _id: id,
-    userId: session.user.id, // Ensure only the owner can fetch
-  }).lean();
+  return results;
+}
 
-  if (!document) {
-    return NextResponse.json({ error: "Document not found" }, { status: 404 });
+// --- API Route ---
+export async function GET(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    await dbConnect();
+
+    const { searchParams } = new URL(req.url);
+    const parentDocument = searchParams.get("parentDocument") || null;
+
+    const documentTree = await buildDocumentTree(session.user.id, parentDocument);
+
+    return NextResponse.json(documentTree, { status: 200 });
+  } catch (error) {
+    console.error("GET /api/documents error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-
-  return NextResponse.json(document);
 }

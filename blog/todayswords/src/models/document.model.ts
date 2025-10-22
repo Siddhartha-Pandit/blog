@@ -1,4 +1,3 @@
-// /models/document.model.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { ITenant } from "./tenant.model";
 import { IUser } from "./user.model";
@@ -31,6 +30,10 @@ const DocumentSchema = new Schema<IDocument>(
   },
   { timestamps: true }
 );
+
+DocumentSchema.index({ userId: 1 });
+DocumentSchema.index({ userId: 1, parentDocument: 1 });
+DocumentSchema.index({ tenantId: 1 });
 
 export const DocumentModel: Model<IDocument> =
   mongoose.models.Document || mongoose.model("Document", DocumentSchema);

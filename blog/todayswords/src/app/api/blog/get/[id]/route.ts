@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import { DocumentModel } from "@/models/document.model.ts";
+import { DocumentModel } from "@/models/document.model";
 
 interface Params {
   id: string;

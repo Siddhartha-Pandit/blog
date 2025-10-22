@@ -47,7 +47,7 @@ const Heading = () => {
 
       {!isLoading && isAuthenticated && (
         <Button asChild>
-          <Link href="/documents">
+          <Link href="/editors">
             Enter Jotion <ArrowRight className="h-4 w-4 ml-2" />
           </Link>
         </Button>

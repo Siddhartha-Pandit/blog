@@ -12,6 +12,7 @@ interface Document {
   title: string;
   icon?: string | null;
   parentDocument?: string | null;
+  children?: Document[];
 }
 
 interface DocumentListProps {
@@ -22,25 +23,20 @@ interface DocumentListProps {
 const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
   const params = useParams();
   const router = useRouter();
-
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
 
-  // ✅ Fetch data from your backend API
   const fetchDocuments = async () => {
     try {
       const res = await fetch(
         parentDocumentId
-          ? `/api/blog/get?parentId=${parentDocumentId}` // ✅ correct API path
-          : `/api/blog/get`, // ✅ correct API path
-        {
-          credentials: "include", // send cookies for session auth
-        }
+          ? `/api/blog/get?parentDocument=${parentDocumentId}` // ✅ fixed param name
+          : `/api/blog/get`,
+        { credentials: "include" }
       );
       if (!res.ok) throw new Error("Failed to fetch documents");
       const data = await res.json();
 
-      // Ensure _id is string
       const normalizedData = data.map((doc: any) => ({
         ...doc,
         _id: String(doc._id),
@@ -50,7 +46,7 @@ const DocumentList = ({ parentDocumentId, level = 0 }: DocumentListProps) => {
     } catch (err) {
       console.error("Error loading documents:", err);
       toast.error("Failed to fetch documents");
-      setDocuments([]); // fail gracefully
+      setDocuments([]);
     }
   };
 

@@ -30,28 +30,40 @@ export const SearchCommand = () => {
   const isOpen = useSearch((store) => store.isOpen);
   const onClose = useSearch((store) => store.onClose);
 
-  // Fetch documents from your backend API
+  // ✅ Fetch documents from your backend API
   useEffect(() => {
-    if (!session?.user?.email) return;
+    if (!session?.user?.id) return;
 
     const fetchDocuments = async () => {
       try {
-        const res = await fetch(`/api/documents?userEmail=${session.user.email}`);
-        if (!res.ok) throw new Error("Failed to fetch documents");
+        const res = await fetch(`/api/blog/get`, {
+          credentials: "include", // send session cookies
+        });
 
-        const data: DocumentType[] = await res.json();
-        setDocuments(data);
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Failed to fetch documents: ${res.status} ${errText}`);
+        }
+
+        const data: any[] = await res.json();
+
+        // Flatten tree structure (since /api/blog/get returns nested docs)
+        const flattenDocs = (docs: any[]): DocumentType[] =>
+          docs.flatMap((doc) => [
+            { _id: doc._id, title: doc.title, icon: doc.icon },
+            ...flattenDocs(doc.children || []),
+          ]);
+
+        setDocuments(flattenDocs(data));
       } catch (err) {
         console.error("Error fetching documents:", err);
       }
     };
 
     fetchDocuments();
-  }, [session?.user?.email]);
+  }, [session?.user?.id]);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  useEffect(() => setIsMounted(true), []);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -73,7 +85,9 @@ export const SearchCommand = () => {
 
   return (
     <CommandDialog open={isOpen} onOpenChange={onClose}>
-      <CommandInput placeholder={`Search ${session?.user?.name || ""}'s Jotion...`} />
+      <CommandInput
+        placeholder={`Search ${session?.user?.name || "your"} documents...`}
+      />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Documents">
