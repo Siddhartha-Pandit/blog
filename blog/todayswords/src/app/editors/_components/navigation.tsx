@@ -1,3 +1,5 @@
+// Navigation.tsx (or the file where Navigation component is defined)
+
 "use client";
 
 import {
@@ -12,28 +14,33 @@ import {
 import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+
 import UserItem from "./useritem";
 import Item from "./item";
-import { toast } from "sonner";
 import DocumentList from "./document-list";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { TrashBox } from "./trash-box";
 import { useSearch } from "@/hooks/use-search";
 import { useSettings } from "@/hooks/use-settings";
-import { Navbar } from "./navbar";
 
-// Custom media query hook (replaces usehooks-ts)
+// 💡 CORRECTION IS HERE: Changing from default import to NAMED import
+import { Navbar } from "./navbar";
+// Custom media query hook
 const useMediaQuery = (query: string) => {
   const [matches, setMatches] = useState(false);
-
   useEffect(() => {
     const media = window.matchMedia(query);
-    if (media.matches !== matches) setMatches(media.matches);
+    setMatches(media.matches);
     const listener = () => setMatches(media.matches);
     media.addEventListener("change", listener);
     return () => media.removeEventListener("change", listener);
-  }, [matches, query]);
-
+  }, [query]);
   return matches;
 };
 
@@ -49,6 +56,7 @@ const Navigation = () => {
   const params = useParams();
   const router = useRouter();
 
+  const { data: session } = useSession();
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -76,7 +84,8 @@ const Navigation = () => {
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isResizingRef.current || isMobile) return;
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
 
     animationFrameRef.current = requestAnimationFrame(() => {
       let newWidth = e.clientX;
@@ -98,7 +107,8 @@ const Navigation = () => {
 
   useEffect(() => {
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
@@ -131,7 +141,10 @@ const Navigation = () => {
         "width",
         isMobile ? "0" : `calc(100% - ${sidebarWidth}px)`
       );
-      navbarRef.current.style.setProperty("left", isMobile ? "100%" : `${sidebarWidth}px`);
+      navbarRef.current.style.setProperty(
+        "left",
+        isMobile ? "100%" : `${sidebarWidth}px`
+      );
     } else {
       setIsCollapsed(true);
       sidebarRef.current.style.width = "0px";
@@ -142,15 +155,27 @@ const Navigation = () => {
     setTimeout(() => setIsResetting(false), 300);
   };
 
-  // Create a new page via backend API
+  // ✅ Create a new page with session check
   const handleCreate = async () => {
+    if (!session?.user?.email) {
+      toast.error("You must be logged in to create a document.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/blog/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ include cookies
         body: JSON.stringify({ title: "Untitled", content: "" }),
       });
-      if (!res.ok) throw new Error("Failed to create document");
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Failed to create document:", res.status, text);
+        throw new Error("Failed to create document");
+      }
+
       const data = await res.json();
       toast.success("New note created!");
       router.push(`/documents/${data._id}`);
@@ -184,7 +209,9 @@ const Navigation = () => {
           onClick={toggleCollapse}
           className={cn(
             "h-6 w-6 text-muted-foreground rounded-sm hover:bg-neutral-300 dark:hover:bg-neutral-600 absolute top-3 right-2 transition flex items-center justify-center",
-            isMobile ? "opacity-100" : "opacity-0 group-hover/sidebar:opacity-100"
+            isMobile
+              ? "opacity-100"
+              : "opacity-0 group-hover/sidebar:opacity-100"
           )}
         >
           <ChevronsLeft
@@ -208,7 +235,10 @@ const Navigation = () => {
             <PopoverTrigger className="w-full mt-4">
               <Item label="Trash" icon={Trash} />
             </PopoverTrigger>
-            <PopoverContent side={isMobile ? "bottom" : "right"} className="p-0 w-72">
+            <PopoverContent
+              side={isMobile ? "bottom" : "right"}
+              className="p-0 w-72"
+            >
               <TrashBox />
             </PopoverContent>
           </Popover>
@@ -244,7 +274,11 @@ const Navigation = () => {
         className="absolute top-0 z-[99999]"
       >
         {params?.documentId ? (
-          <Navbar isCollapsed={isCollapsed} onResetWidth={resetWidth} key={params.documentId as string}/>
+          <Navbar
+            isCollapsed={isCollapsed}
+            onResetWidth={resetWidth}
+            key={params.documentId as string}
+          />
         ) : (
           <nav className="bg-transparent px-3 py-2 w-full flex items-center">
             {isCollapsed && (
